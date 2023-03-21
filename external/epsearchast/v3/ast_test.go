@@ -206,6 +206,24 @@ func TestOneArgumentToInReturnsError(t *testing.T) {
 	require.Nil(t, astNode)
 }
 
+func TestInvalidOperatorReturnsError(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "FOO",
+	"args": ["orders"]
+}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.Error(t, err)
+	require.ErrorContains(t, err, "unknown operator FOO")
+	require.Nil(t, astNode)
+}
+
 func TestInWithChildReturnsError(t *testing.T) {
 	// Fixture Setup
 	// language=JSON
@@ -276,4 +294,3 @@ func TestAndReturnsErrorWithAnInvalidChild(t *testing.T) {
 	require.ErrorContains(t, err, "unknown operator FOO")
 	require.Nil(t, astNode)
 }
-

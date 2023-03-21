@@ -7,79 +7,91 @@ import (
 )
 
 type GormVisitor struct {
-	clause string
-	args   []interface{}
+	Clause string
+	Args   []interface{}
+}
+
+func NewGormVisitor() *GormVisitor {
+	return &GormVisitor{}
 }
 
 var _ epsearchast_v3.SearchFilterVisitor = (*GormVisitor)(nil)
 
 func (g *GormVisitor) PreVisit() error {
-	g.clause = " 1=1 "
-	g.args = make([]interface{}, 0)
+	g.Clause = " 1=1 "
+	g.Args = make([]interface{}, 0)
 
 	return nil
 }
 
 func (g *GormVisitor) PostVisit() error {
-	//g.Query = g.Query.Where(g.clause, g.args...)
+	// Get rid of leading 1=1
+	g.Clause = strings.ReplaceAll(g.Clause, " 1=1 AND ", "")
+	// Remove whitespace from either side
+	g.Clause = strings.Trim(g.Clause, " ")
+	// Remove whitespace before closing parenthesis
+	g.Clause = strings.ReplaceAll(g.Clause, " )", ")")
+
+	// Remove whitespace after opening parenthesis
+	g.Clause = strings.ReplaceAll(g.Clause, "( ", "(")
 	return nil
 }
 
 func (g *GormVisitor) PreVisitAnd() error {
-	g.clause += "AND ( 1=1 "
+	g.Clause += "AND ( 1=1 "
 	return nil
 }
 
 func (g *GormVisitor) PostVisitAnd() error {
-	g.clause += ") "
+	g.Clause += ") "
 	return nil
 }
 
 func (g *GormVisitor) VisitIn(args ...string) error {
 	s := make([]interface{}, len(args)-1)
-	for i, v := range args {
+	for i, v := range args[1:] {
 		s[i] = v
 	}
 
-	g.clause += fmt.Sprintf("AND %s IN ? ", args[0])
-	g.args = append(g.args, s)
+	g.Clause += fmt.Sprintf("AND %s IN ? ", args[0])
+	g.Args = append(g.Args, s)
 	return nil
 }
 
 func (g *GormVisitor) VisitEq(first, second string) error {
-	g.clause += fmt.Sprintf("AND LOWER(%s::text) = LOWER(?) ", first)
-	g.args = append(g.args, second)
+	g.Clause += fmt.Sprintf("AND LOWER(%s::text) = LOWER(?) ", first)
+	g.Args = append(g.Args, second)
 
 	return nil
 }
 
 func (g *GormVisitor) VisitLe(first, second string) error {
-	g.clause += fmt.Sprintf("AND %s <= ? ", first)
-	g.args = append(g.args, second)
+	g.Clause += fmt.Sprintf("AND %s <= ? ", first)
+	g.Args = append(g.Args, second)
 	return nil
 }
 
 func (g *GormVisitor) VisitLt(first, second string) error {
-	g.clause += fmt.Sprintf("AND %s < ? ", first)
-	g.args = append(g.args, second)
+	g.Clause += fmt.Sprintf("AND %s < ? ", first)
+	g.Args = append(g.Args, second)
 	return nil
 }
 
 func (g *GormVisitor) VisitGe(first, second string) error {
-	g.clause += fmt.Sprintf("AND %s >= ? ", first)
-	g.args = append(g.args, second)
+	g.Clause += fmt.Sprintf("AND %s >= ? ", first)
+	g.Args = append(g.Args, second)
 	return nil
 }
 
 func (g *GormVisitor) VisitGt(first, second string) error {
-	g.clause += fmt.Sprintf("AND %s > ? ", first)
-	g.args = append(g.args, second)
+	g.Clause += fmt.Sprintf("AND %s > ? ", first)
+	g.Args = append(g.Args, second)
 	return nil
 }
 
 func (g *GormVisitor) VisitLike(first, second string) error {
-	g.clause += fmt.Sprintf("AND %s ILIKE ? ", first)
-	g.args = append(g.args, processLikeWildcards(second))
+	g.Clause += fmt.Sprintf("AND %s ILIKE ? ", first)
+	g.Args = append(g.Args, processLikeWildcards(second))
 	return nil
 }
 

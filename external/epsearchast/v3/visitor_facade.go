@@ -14,6 +14,10 @@ type SearchFilterVisitor interface {
 	VisitLike(first, second string) error
 }
 
+func NewSearchFilterVisitorAdapter(visitor SearchFilterVisitor) AstVisitor {
+	return &SearchFilterVisitorAdaptor{Sfv: visitor}
+}
+
 type SearchFilterVisitorAdaptor struct {
 	Sfv SearchFilterVisitor
 }
@@ -26,11 +30,11 @@ func (s *SearchFilterVisitorAdaptor) PostVisit() error {
 	return s.Sfv.PostVisit()
 }
 
-func (s *SearchFilterVisitorAdaptor) PreVisitAnd(astNode *AstNode) (bool, error) {
+func (s *SearchFilterVisitorAdaptor) PreVisitAnd(_ *AstNode) (bool, error) {
 	return true, s.Sfv.PreVisitAnd()
 }
 
-func (s *SearchFilterVisitorAdaptor) PostVisitAnd(astNode *AstNode) (bool, error) {
+func (s *SearchFilterVisitorAdaptor) PostVisitAnd(_ *AstNode) (bool, error) {
 	return true, s.Sfv.PostVisitAnd()
 }
 
