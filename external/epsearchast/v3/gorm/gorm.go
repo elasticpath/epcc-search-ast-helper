@@ -7,8 +7,6 @@ import (
 )
 
 type GormVisitor struct {
-
-	//clauseStack [][]*gorm.DB
 	clause string
 	args   []interface{}
 }
