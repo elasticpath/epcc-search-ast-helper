@@ -34,7 +34,8 @@ func TestValidationCatchesInvalidOperatorForBinaryOperatorsForKnownField(t *test
 			mockObj.On("PreVisit").Return(nil).
 				On("PostVisit").Return(nil)
 
-			visitor := NewValidatingVisitor(mockObj, map[string][]string{"amount": {otherBinOp}}, map[string]string{})
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"amount": {otherBinOp}}, map[string]string{}, map[string]string{})
+			require.NoError(t, err)
 
 			// Execute SUT
 			err = astNode.Accept(visitor)
@@ -68,7 +69,8 @@ func TestValidationCatchesInvalidOperatorForBinaryOperatorsForUnknownField(t *te
 			mockObj.On("PreVisit").Return(nil).
 				On("PostVisit").Return(nil)
 
-			visitor := NewValidatingVisitor(mockObj, map[string][]string{"other_field": {otherBinOp}}, map[string]string{})
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"other_field": {otherBinOp}}, map[string]string{}, map[string]string{})
+			require.NoError(t, err)
 
 			// Execute SUT
 			err = astNode.Accept(visitor)
@@ -102,7 +104,8 @@ func TestValidationReturnsErrorForBinaryOperators(t *testing.T) {
 				On("PostVisit").Return(nil).
 				On(fmt.Sprintf("Visit%s", strings.Title(binOp)), mock.Anything).Return(true, fmt.Errorf("mocked error: %s", binOp))
 
-			visitor := NewValidatingVisitor(mockObj, map[string][]string{"amount": {binOp}}, map[string]string{})
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"amount": {binOp}}, map[string]string{}, map[string]string{})
+			require.NoError(t, err)
 
 			// Execute SUT
 			err = astNode.Accept(visitor)
@@ -135,13 +138,47 @@ func TestValidationReturnsErrorForBinaryOperatorsWithAlias(t *testing.T) {
 				On("PostVisit").Return(nil).
 				On(fmt.Sprintf("Visit%s", strings.Title(binOp)), mock.Anything).Return(true, fmt.Errorf("mocked error: %s", binOp))
 
-			visitor := NewValidatingVisitor(mockObj, map[string][]string{"total": {binOp}}, map[string]string{"amount": "total"})
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"total": {binOp}}, map[string]string{"amount": "total"}, map[string]string{})
+			require.NoError(t, err)
 
 			// Execute SUT
 			err = astNode.Accept(visitor)
 
 			// Verification
 			require.ErrorContains(t, err, fmt.Sprintf("mocked error: %s", binOp))
+		})
+	}
+}
+
+func TestValidationReturnsErrorForBinaryOperatorsValueValidation(t *testing.T) {
+
+	for _, binOp := range binOps {
+		t.Run(fmt.Sprintf("%s", binOp), func(t *testing.T) {
+			// Fixture Setup
+			// language=JSON
+			jsonTxt := fmt.Sprintf(`
+			{
+				"type": "%s",
+				"first_arg": "amount",
+				"second_arg": "5"
+			}
+			`, strings.ToUpper(binOp))
+
+			astNode, err := GetAst(jsonTxt)
+			require.NoError(t, err)
+
+			mockObj := new(MyMockedVisitor)
+			mockObj.On("PreVisit").Return(nil).
+				On("PostVisit").Return(nil)
+
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"total": {binOp}}, map[string]string{"amount": "total"}, map[string]string{"total": "uuid"})
+			require.NoError(t, err)
+
+			// Execute SUT
+			err = astNode.Accept(visitor)
+
+			// Verification
+			require.ErrorContains(t, err, fmt.Sprintf("could not validate [amount] with [%s]", binOp))
 		})
 	}
 }
@@ -167,8 +204,8 @@ func TestValidationCatchesInvalidOperatorForVariableOperatorsForKnownField(t *te
 			mockObj.On("PreVisit").Return(nil).
 				On("PostVisit").Return(nil)
 
-			visitor := NewValidatingVisitor(mockObj, map[string][]string{"amount": {otherBinOp}}, map[string]string{})
-
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"amount": {otherBinOp}}, map[string]string{}, map[string]string{})
+			require.NoError(t, err)
 			// Execute SUT
 			err = astNode.Accept(visitor)
 
@@ -200,7 +237,8 @@ func TestValidationCatchesInvalidOperatorForVariableOperatorsForUnknownField(t *
 			mockObj.On("PreVisit").Return(nil).
 				On("PostVisit").Return(nil)
 
-			visitor := NewValidatingVisitor(mockObj, map[string][]string{"other_field": {otherBinOp}}, map[string]string{})
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"other_field": {otherBinOp}}, map[string]string{}, map[string]string{})
+			require.NoError(t, err)
 
 			// Execute SUT
 			err = astNode.Accept(visitor)
@@ -233,7 +271,8 @@ func TestValidationReturnsErrorForVariableOperators(t *testing.T) {
 				On("PostVisit").Return(nil).
 				On(fmt.Sprintf("Visit%s", strings.Title(varOp)), mock.Anything).Return(true, fmt.Errorf("mocked error: %s", varOp))
 
-			visitor := NewValidatingVisitor(mockObj, map[string][]string{"amount": {varOp}}, map[string]string{})
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"amount": {varOp}}, map[string]string{}, map[string]string{})
+			require.NoError(t, err)
 
 			// Execute SUT
 			err = astNode.Accept(visitor)
@@ -265,13 +304,46 @@ func TestValidationReturnsErrorForVariableOperatorsWithAlias(t *testing.T) {
 				On("PostVisit").Return(nil).
 				On(fmt.Sprintf("Visit%s", strings.Title(varOp)), mock.Anything).Return(true, fmt.Errorf("mocked error: %s", varOp))
 
-			visitor := NewValidatingVisitor(mockObj, map[string][]string{"total": {varOp}}, map[string]string{"amount": "total"})
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"total": {varOp}}, map[string]string{"amount": "total"}, map[string]string{})
+			require.NoError(t, err)
 
 			// Execute SUT
 			err = astNode.Accept(visitor)
 
 			// Verification
 			require.ErrorContains(t, err, fmt.Sprintf("mocked error: %s", varOp))
+		})
+	}
+}
+
+func TestValidationReturnsErrorForVariableOperatorsValueValidation(t *testing.T) {
+
+	for _, varOp := range varOps {
+		t.Run(fmt.Sprintf("%s", varOp), func(t *testing.T) {
+			// Fixture Setup
+			// language=JSON
+			jsonTxt := fmt.Sprintf(`
+			{
+				"type": "%s",
+				"args": ["email", "foo@foo.com", "bar@bar.com", "5"]
+			}
+			`, strings.ToUpper(varOp))
+
+			astNode, err := GetAst(jsonTxt)
+			require.NoError(t, err)
+
+			mockObj := new(MyMockedVisitor)
+			mockObj.On("PreVisit").Return(nil).
+				On("PostVisit").Return(nil)
+
+			visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"email": {varOp}}, map[string]string{}, map[string]string{"email": "email"})
+			require.NoError(t, err)
+
+			// Execute SUT
+			err = astNode.Accept(visitor)
+
+			// Verification
+			require.ErrorContains(t, err, fmt.Sprintf("could not validate [email] with [%s]", varOp))
 		})
 	}
 }
@@ -294,7 +366,8 @@ func TestValidationReturnsErrorForPostVisit(t *testing.T) {
 		On("PostVisit").Return(fmt.Errorf("mocked error: PostVisit")).
 		On("VisitIn", mock.Anything).Return(true, nil)
 
-	visitor := NewValidatingVisitor(mockObj, map[string][]string{"amount": {"in"}}, map[string]string{})
+	visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"amount": {"in"}}, map[string]string{}, map[string]string{})
+	require.NoError(t, err)
 
 	// Execute SUT
 	err = astNode.Accept(visitor)
@@ -333,7 +406,8 @@ func TestValidationReturnsErrorForPostVisitAnd(t *testing.T) {
 		On("PreVisitAnd", mock.Anything).Return(true, nil).
 		On("PostVisitAnd", mock.Anything).Return(false, fmt.Errorf("mocked error: PostVisitAnd"))
 
-	visitor := NewValidatingVisitor(mockObj, map[string][]string{"amount": {"in"}, "status": {"eq"}}, map[string]string{})
+	visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"amount": {"in"}, "status": {"eq"}}, map[string]string{}, map[string]string{})
+	require.NoError(t, err)
 
 	// Execute SUT
 	err = astNode.Accept(visitor)
@@ -369,7 +443,8 @@ func TestValidationReturnsErrorForPreVisitAnd(t *testing.T) {
 	mockObj.On("PreVisit").Return(nil).
 		On("PreVisitAnd", mock.Anything).Return(false, fmt.Errorf("mocked error: PreVisitAnd"))
 
-	visitor := NewValidatingVisitor(mockObj, map[string][]string{"amount": {"in"}, "status": {"eq"}}, map[string]string{})
+	visitor, err := NewValidatingVisitor(mockObj, map[string][]string{"amount": {"in"}, "status": {"eq"}}, map[string]string{}, map[string]string{})
+	require.NoError(t, err)
 
 	// Execute SUT
 	err = astNode.Accept(visitor)
@@ -377,4 +452,37 @@ func TestValidationReturnsErrorForPreVisitAnd(t *testing.T) {
 	// Verification
 	require.ErrorContains(t, err, fmt.Sprintf("mocked error: PreVisitAnd"))
 
+}
+
+func TestNewConstructorDetectsUnknownAliasTarget(t *testing.T) {
+	// Fixture Setup
+	mockObj := new(MyMockedVisitor)
+
+	// Execute SUT
+	_, err := NewValidatingVisitor(mockObj, map[string][]string{"status": {"eq"}}, map[string]string{"total": "amount"}, map[string]string{})
+
+	// Verification
+	require.ErrorContains(t, err, fmt.Sprintf("alias from `total` to `amount` points to a field not in the allowed ops"))
+}
+
+func TestNewConstructorDetectsUnknownValueValidatorTarget(t *testing.T) {
+	// Fixture Setup
+	mockObj := new(MyMockedVisitor)
+
+	// Execute SUT
+	_, err := NewValidatingVisitor(mockObj, map[string][]string{"status": {"eq"}}, map[string]string{}, map[string]string{"total": "int"})
+
+	// Verification
+	require.ErrorContains(t, err, fmt.Sprintf("validator for field `total` with type `int` points to an unknown field"))
+}
+
+func TestNewConstructorDetectsAliasedValueValidatorTarget(t *testing.T) {
+	// Fixture Setup
+	mockObj := new(MyMockedVisitor)
+
+	// Execute SUT
+	_, err := NewValidatingVisitor(mockObj, map[string][]string{"status": {"eq"}}, map[string]string{"state": "status"}, map[string]string{"state": "int"})
+
+	// Verification
+	require.ErrorContains(t, err, fmt.Sprintf("validator for field `state` with type `int` points to an alias of `status` instead of the field"))
 }
