@@ -78,9 +78,9 @@ func (v *validatingVisitor) VisitIn(astNode *AstNode) (bool, error) {
 }
 
 func (v *validatingVisitor) VisitEq(astNode *AstNode) (bool, error) {
-	fieldName := astNode.FirstArg
+	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("eq", fieldName, astNode.SecondArg); err != nil {
+	if _, err := v.validateFieldAndValue("eq", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
@@ -88,9 +88,9 @@ func (v *validatingVisitor) VisitEq(astNode *AstNode) (bool, error) {
 }
 
 func (v *validatingVisitor) VisitLe(astNode *AstNode) (bool, error) {
-	fieldName := astNode.FirstArg
+	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("le", fieldName, astNode.SecondArg); err != nil {
+	if _, err := v.validateFieldAndValue("le", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
@@ -98,9 +98,9 @@ func (v *validatingVisitor) VisitLe(astNode *AstNode) (bool, error) {
 }
 
 func (v *validatingVisitor) VisitLt(astNode *AstNode) (bool, error) {
-	fieldName := astNode.FirstArg
+	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("lt", fieldName, astNode.SecondArg); err != nil {
+	if _, err := v.validateFieldAndValue("lt", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
@@ -108,9 +108,9 @@ func (v *validatingVisitor) VisitLt(astNode *AstNode) (bool, error) {
 }
 
 func (v *validatingVisitor) VisitGe(astNode *AstNode) (bool, error) {
-	fieldName := astNode.FirstArg
+	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("ge", fieldName, astNode.SecondArg); err != nil {
+	if _, err := v.validateFieldAndValue("ge", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
@@ -118,9 +118,9 @@ func (v *validatingVisitor) VisitGe(astNode *AstNode) (bool, error) {
 }
 
 func (v *validatingVisitor) VisitGt(astNode *AstNode) (bool, error) {
-	fieldName := astNode.FirstArg
+	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("gt", fieldName, astNode.SecondArg); err != nil {
+	if _, err := v.validateFieldAndValue("gt", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
@@ -128,9 +128,9 @@ func (v *validatingVisitor) VisitGt(astNode *AstNode) (bool, error) {
 }
 
 func (v *validatingVisitor) VisitLike(astNode *AstNode) (bool, error) {
-	fieldName := astNode.FirstArg
+	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("like", fieldName, astNode.SecondArg); err != nil {
+	if _, err := v.validateFieldAndValue("like", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 

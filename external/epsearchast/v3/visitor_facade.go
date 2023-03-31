@@ -43,27 +43,27 @@ func (s *SearchFilterVisitorAdaptor) VisitIn(astNode *AstNode) (bool, error) {
 }
 
 func (s *SearchFilterVisitorAdaptor) VisitEq(astNode *AstNode) (bool, error) {
-	return false, s.Sfv.VisitEq(astNode.FirstArg, astNode.SecondArg)
+	return false, s.Sfv.VisitEq(astNode.Args[0], astNode.Args[1])
 }
 
 func (s *SearchFilterVisitorAdaptor) VisitLe(astNode *AstNode) (bool, error) {
-	return false, s.Sfv.VisitLe(astNode.FirstArg, astNode.SecondArg)
+	return false, s.Sfv.VisitLe(astNode.Args[0], astNode.Args[1])
 }
 
 func (s *SearchFilterVisitorAdaptor) VisitLt(astNode *AstNode) (bool, error) {
-	return false, s.Sfv.VisitLt(astNode.FirstArg, astNode.SecondArg)
+	return false, s.Sfv.VisitLt(astNode.Args[0], astNode.Args[1])
 }
 
 func (s *SearchFilterVisitorAdaptor) VisitGe(astNode *AstNode) (bool, error) {
-	return false, s.Sfv.VisitGe(astNode.FirstArg, astNode.SecondArg)
+	return false, s.Sfv.VisitGe(astNode.Args[0], astNode.Args[1])
 }
 
 func (s *SearchFilterVisitorAdaptor) VisitGt(astNode *AstNode) (bool, error) {
-	return false, s.Sfv.VisitGt(astNode.FirstArg, astNode.SecondArg)
+	return false, s.Sfv.VisitGt(astNode.Args[0], astNode.Args[1])
 }
 
 func (s *SearchFilterVisitorAdaptor) VisitLike(astNode *AstNode) (bool, error) {
-	return false, s.Sfv.VisitLike(astNode.FirstArg, astNode.SecondArg)
+	return false, s.Sfv.VisitLike(astNode.Args[0], astNode.Args[1])
 }
 
 var _ AstVisitor = (*SearchFilterVisitorAdaptor)(nil)

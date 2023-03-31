@@ -122,16 +122,21 @@ func (a *AstNode) checkValid() error {
 			return fmt.Errorf("and should have at least two children")
 		}
 	case "IN":
-		if len(a.Args) < 2 {
-			return fmt.Errorf("insufficient number of arguments to in")
+		if len(a.Children) > 0 {
+			return fmt.Errorf("operator %v should not have any children", strings.ToLower(a.NodeType))
 		}
 
-		if len(a.Children) > 0 {
-			return fmt.Errorf("in should not have any children")
+		if len(a.Args) < 2 {
+			return fmt.Errorf("insufficient number of arguments to %s", strings.ToLower(a.NodeType))
 		}
 	case "EQ", "LE", "LT", "GT", "GE", "LIKE":
 		if len(a.Children) > 0 {
 			return fmt.Errorf("operator %v should not have any children", strings.ToLower(a.NodeType))
+		}
+
+		if len(a.Args) != 2 {
+			return fmt.Errorf("operator %v should have exactly 2 arguments", strings.ToLower(a.NodeType))
+
 		}
 	default:
 		return fmt.Errorf("unknown operator %s", a.NodeType)

@@ -45,8 +45,7 @@ func TestValidObjectWithEqReturnsAst(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "EQ",
-	"first_arg": "status",
-	"second_arg": "paid"
+	"args": [ "status",  "paid"]
 }
 `
 	// Execute SUT
@@ -63,8 +62,7 @@ func TestValidObjectWithLeReturnsAst(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LE",
-	"first_arg": "orders",
-	"second_arg": "5"
+	"args": [ "orders",  "5"]
 }
 `
 	// Execute SUT
@@ -81,8 +79,7 @@ func TestValidObjectWithLtReturnsAst(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LT",
-	"first_arg": "orders",
-	"second_arg": "5"
+	"args": [ "orders",  "5"]
 }
 `
 	// Execute SUT
@@ -99,8 +96,7 @@ func TestValidObjectWithGeReturnsAst(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "GE",
-	"first_arg": "orders",
-	"second_arg": "5"
+	"args": [ "orders",  "5"]
 }
 `
 	// Execute SUT
@@ -117,8 +113,7 @@ func TestValidObjectWithGtReturnsAst(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "GT",
-	"first_arg": "orders",
-	"second_arg": "5"
+	"args": [ "orders",  "5"]
 }
 `
 	// Execute SUT
@@ -135,8 +130,7 @@ func TestValidObjectWithLikeReturnsAst(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LIKE",
-	"first_arg": "status",
-	"second_arg": "p*"
+	"args": [ "status",  "p*"]
 }
 `
 	// Execute SUT
@@ -153,12 +147,10 @@ func TestEqWithChildReturnsError(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "EQ",
-	"first_arg": "status",
-	"second_arg": "paid",
+	"args": [ "status",  "paid"],
 	"children": [{
 		"type": "EQ",
-		"first_arg": "status",
-		"second_arg": "paid"
+		"args": [ "status",  "paid"]
 	}]
 }
 `
@@ -233,8 +225,7 @@ func TestInWithChildReturnsError(t *testing.T) {
 	"args": ["status", "paid"],
 	"children": [{
 		"type": "EQ",
-		"first_arg": "status",
-		"second_arg": "paid"
+		"args": [ "status",  "paid"]
 	}]
 }
 `
@@ -255,8 +246,7 @@ func TestAndReturnsErrorWithOneChildren(t *testing.T) {
 	"type": "AND",
 	"children": [{
 		"type": "EQ",
-		"first_arg": "status",
-		"second_arg": "paid"
+		"args": [ "status",  "paid"]
 	}]
 }
 `
@@ -277,8 +267,7 @@ func TestAndReturnsErrorWithAnInvalidChild(t *testing.T) {
 	"type": "AND",
 	"children": [{
 		"type": "EQ",
-		"first_arg": "status",
-		"second_arg": "paid"
+		"args": [ "status",  "paid"]
 	},
 	{
 		"type": "FOO"
