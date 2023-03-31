@@ -13,8 +13,7 @@ func TestPreAndPostAndLeCalledOnAccept(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LE",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -39,8 +38,7 @@ func TestPreAndPostAndLtCalledOnAccept(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LT",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -66,8 +64,7 @@ func TestPreAndPostAndGeCalledOnAccept(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "GE",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -93,8 +90,7 @@ func TestPreAndPostAndGtCalledOnAccept(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "GT",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -120,8 +116,7 @@ func TestPreAndPostAndEqCalledOnAccept(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "EQ",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -147,8 +142,7 @@ func TestPreAndPostAndLikeCalledOnAccept(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LIKE",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -204,8 +198,7 @@ func TestPreOnAcceptWithError(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LE",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -228,8 +221,7 @@ func TestPreVisitAndLeAndPostVisitCalledOnAcceptWithError(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LE",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -253,8 +245,7 @@ func TestPreAndLeCalledOnAcceptWithError(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LE",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -278,8 +269,7 @@ func TestPreAndLtCalledOnAcceptWithError(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LT",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -304,8 +294,7 @@ func TestPreAndGeCalledOnAcceptWithError(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "GE",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -330,8 +319,7 @@ func TestPreAndGtCalledOnAcceptWithError(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "GT",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -356,8 +344,7 @@ func TestPreAndEqCalledOnAcceptWithError(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "EQ",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -382,8 +369,7 @@ func TestPreAndLikeCalledOnAcceptWithError(t *testing.T) {
 	jsonTxt := `
 {
 	"type": "LIKE",
-	"first_arg": "amount",
-	"second_arg": "5"
+	"args": [ "amount",  "5"]
 }
 `
 
@@ -439,12 +425,10 @@ func TestPreAndPostAndEqAndAndCalledOnAccept(t *testing.T) {
 	"children": [
 	{
 		"type": "EQ",
-		"first_arg": "amount",
-		"second_arg": "5"
+		"args": [ "amount",  "5"]
 	},{
 		"type": "EQ",
-		"first_arg": "amount",
-		"second_arg": "5"
+		"args": [ "amount",  "5"]
 	}]
 }
 `
@@ -476,12 +460,10 @@ func TestPreAndPreVisitAndCalledOnAcceptWithError(t *testing.T) {
 	"children": [
 	{
 		"type": "EQ",
-		"first_arg": "amount",
-		"second_arg": "5"
+		"args": [ "amount",  "5"]
 	},{
 		"type": "EQ",
-		"first_arg": "amount",
-		"second_arg": "5"
+		"args": [ "amount",  "5"]
 	}]
 }
 `
@@ -509,12 +491,10 @@ func TestPreAndPreVisitAndEqCalledOnAcceptWithError(t *testing.T) {
 	"children": [
 	{
 		"type": "EQ",
-		"first_arg": "amount",
-		"second_arg": "5"
+		"args": [ "amount",  "5"]
 	},{
 		"type": "EQ",
-		"first_arg": "amount",
-		"second_arg": "5"
+		"args": [ "amount",  "5"]
 	}]
 }
 `
@@ -543,12 +523,10 @@ func TestPreAndPreVisitAndEqAndPostVisitCalledOnAcceptWithError(t *testing.T) {
 	"children": [
 	{
 		"type": "EQ",
-		"first_arg": "amount",
-		"second_arg": "5"
+		"args": [ "amount",  "5"]
 	},{
 		"type": "EQ",
-		"first_arg": "amount",
-		"second_arg": "5"
+		"args": [ "amount",  "5"]
 	}]
 }
 `

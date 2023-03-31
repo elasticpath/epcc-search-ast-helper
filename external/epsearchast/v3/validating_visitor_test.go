@@ -20,8 +20,7 @@ func TestValidationCatchesInvalidOperatorForBinaryOperatorsForKnownField(t *test
 			jsonTxt := fmt.Sprintf(`
 			{
 				"type": "%s",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`, strings.ToUpper(binOp))
 
@@ -55,8 +54,7 @@ func TestValidationCatchesInvalidOperatorForBinaryOperatorsForUnknownField(t *te
 			jsonTxt := fmt.Sprintf(`
 			{
 				"type": "%s",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`, strings.ToUpper(binOp))
 
@@ -91,8 +89,7 @@ func TestValidationReturnsErrorForBinaryOperators(t *testing.T) {
 			jsonTxt := fmt.Sprintf(`
 			{
 				"type": "%s",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`, strings.ToUpper(binOp))
 
@@ -125,8 +122,7 @@ func TestValidationReturnsErrorForBinaryOperatorsWithAlias(t *testing.T) {
 			jsonTxt := fmt.Sprintf(`
 			{
 				"type": "%s",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`, strings.ToUpper(binOp))
 
@@ -159,8 +155,7 @@ func TestValidationReturnsErrorForBinaryOperatorsValueValidation(t *testing.T) {
 			jsonTxt := fmt.Sprintf(`
 			{
 				"type": "%s",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`, strings.ToUpper(binOp))
 
@@ -391,8 +386,7 @@ func TestValidationReturnsErrorForPostVisitAnd(t *testing.T) {
 		  },
 		  { 
 			"type": "EQ",
-			"first_arg": "status",
-			"second_arg": "paid"
+			"args": [ "status",  "paid"]
 		  }
 		 ]	
 }`
@@ -431,8 +425,7 @@ func TestValidationReturnsErrorForPreVisitAnd(t *testing.T) {
 		  },
 		  { 
 			"type": "EQ",
-			"first_arg": "status",
-			"second_arg": "paid"
+			"args": [ "status",  "paid"]
 		  }
 		 ]	
 }`

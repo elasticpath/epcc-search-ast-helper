@@ -12,8 +12,7 @@ func TestSimpleEqFilterGeneratesCorrectWhereClause(t *testing.T) {
 	jsonTxt := `
 			{
 				"type": "EQ",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`
 
@@ -39,8 +38,7 @@ func TestSimpleLeFilterGeneratesCorrectWhereClause(t *testing.T) {
 	jsonTxt := `
 			{
 				"type": "LE",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`
 
@@ -66,8 +64,7 @@ func TestSimpleLtFilterGeneratesCorrectWhereClause(t *testing.T) {
 	jsonTxt := `
 			{
 				"type": "LT",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`
 
@@ -93,8 +90,7 @@ func TestSimpleGeFilterGeneratesCorrectWhereClause(t *testing.T) {
 	jsonTxt := `
 			{
 				"type": "GE",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`
 
@@ -120,8 +116,7 @@ func TestSimpleGtFilterGeneratesCorrectWhereClause(t *testing.T) {
 	jsonTxt := `
 			{
 				"type": "GT",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`
 
@@ -173,8 +168,7 @@ func TestSimpleLikeFilterGeneratesCorrectWhereClause(t *testing.T) {
 	jsonTxt := `
 			{
 				"type": "LIKE",
-				"first_arg": "amount",
-				"second_arg": "5"
+				"args": [ "amount",  "5"]
 			}
 			`
 
@@ -200,8 +194,7 @@ func TestSimpleLikeFilterWithWildcardAtStartGeneratesCorrectWhereClause(t *testi
 	jsonTxt := `
 			{
 				"type": "LIKE",
-				"first_arg": "amount",
-				"second_arg": "*5"
+				"args": [ "amount",  "*5"]
 			}
 			`
 
@@ -227,8 +220,7 @@ func TestSimpleLikeFilterWithWildcardAtEndGeneratesCorrectWhereClause(t *testing
 	jsonTxt := `
 			{
 				"type": "LIKE",
-				"first_arg": "amount",
-				"second_arg": "5*"
+				"args": [ "amount",  "5*"]
 			}
 			`
 
@@ -254,8 +246,7 @@ func TestSimpleLikeFilterWithWildcardAtBothEndsGeneratesCorrectWhereClause(t *te
 	jsonTxt := `
 			{
 				"type": "LIKE",
-				"first_arg": "amount",
-				"second_arg": "*5*"
+				"args": [ "amount",  "*5*"]
 			}
 			`
 
@@ -281,8 +272,7 @@ func TestSimpleLikeFilterWithWildcardOnlyCorrectWhereClause(t *testing.T) {
 	jsonTxt := `
 			{
 				"type": "LIKE",
-				"first_arg": "amount",
-				"second_arg": "*"
+				"args": [ "amount",  "*"]
 			}
 			`
 
@@ -315,8 +305,7 @@ func TestSimpleAndFilterGeneratesCorrectWhereClause(t *testing.T) {
 					},
 					{
 						"type": "GE",
-						"first_arg": "amount",
-						"second_arg": "5"
+						"args": [ "amount",  "5"]
 					}
 					]
 				}
