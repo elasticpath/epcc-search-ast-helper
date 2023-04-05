@@ -7,11 +7,9 @@ import (
 )
 
 type AstNode struct {
-	NodeType  string    `json:"type"`
-	Children  []AstNode `json:"children"`
-	FirstArg  string    `json:"first_arg"`
-	SecondArg string    `json:"second_arg"`
-	Args      []string  `json:"args"`
+	NodeType string    `json:"type"`
+	Children []AstNode `json:"children"`
+	Args     []string  `json:"args"`
 }
 
 func GetAst(jsonTxt string) (*AstNode, error) {
