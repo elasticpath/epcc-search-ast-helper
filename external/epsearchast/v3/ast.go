@@ -143,16 +143,3 @@ func (a *AstNode) checkValid() error {
 	return nil
 
 }
-
-func ReduceAst[T any](a *AstNode, applyFn func(*AstNode, []*T) (*T, error)) (*T, error) {
-	collector := make([]*T, 0, len(a.Children))
-	for _, n := range a.Children {
-		v, err := ReduceAst(n, applyFn)
-		if err != nil {
-			return nil, err
-		}
-		collector = append(collector, v)
-	}
-
-	return applyFn(a, collector)
-}

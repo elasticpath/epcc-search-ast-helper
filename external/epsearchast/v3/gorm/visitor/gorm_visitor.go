@@ -11,22 +11,11 @@ type SubQuery struct {
 	Args   []interface{}
 }
 
-type SemanticReducer[R any] interface {
-	PostVisitAnd([]*R) (*R, error)
-	VisitIn(args ...string) (*R, error)
-	VisitEq(first, second string) (*R, error)
-	VisitLe(first, second string) (*R, error)
-	VisitLt(first, second string) (*R, error)
-	VisitGe(first, second string) (*R, error)
-	VisitGt(first, second string) (*R, error)
-	VisitLike(first, second string) (*R, error)
-}
+type DefaultGormVisitor struct{}
 
-type genericGormVisitor struct{}
+var _ epsearchast_v3.SemanticReducer[SubQuery] = (*DefaultGormVisitor)(nil)
 
-var _ SemanticReducer[SubQuery] = (*genericGormVisitor)(nil)
-
-func (g genericGormVisitor) PostVisitAnd(sqs []*SubQuery) (*SubQuery, error) {
+func (g DefaultGormVisitor) PostVisitAnd(sqs []*SubQuery) (*SubQuery, error) {
 	clauses := make([]string, 0, len(sqs))
 	args := make([]interface{}, 0)
 	for _, sq := range sqs {
@@ -40,7 +29,7 @@ func (g genericGormVisitor) PostVisitAnd(sqs []*SubQuery) (*SubQuery, error) {
 	}, nil
 }
 
-func (g genericGormVisitor) VisitIn(args ...string) (*SubQuery, error) {
+func (g DefaultGormVisitor) VisitIn(args ...string) (*SubQuery, error) {
 	s := make([]interface{}, len(args)-1)
 	for i, v := range args[1:] {
 		s[i] = v
@@ -52,50 +41,50 @@ func (g genericGormVisitor) VisitIn(args ...string) (*SubQuery, error) {
 	}, nil
 }
 
-func (g genericGormVisitor) VisitEq(first, second string) (*SubQuery, error) {
+func (g DefaultGormVisitor) VisitEq(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s = ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g genericGormVisitor) VisitLe(first, second string) (*SubQuery, error) {
+func (g DefaultGormVisitor) VisitLe(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s <= ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g genericGormVisitor) VisitLt(first, second string) (*SubQuery, error) {
+func (g DefaultGormVisitor) VisitLt(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s < ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g genericGormVisitor) VisitGe(first, second string) (*SubQuery, error) {
+func (g DefaultGormVisitor) VisitGe(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s >= ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g genericGormVisitor) VisitGt(first, second string) (*SubQuery, error) {
+func (g DefaultGormVisitor) VisitGt(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s > ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g genericGormVisitor) VisitLike(first, second string) (*SubQuery, error) {
+func (g DefaultGormVisitor) VisitLike(first, second string) (*SubQuery, error) {
 
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s ILIKE ?", first),
-		Args:   []interface{}{processLikeWildcards(second)},
+		Args:   []interface{}{g.ProcessLikeWildcards(second)},
 	}, nil
 }
 
-func processLikeWildcards(valString string) string {
+func (g DefaultGormVisitor) ProcessLikeWildcards(valString string) string {
 	if valString == "*" {
 		return "%"
 	}
@@ -107,7 +96,7 @@ func processLikeWildcards(valString string) string {
 	if endsWithStar {
 		valString = valString[:len(valString)-1]
 	}
-	valString = escapeWildcards(valString)
+	valString = g.EscapeWildcards(valString)
 	if startsWithStar {
 		valString = "%" + valString
 	}
@@ -117,41 +106,8 @@ func processLikeWildcards(valString string) string {
 	return valString
 }
 
-func escapeWildcards(valString string) string {
+func (g DefaultGormVisitor) EscapeWildcards(valString string) string {
 	valString = strings.ReplaceAll(valString, "%", "\\%")
 	valString = strings.ReplaceAll(valString, "_", "\\_")
 	return valString
-}
-
-//func GormVisitorReducer[R any](a *epsearchast_v3.AstNode, applyFn func(*epsearchast_v3.AstNode, []*R) (*R, error)) {
-//
-//}
-
-func GormVisitorReducer[R any](v *SemanticReducer[R]) func(a *epsearchast_v3.AstNode, c []*R) (*R, error) {
-
-	var foo = *v
-
-	return func(a *epsearchast_v3.AstNode, subQueries []*R) (*R, error) {
-		switch a.NodeType {
-		case "LT":
-			return foo.VisitLt(a.Args[0], a.Args[1])
-		case "LE":
-			return foo.VisitLe(a.Args[0], a.Args[1])
-		case "EQ":
-			return foo.VisitEq(a.Args[0], a.Args[1])
-		case "GE":
-			return foo.VisitGe(a.Args[0], a.Args[1])
-		case "GT":
-			return foo.VisitGt(a.Args[0], a.Args[1])
-		case "LIKE":
-			return foo.VisitLike(a.Args[0], a.Args[1])
-		case "IN":
-			return foo.VisitIn(a.Args...)
-		case "AND":
-			return foo.PostVisitAnd(subQueries)
-		default:
-			return nil, fmt.Errorf("unsupported node type: %s", a.NodeType)
-		}
-	}
-
 }
