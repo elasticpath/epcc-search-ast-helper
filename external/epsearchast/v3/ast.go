@@ -1,3 +1,4 @@
+// Package epsearchast_v3 implements structs and functions for working with the EP-Internal-Search-AST-v3 header.
 package epsearchast_v3
 
 import (
@@ -6,12 +7,14 @@ import (
 	"strings"
 )
 
+// An AstNode presents a particular level in the Abstract Syntax Tree.
 type AstNode struct {
 	NodeType string     `json:"type"`
 	Children []*AstNode `json:"children"`
 	Args     []string   `json:"args"`
 }
 
+// GetAst converts the JSON to an AstNode if possible, returning an error otherwise.
 func GetAst(jsonTxt string) (*AstNode, error) {
 	astNode := &AstNode{}
 
@@ -26,6 +29,11 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 	}
 }
 
+// The AstVisitor interface provides a way of specifying a [Visitor] for visiting an AST.
+//
+// This interface probably isn't very Go-like and you should consider [epsearchast_v3.ReduceAst] instead.
+//
+// [Visitor]: https://en.wikipedia.org/wiki/Visitor_pattern
 type AstVisitor interface {
 	PreVisit() error
 	PostVisit() error
@@ -40,6 +48,7 @@ type AstVisitor interface {
 	VisitLike(astNode *AstNode) (bool, error)
 }
 
+// Accept triggers a visit of the AST.
 func (a *AstNode) Accept(v AstVisitor) error {
 	err := v.PreVisit()
 
