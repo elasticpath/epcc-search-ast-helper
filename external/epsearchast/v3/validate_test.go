@@ -395,7 +395,7 @@ func TestNewConstructorDetectsUnknownAliasTarget(t *testing.T) {
 	// Fixture Setup
 
 	// Execute SUT
-	_, err := NewValidatingVisitor(map[string][]string{"status": {"eq"}}, map[string]string{"total": "amount"}, map[string]string{})
+	err := ValidateAstFieldAndOperatorsWithAliases(nil, map[string][]string{"status": {"eq"}}, map[string]string{"total": "amount"})
 
 	// Verification
 	require.ErrorContains(t, err, fmt.Sprintf("alias from `total` to `amount` points to a field not in the allowed ops"))
@@ -404,7 +404,7 @@ func TestNewConstructorDetectsUnknownAliasTarget(t *testing.T) {
 func TestNewConstructorDetectsUnknownValueValidatorTarget(t *testing.T) {
 	// Fixture Setup
 	// Execute SUT
-	_, err := NewValidatingVisitor(map[string][]string{"status": {"eq"}}, map[string]string{}, map[string]string{"total": "int"})
+	err := ValidateAstFieldAndOperatorsWithValueValidation(nil, map[string][]string{"status": {"eq"}}, map[string]string{"total": "int"})
 
 	// Verification
 	require.ErrorContains(t, err, fmt.Sprintf("validator for field `total` with type `int` points to an unknown field"))
@@ -414,7 +414,7 @@ func TestNewConstructorDetectsAliasedValueValidatorTarget(t *testing.T) {
 	// Fixture Setup
 
 	// Execute SUT
-	_, err := NewValidatingVisitor(map[string][]string{"status": {"eq"}}, map[string]string{"state": "status"}, map[string]string{"state": "int"})
+	err := ValidateAstFieldAndOperatorsWithAliasesAndValueValidation(nil, map[string][]string{"status": {"eq"}}, map[string]string{"state": "status"}, map[string]string{"state": "int"})
 
 	// Verification
 	require.ErrorContains(t, err, fmt.Sprintf("validator for field `state` with type `int` points to an alias of `status` instead of the field"))
