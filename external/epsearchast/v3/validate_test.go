@@ -11,7 +11,7 @@ var binOps = []string{"le", "lt", "eq", "ge", "gt", "like"}
 
 var varOps = []string{"in"}
 
-func TestValidationCatchesInvalidOperatorForBinaryOperatorsForKnownField(t *testing.T) {
+func TestValidationReturnsErrorForBinaryOperatorsWhenAstUsesInvalidOperatorForKnownField(t *testing.T) {
 	for idx, binOp := range binOps {
 		t.Run(fmt.Sprintf("%s", binOp), func(t *testing.T) {
 			// Fixture Setup
@@ -23,16 +23,13 @@ func TestValidationCatchesInvalidOperatorForBinaryOperatorsForKnownField(t *test
 			}
 			`, strings.ToUpper(binOp))
 
-			astNode, err := GetAst(jsonTxt)
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			otherBinOp := binOps[(idx+1)%len(binOps)]
 
-			visitor, err := NewValidatingVisitor(map[string][]string{"amount": {otherBinOp}}, map[string]string{}, map[string]string{})
-			require.NoError(t, err)
-
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperators(ast, map[string][]string{"amount": {otherBinOp}})
 
 			// Verification
 			require.ErrorContains(t, err, fmt.Sprintf("unknown operator [%s] specified in search filter for field [amount], allowed operators are [%s]", binOp, otherBinOp))
@@ -41,7 +38,7 @@ func TestValidationCatchesInvalidOperatorForBinaryOperatorsForKnownField(t *test
 
 }
 
-func TestValidationCatchesInvalidOperatorForBinaryOperatorsForUnknownField(t *testing.T) {
+func TestValidationReturnsErrorForBinaryOperatorsWhenAstUsesUnknownField(t *testing.T) {
 	for idx, binOp := range binOps {
 		t.Run(fmt.Sprintf("%s", binOp), func(t *testing.T) {
 			// Fixture Setup
@@ -53,16 +50,13 @@ func TestValidationCatchesInvalidOperatorForBinaryOperatorsForUnknownField(t *te
 			}
 			`, strings.ToUpper(binOp))
 
-			astNode, err := GetAst(jsonTxt)
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			otherBinOp := binOps[(idx+1)%len(binOps)]
 
-			visitor, err := NewValidatingVisitor(map[string][]string{"other_field": {otherBinOp}}, map[string]string{}, map[string]string{})
-			require.NoError(t, err)
-
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperators(ast, map[string][]string{"other_field": {otherBinOp}})
 
 			// Verification
 			require.ErrorContains(t, err, fmt.Sprintf("unknown field [amount] specified in search filter, allowed fields are [other_field]"))
@@ -84,14 +78,11 @@ func TestValidationReturnsNoErrorForBinaryOperatorsWhenAstSatisfiesConstraints(t
 			}
 			`, strings.ToUpper(binOp))
 
-			astNode, err := GetAst(jsonTxt)
-			require.NoError(t, err)
-
-			visitor, err := NewValidatingVisitor(map[string][]string{"amount": {binOp}}, map[string]string{}, map[string]string{})
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperators(ast, map[string][]string{"amount": {binOp}})
 
 			// Verification
 			require.NoError(t, err)
@@ -112,14 +103,11 @@ func TestValidationReturnsNoErrorForBinaryOperatorWhenAstUsesAliasAndSatisfiesCo
 			}
 			`, strings.ToUpper(binOp))
 
-			astNode, err := GetAst(jsonTxt)
-			require.NoError(t, err)
-
-			visitor, err := NewValidatingVisitor(map[string][]string{"total": {binOp}}, map[string]string{"amount": "total"}, map[string]string{})
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{"total": {binOp}}, map[string]string{"amount": "total"})
 
 			// Verification
 			require.NoError(t, err)
@@ -127,7 +115,7 @@ func TestValidationReturnsNoErrorForBinaryOperatorWhenAstUsesAliasAndSatisfiesCo
 	}
 }
 
-func TestValidationReturnsErrorForBinaryOperatorsValueValidation(t *testing.T) {
+func TestValidationReturnsErrorForBinaryOperatorsFailedValueValidationWhenAstUseAliases(t *testing.T) {
 
 	for _, binOp := range binOps {
 		t.Run(fmt.Sprintf("%s", binOp), func(t *testing.T) {
@@ -136,26 +124,48 @@ func TestValidationReturnsErrorForBinaryOperatorsValueValidation(t *testing.T) {
 			jsonTxt := fmt.Sprintf(`
 			{
 				"type": "%s",
-				"args": [ "pkey",  "5"]
+				"args": [ "years",  "ancient"]
 			}
 			`, strings.ToUpper(binOp))
 
-			astNode, err := GetAst(jsonTxt)
-			require.NoError(t, err)
-
-			visitor, err := NewValidatingVisitor(map[string][]string{"id": {binOp}}, map[string]string{"pkey": "id"}, map[string]string{"id": "uuid"})
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidation(ast, map[string][]string{"age": {binOp}}, map[string]string{"years": "age"}, map[string]string{"age": "number"})
 
 			// Verification
-			require.ErrorContains(t, err, fmt.Sprintf("could not validate [pkey] with [%s]", binOp))
+			require.ErrorContains(t, err, fmt.Sprintf("could not validate [years] with [%s]", binOp))
 		})
 	}
 }
 
-func TestValidationCatchesInvalidOperatorForVariableOperatorsForKnownField(t *testing.T) {
+func TestValidationReturnsNoErrorForBinaryOperatorsWhenAstUseAliasesAndValueValidationAndSatisfiesConstraints(t *testing.T) {
+
+	for _, binOp := range binOps {
+		t.Run(fmt.Sprintf("%s", binOp), func(t *testing.T) {
+			// Fixture Setup
+			// language=JSON
+			jsonTxt := fmt.Sprintf(`
+			{
+				"type": "%s",
+				"args": [ "years",  "70"]
+			}
+			`, strings.ToUpper(binOp))
+
+			ast, err := GetAst(jsonTxt)
+			require.NoError(t, err)
+
+			// Execute SUT
+			err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidation(ast, map[string][]string{"age": {binOp}}, map[string]string{"years": "age"}, map[string]string{"age": "number"})
+
+			// Verification
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestValidationReturnsErrorForVariableOperatorsWhenAstUsesInvalidOperatorForKnownField(t *testing.T) {
 	for idx, varOp := range varOps {
 		t.Run(fmt.Sprintf("%s", varOp), func(t *testing.T) {
 			// Fixture Setup
@@ -167,15 +177,13 @@ func TestValidationCatchesInvalidOperatorForVariableOperatorsForKnownField(t *te
 			}
 			`, strings.ToUpper(varOp))
 
-			astNode, err := GetAst(jsonTxt)
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			otherBinOp := binOps[(idx+1)%len(binOps)]
 
-			visitor, err := NewValidatingVisitor(map[string][]string{"amount": {otherBinOp}}, map[string]string{}, map[string]string{})
-			require.NoError(t, err)
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperators(ast, map[string][]string{"amount": {otherBinOp}})
 
 			// Verification
 			require.ErrorContains(t, err, fmt.Sprintf("unknown operator [%s] specified in search filter for field [amount], allowed operators are [%s]", varOp, otherBinOp))
@@ -184,7 +192,7 @@ func TestValidationCatchesInvalidOperatorForVariableOperatorsForKnownField(t *te
 
 }
 
-func TestValidationCatchesInvalidOperatorForVariableOperatorsForUnknownField(t *testing.T) {
+func TestValidationReturnsErrorForVariableOperatorsWhenAstUsesUnknownField(t *testing.T) {
 	for idx, varOp := range varOps {
 		t.Run(fmt.Sprintf("%s", varOp), func(t *testing.T) {
 			// Fixture Setup
@@ -196,16 +204,13 @@ func TestValidationCatchesInvalidOperatorForVariableOperatorsForUnknownField(t *
 			}
 			`, strings.ToUpper(varOp))
 
-			astNode, err := GetAst(jsonTxt)
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			otherBinOp := binOps[(idx+1)%len(binOps)]
 
-			visitor, err := NewValidatingVisitor(map[string][]string{"other_field": {otherBinOp}}, map[string]string{}, map[string]string{})
-			require.NoError(t, err)
-
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperators(ast, map[string][]string{"other_field": {otherBinOp}})
 
 			// Verification
 			require.ErrorContains(t, err, fmt.Sprintf("unknown field [amount] specified in search filter, allowed fields are [other_field]"))
@@ -227,14 +232,11 @@ func TestValidationReturnsNoErrorForVariableOperatorWhenAstSatisfiesConstraints(
 			}
 			`, strings.ToUpper(varOp))
 
-			astNode, err := GetAst(jsonTxt)
-			require.NoError(t, err)
-
-			visitor, err := NewValidatingVisitor(map[string][]string{"amount": {varOp}}, map[string]string{}, map[string]string{})
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperators(ast, map[string][]string{"amount": {varOp}})
 
 			// Verification
 			require.NoError(t, err)
@@ -255,14 +257,11 @@ func TestValidationReturnsNoErrorForVariableOperatorWhenAstUsesAliasesAndSatisfi
 			}
 			`, strings.ToUpper(varOp))
 
-			astNode, err := GetAst(jsonTxt)
-			require.NoError(t, err)
-
-			visitor, err := NewValidatingVisitor(map[string][]string{"total": {varOp}}, map[string]string{"amount": "total"}, map[string]string{})
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{"total": {varOp}}, map[string]string{"amount": "total"})
 
 			// Verification
 			require.NoError(t, err)
@@ -270,7 +269,7 @@ func TestValidationReturnsNoErrorForVariableOperatorWhenAstUsesAliasesAndSatisfi
 	}
 }
 
-func TestValidationReturnsErrorForVariableOperatorsValueValidation(t *testing.T) {
+func TestValidationReturnsErrorForVariableOperatorsFailedValueValidationWhenAstUseAliases(t *testing.T) {
 
 	for _, varOp := range varOps {
 		t.Run(fmt.Sprintf("%s", varOp), func(t *testing.T) {
@@ -283,14 +282,11 @@ func TestValidationReturnsErrorForVariableOperatorsValueValidation(t *testing.T)
 			}
 			`, strings.ToUpper(varOp))
 
-			astNode, err := GetAst(jsonTxt)
-			require.NoError(t, err)
-
-			visitor, err := NewValidatingVisitor(map[string][]string{"email": {varOp}}, map[string]string{}, map[string]string{"email": "email"})
+			ast, err := GetAst(jsonTxt)
 			require.NoError(t, err)
 
 			// Execute SUT
-			err = astNode.Accept(visitor)
+			err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"email": {varOp}}, map[string]string{"email": "email"})
 
 			// Verification
 			require.ErrorContains(t, err, fmt.Sprintf("could not validate [email] with [%s]", varOp))
@@ -298,93 +294,102 @@ func TestValidationReturnsErrorForVariableOperatorsValueValidation(t *testing.T)
 	}
 }
 
-//func TestValidationReturnsErrorForPostVisit(t *testing.T) {
-//
-//	// Fixture Setup
-//	// language=JSON
-//	jsonTxt := `
-//	{
-//		"type": "IN",
-//		"args": ["amount", "5"]
-//	}`
-//
-//	astNode, err := GetAst(jsonTxt)
-//	require.NoError(t, err)
-//
-//	visitor, err := NewValidatingVisitor(map[string][]string{"amount": {"in"}}, map[string]string{}, map[string]string{})
-//	require.NoError(t, err)
-//
-//	// Execute SUT
-//	err = astNode.Accept(visitor)
-//
-//	// Verification
-//	require.ErrorContains(t, err, fmt.Sprintf("mocked error: PostVisit"))
-//
-//}
-//
-//func TestValidationReturnsErrorForPostVisitAnd(t *testing.T) {
-//
-//	// Fixture Setup
-//	// language=JSON
-//	jsonTxt := `
-//	{
-//		"type": "AND",
-//		"children": [
-//		  {
-//		    "type": "IN",
-//		    "args": ["amount", "5"]
-//		  },
-//		  {
-//			"type": "EQ",
-//			"args": [ "status",  "paid"]
-//		  }
-//		 ]
-//}`
-//	astNode, err := GetAst(jsonTxt)
-//	require.NoError(t, err)
-//
-//	visitor, err := NewValidatingVisitor(map[string][]string{"amount": {"in"}, "status": {"eq"}}, map[string]string{}, map[string]string{})
-//	require.NoError(t, err)
-//
-//	// Execute SUT
-//	err = astNode.Accept(visitor)
-//
-//	// Verification
-//	require.ErrorContains(t, err, fmt.Sprintf("mocked error: PostVisitAnd"))
-//
-//}
-//
-//func TestValidationReturnsErrorForPreVisitAnd(t *testing.T) {
-//
-//	// Fixture Setup
-//	// language=JSON
-//	jsonTxt := `
-//	{
-//		"type": "AND",
-//		"children": [
-//		  {
-//		    "type": "IN",
-//		    "args": ["amount", "5"]
-//		  },
-//		  {
-//			"type": "EQ",
-//			"args": [ "status",  "paid"]
-//		  }
-//		 ]
-//}`
-//	astNode, err := GetAst(jsonTxt)
-//	require.NoError(t, err)
-//
-//	visitor, err := NewValidatingVisitor(map[string][]string{"amount": {"in"}, "status": {"eq"}}, map[string]string{}, map[string]string{})
-//	require.NoError(t, err)
-//
-//	// Execute SUT
-//	err = astNode.Accept(visitor)
-//
-//	// Verification
-//	require.ErrorContains(t, err, fmt.Sprintf("mocked error: PreVisitAnd"))
-//
-//}
+func TestValidationReturnsNoErrorForVariableOperatorsWhenAstUseAliasesAndValueValidationAndSatisfiesConstraints(t *testing.T) {
+
+	for _, varOp := range varOps {
+		t.Run(fmt.Sprintf("%s", varOp), func(t *testing.T) {
+			// Fixture Setup
+			// language=JSON
+			jsonTxt := fmt.Sprintf(`
+			{
+				"type": "%s",
+				"args": [ "order_status",  "complete", "cancelled"]
+			}
+			`, strings.ToUpper(varOp))
+
+			ast, err := GetAst(jsonTxt)
+			require.NoError(t, err)
+
+			// Execute SUT
+			err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidation(ast, map[string][]string{"status": {varOp}}, map[string]string{"order_status": "status"}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
+
+			// Verification
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestSmokeTestAndWithBinaryAndVariableReturnsErrorWhenBothAreInvalid(t *testing.T) {
+	for _, varOp := range varOps {
+		for _, binOp := range binOps {
+
+			t.Run(fmt.Sprintf("%s/%s", varOp, binOp), func(t *testing.T) {
+				// Fixture Setup
+				// language=JSON
+				jsonTxt := fmt.Sprintf(`
+			{ 
+				"type": "AND",
+				"children": [
+					{
+					"type": "%s",
+					"args": [ "status",  "complete", "cancelled"]
+					},
+					{
+					"type": "%s",
+					"args": [ "some_field",  "hello"]
+					}
+				]
+}`, strings.ToUpper(varOp), strings.ToUpper(binOp))
+
+				ast, err := GetAst(jsonTxt)
+				require.NoError(t, err)
+
+				// Execute SUT
+				err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"status": {varOp}, "other_field": {binOp}}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
+
+				// Verification
+				require.ErrorContains(t, err, fmt.Sprint("unknown field [some_field] specified in search filter"))
+			})
+
+		}
+	}
+}
+
+func TestSmokeTestAndWithBinaryAndVariableReturnsNoErrorWhenBothValid(t *testing.T) {
+	for _, varOp := range varOps {
+		for _, binOp := range binOps {
+
+			t.Run(fmt.Sprintf("%s/%s", varOp, binOp), func(t *testing.T) {
+				// Fixture Setup
+				// language=JSON
+				jsonTxt := fmt.Sprintf(`
+			{ 
+				"type": "AND",
+				"children": [
+					{
+					"type": "%s",
+					"args": [ "status",  "complete", "cancelled"]
+					},
+					{
+					"type": "%s",
+					"args": [ "some_field",  "hello"]
+					}
+				]
+}`, strings.ToUpper(varOp), strings.ToUpper(binOp))
+
+				ast, err := GetAst(jsonTxt)
+				require.NoError(t, err)
+
+				// Execute SUT
+				err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"status": {varOp}, "some_field": {binOp}}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
+
+				// Verification
+				require.NoError(t, err)
+			})
+
+		}
+	}
+}
 
 func TestNewConstructorDetectsUnknownAliasTarget(t *testing.T) {
 	// Fixture Setup
