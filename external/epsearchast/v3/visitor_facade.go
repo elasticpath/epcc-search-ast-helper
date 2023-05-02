@@ -34,8 +34,8 @@ func (s *SearchFilterVisitorAdaptor) PreVisitAnd(_ *AstNode) (bool, error) {
 	return true, s.Sfv.PreVisitAnd()
 }
 
-func (s *SearchFilterVisitorAdaptor) PostVisitAnd(_ *AstNode) (bool, error) {
-	return true, s.Sfv.PostVisitAnd()
+func (s *SearchFilterVisitorAdaptor) PostVisitAnd(_ *AstNode) error {
+	return s.Sfv.PostVisitAnd()
 }
 
 func (s *SearchFilterVisitorAdaptor) VisitIn(astNode *AstNode) (bool, error) {

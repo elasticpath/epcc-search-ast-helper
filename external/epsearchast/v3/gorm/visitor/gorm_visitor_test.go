@@ -32,7 +32,7 @@ func TestSimpleRecursiveStructure(t *testing.T) {
 	err = json.Unmarshal([]byte(jsonTxt), astNode)
 	require.NoError(t, err)
 
-	var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormVisitor{}
+	var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
 
 	// Execute SUT
 	query, err := epsearchast_v3.SemanticReduceAst(astNode, &sr)
@@ -79,11 +79,10 @@ func TestSimpleRecursiveWithOverrideStructure(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "status IN ? AND LOWER(email::text) = LOWER(?)", query.Clause)
-	//require.Equal(t, []interface{}{[]interface{}{"new", "paid"}, "5"}, query.Args)
 }
 
 type LowerCaseEmail struct {
-	DefaultGormVisitor
+	DefaultGormQueryBuilder
 }
 
 func (l *LowerCaseEmail) VisitEq(first, second string) (*SubQuery, error) {
@@ -93,6 +92,6 @@ func (l *LowerCaseEmail) VisitEq(first, second string) (*SubQuery, error) {
 			Args:   []interface{}{second},
 		}, nil
 	} else {
-		return DefaultGormVisitor.VisitEq(l.DefaultGormVisitor, first, second)
+		return DefaultGormQueryBuilder.VisitEq(l.DefaultGormQueryBuilder, first, second)
 	}
 }

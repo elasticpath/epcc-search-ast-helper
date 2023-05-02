@@ -31,14 +31,15 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 
 // The AstVisitor interface provides a way of specifying a [Visitor] for visiting an AST.
 //
-// This interface probably isn't very Go-like and you should consider [epsearchast_v3.ReduceAst] instead.
+// This interface is clunky to use for conversions or when you need to return state, and you should use [epsearchast_v3.ReduceAst] instead.
+// In particular because the return values are restricted to error, you need to manage and combine the state yourself, which can be more annoying than necessary.
 //
 // [Visitor]: https://en.wikipedia.org/wiki/Visitor_pattern
 type AstVisitor interface {
 	PreVisit() error
 	PostVisit() error
 	PreVisitAnd(astNode *AstNode) (bool, error)
-	PostVisitAnd(astNode *AstNode) (bool, error)
+	PostVisitAnd(astNode *AstNode) error
 	VisitIn(astNode *AstNode) (bool, error)
 	VisitEq(astNode *AstNode) (bool, error)
 	VisitLe(astNode *AstNode) (bool, error)
@@ -106,7 +107,7 @@ func (a *AstNode) accept(v AstVisitor) error {
 
 	switch a.NodeType {
 	case "AND":
-		descend, err = v.PostVisitAnd(a)
+		err = v.PostVisitAnd(a)
 
 		if err != nil {
 			return err

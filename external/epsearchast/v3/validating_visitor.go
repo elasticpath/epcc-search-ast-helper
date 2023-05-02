@@ -10,7 +10,6 @@ import (
 type validatingVisitor struct {
 	AllowedOperators map[string][]string
 	ColumnAliases    map[string]string
-	Visitor          AstVisitor
 	ValueValidators  map[string]string
 }
 
@@ -23,7 +22,8 @@ func init() {
 
 var _ AstVisitor = (*validatingVisitor)(nil)
 
-func NewValidatingVisitor(visitor AstVisitor, allowedOps map[string][]string, aliases map[string]string, valueValidators map[string]string) (AstVisitor, error) {
+// Returns a new validatingVisitor though you should use the helper functions (e.g., [ValidateAstFieldAndOperators]) instead of this method
+func NewValidatingVisitor(allowedOps map[string][]string, aliases map[string]string, valueValidators map[string]string) (AstVisitor, error) {
 
 	for k, v := range aliases {
 		if _, ok := allowedOps[v]; !ok {
@@ -44,7 +44,6 @@ func NewValidatingVisitor(visitor AstVisitor, allowedOps map[string][]string, al
 	}
 
 	return &validatingVisitor{
-		Visitor:          visitor,
 		AllowedOperators: allowedOps,
 		ColumnAliases:    aliases,
 		ValueValidators:  valueValidators,
@@ -52,89 +51,89 @@ func NewValidatingVisitor(visitor AstVisitor, allowedOps map[string][]string, al
 }
 
 func (v *validatingVisitor) PreVisit() error {
-	return v.Visitor.PreVisit()
+	return nil
 }
 
 func (v *validatingVisitor) PostVisit() error {
-	return v.Visitor.PostVisit()
+	return nil
 }
 
 func (v *validatingVisitor) PreVisitAnd(astNode *AstNode) (bool, error) {
-	return v.Visitor.PreVisitAnd(astNode)
+	return true, nil
 }
 
-func (v *validatingVisitor) PostVisitAnd(astNode *AstNode) (bool, error) {
-	return v.Visitor.PostVisitAnd(astNode)
+func (v *validatingVisitor) PostVisitAnd(astNode *AstNode) error {
+	return nil
 }
 
 func (v *validatingVisitor) VisitIn(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("in", fieldName, astNode.Args[1:]...); err != nil {
+	if err := v.validateFieldAndValue("in", fieldName, astNode.Args[1:]...); err != nil {
 		return false, err
 	}
 
-	return v.Visitor.VisitIn(astNode)
+	return false, nil
 }
 
 func (v *validatingVisitor) VisitEq(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("eq", fieldName, astNode.Args[1]); err != nil {
+	if err := v.validateFieldAndValue("eq", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
-	return v.Visitor.VisitEq(astNode)
+	return false, nil
 }
 
 func (v *validatingVisitor) VisitLe(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("le", fieldName, astNode.Args[1]); err != nil {
+	if err := v.validateFieldAndValue("le", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
-	return v.Visitor.VisitLe(astNode)
+	return false, nil
 }
 
 func (v *validatingVisitor) VisitLt(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("lt", fieldName, astNode.Args[1]); err != nil {
+	if err := v.validateFieldAndValue("lt", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
-	return v.Visitor.VisitLt(astNode)
+	return false, nil
 }
 
 func (v *validatingVisitor) VisitGe(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("ge", fieldName, astNode.Args[1]); err != nil {
+	if err := v.validateFieldAndValue("ge", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
-	return v.Visitor.VisitGe(astNode)
+	return false, nil
 }
 
 func (v *validatingVisitor) VisitGt(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("gt", fieldName, astNode.Args[1]); err != nil {
+	if err := v.validateFieldAndValue("gt", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
-	return v.Visitor.VisitGt(astNode)
+	return false, nil
 }
 
 func (v *validatingVisitor) VisitLike(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 
-	if _, err := v.validateFieldAndValue("like", fieldName, astNode.Args[1]); err != nil {
+	if err := v.validateFieldAndValue("like", fieldName, astNode.Args[1]); err != nil {
 		return false, err
 	}
 
-	return v.Visitor.VisitLike(astNode)
+	return false, nil
 }
 
 func (v *validatingVisitor) isOperatorValidForField(operator, requestField string) (bool, error) {
@@ -157,10 +156,10 @@ func (v *validatingVisitor) isOperatorValidForField(operator, requestField strin
 	return false, fmt.Errorf("unknown operator [%s] specified in search filter for field [%s], allowed operators are %v", strings.ToLower(operator), requestField, v.AllowedOperators[canonicalField])
 }
 
-func (v *validatingVisitor) validateFieldAndValue(operator, requestField string, values ...string) (bool, error) {
+func (v *validatingVisitor) validateFieldAndValue(operator, requestField string, values ...string) error {
 
 	if _, err := v.isOperatorValidForField(operator, requestField); err != nil {
-		return false, err
+		return err
 	}
 
 	canonicalField := requestField
@@ -177,15 +176,15 @@ func (v *validatingVisitor) validateFieldAndValue(operator, requestField string,
 				if verrors, ok := err.(validator.ValidationErrors); ok {
 					if len(verrors) > 0 {
 						verror := verrors[0]
-						return false, fmt.Errorf("could not validate [%s] with [%s], value [%s] does not satisify requirement [%s]", requestField, operator, verror.Value(), verror.Tag())
+						return fmt.Errorf("could not validate [%s] with [%s], value [%s] does not satisify requirement [%s]", requestField, operator, verror.Value(), verror.Tag())
 					}
 				}
 
-				return false, fmt.Errorf("could not validate [%s] with [%s] validation error: %w", requestField, value, err)
+				return fmt.Errorf("could not validate [%s] with [%s] validation error: %w", requestField, value, err)
 			}
 
 		}
 	}
 
-	return true, nil
+	return nil
 }

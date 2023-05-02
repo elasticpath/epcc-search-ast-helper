@@ -11,11 +11,11 @@ type SubQuery struct {
 	Args   []interface{}
 }
 
-type DefaultGormVisitor struct{}
+type DefaultGormQueryBuilder struct{}
 
-var _ epsearchast_v3.SemanticReducer[SubQuery] = (*DefaultGormVisitor)(nil)
+var _ epsearchast_v3.SemanticReducer[SubQuery] = (*DefaultGormQueryBuilder)(nil)
 
-func (g DefaultGormVisitor) PostVisitAnd(sqs []*SubQuery) (*SubQuery, error) {
+func (g DefaultGormQueryBuilder) PostVisitAnd(sqs []*SubQuery) (*SubQuery, error) {
 	clauses := make([]string, 0, len(sqs))
 	args := make([]interface{}, 0)
 	for _, sq := range sqs {
@@ -29,7 +29,7 @@ func (g DefaultGormVisitor) PostVisitAnd(sqs []*SubQuery) (*SubQuery, error) {
 	}, nil
 }
 
-func (g DefaultGormVisitor) VisitIn(args ...string) (*SubQuery, error) {
+func (g DefaultGormQueryBuilder) VisitIn(args ...string) (*SubQuery, error) {
 	s := make([]interface{}, len(args)-1)
 	for i, v := range args[1:] {
 		s[i] = v
@@ -41,42 +41,42 @@ func (g DefaultGormVisitor) VisitIn(args ...string) (*SubQuery, error) {
 	}, nil
 }
 
-func (g DefaultGormVisitor) VisitEq(first, second string) (*SubQuery, error) {
+func (g DefaultGormQueryBuilder) VisitEq(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s = ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g DefaultGormVisitor) VisitLe(first, second string) (*SubQuery, error) {
+func (g DefaultGormQueryBuilder) VisitLe(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s <= ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g DefaultGormVisitor) VisitLt(first, second string) (*SubQuery, error) {
+func (g DefaultGormQueryBuilder) VisitLt(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s < ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g DefaultGormVisitor) VisitGe(first, second string) (*SubQuery, error) {
+func (g DefaultGormQueryBuilder) VisitGe(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s >= ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g DefaultGormVisitor) VisitGt(first, second string) (*SubQuery, error) {
+func (g DefaultGormQueryBuilder) VisitGt(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s > ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
 
-func (g DefaultGormVisitor) VisitLike(first, second string) (*SubQuery, error) {
+func (g DefaultGormQueryBuilder) VisitLike(first, second string) (*SubQuery, error) {
 
 	return &SubQuery{
 		Clause: fmt.Sprintf("%s ILIKE ?", first),
@@ -84,7 +84,7 @@ func (g DefaultGormVisitor) VisitLike(first, second string) (*SubQuery, error) {
 	}, nil
 }
 
-func (g DefaultGormVisitor) ProcessLikeWildcards(valString string) string {
+func (g DefaultGormQueryBuilder) ProcessLikeWildcards(valString string) string {
 	if valString == "*" {
 		return "%"
 	}
@@ -106,7 +106,7 @@ func (g DefaultGormVisitor) ProcessLikeWildcards(valString string) string {
 	return valString
 }
 
-func (g DefaultGormVisitor) EscapeWildcards(valString string) string {
+func (g DefaultGormQueryBuilder) EscapeWildcards(valString string) string {
 	valString = strings.ReplaceAll(valString, "%", "\\%")
 	valString = strings.ReplaceAll(valString, "_", "\\_")
 	return valString
