@@ -1,4 +1,4 @@
-package v3_gorm_visitor
+package v3_gorm
 
 import (
 	"fmt"
@@ -7,8 +7,10 @@ import (
 )
 
 type SubQuery struct {
+	// The clause that can be passed to Where
 	Clause string
-	Args   []interface{}
+	// An array that should be passed in using the ... operator to Where
+	Args []interface{}
 }
 
 type DefaultGormQueryBuilder struct{}
@@ -20,11 +22,11 @@ func (g DefaultGormQueryBuilder) PostVisitAnd(sqs []*SubQuery) (*SubQuery, error
 	args := make([]interface{}, 0)
 	for _, sq := range sqs {
 		clauses = append(clauses, sq.Clause)
-		args = append(args, sq.Args)
+		args = append(args, sq.Args...)
 	}
 
 	return &SubQuery{
-		Clause: strings.Join(clauses, " AND "),
+		Clause: "( " + strings.Join(clauses, " AND ") + " )",
 		Args:   args,
 	}, nil
 }
@@ -43,7 +45,7 @@ func (g DefaultGormQueryBuilder) VisitIn(args ...string) (*SubQuery, error) {
 
 func (g DefaultGormQueryBuilder) VisitEq(first, second string) (*SubQuery, error) {
 	return &SubQuery{
-		Clause: fmt.Sprintf("%s = ?", first),
+		Clause: fmt.Sprintf("%s == ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }
@@ -77,9 +79,8 @@ func (g DefaultGormQueryBuilder) VisitGt(first, second string) (*SubQuery, error
 }
 
 func (g DefaultGormQueryBuilder) VisitLike(first, second string) (*SubQuery, error) {
-
 	return &SubQuery{
-		Clause: fmt.Sprintf("%s ILIKE ?", first),
+		Clause: fmt.Sprintf("%s LIKE ?", first),
 		Args:   []interface{}{g.ProcessLikeWildcards(second)},
 	}, nil
 }
