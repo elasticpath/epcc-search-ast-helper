@@ -45,7 +45,7 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectWhereClause(t *testing.T) {
 			var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
 
 			// Execute SUT
-			query, err := epsearchast_v3.SemanticReduceAst(astNode, &sr)
+			query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
 
 			// Verification
 
@@ -77,7 +77,7 @@ func TestSimpleVariableOperatorFiltersGeneratesCorrectWhereClause(t *testing.T) 
 			var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
 
 			// Execute SUT
-			query, err := epsearchast_v3.SemanticReduceAst(astNode, &sr)
+			query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
 
 			// Verification
 
@@ -108,7 +108,7 @@ func TestLikeFilterWildCards(t *testing.T) {
 			var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
 
 			// Execute SUT
-			query, err := epsearchast_v3.SemanticReduceAst(astNode, &sr)
+			query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
 
 			// Verification
 
@@ -152,7 +152,7 @@ func TestSimpleRecursiveStructure(t *testing.T) {
 	var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, &sr)
+	query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
 
 	// Verification
 
@@ -189,7 +189,7 @@ func TestSimpleRecursiveWithOverrideStructure(t *testing.T) {
 	var sr epsearchast_v3.SemanticReducer[SubQuery] = &LowerCaseEmail{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, &sr)
+	query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
 
 	// Verification
 

@@ -18,28 +18,25 @@ type SemanticReducer[R any] interface {
 }
 
 // SemanticReduceAst adapts an epsearchast_v3.SemanticReducer for use with the epsearchast_v3.ReduceAst function.
-func SemanticReduceAst[T any](a *AstNode, v *SemanticReducer[T]) (*T, error) {
-
-	// Why do I need this
-	var foo = *v
+func SemanticReduceAst[T any](a *AstNode, v SemanticReducer[T]) (*T, error) {
 	f := func(a *AstNode, t []*T) (*T, error) {
 		switch a.NodeType {
 		case "LT":
-			return foo.VisitLt(a.Args[0], a.Args[1])
+			return v.VisitLt(a.Args[0], a.Args[1])
 		case "LE":
-			return foo.VisitLe(a.Args[0], a.Args[1])
+			return v.VisitLe(a.Args[0], a.Args[1])
 		case "EQ":
-			return foo.VisitEq(a.Args[0], a.Args[1])
+			return v.VisitEq(a.Args[0], a.Args[1])
 		case "GE":
-			return foo.VisitGe(a.Args[0], a.Args[1])
+			return v.VisitGe(a.Args[0], a.Args[1])
 		case "GT":
-			return foo.VisitGt(a.Args[0], a.Args[1])
+			return v.VisitGt(a.Args[0], a.Args[1])
 		case "LIKE":
-			return foo.VisitLike(a.Args[0], a.Args[1])
+			return v.VisitLike(a.Args[0], a.Args[1])
 		case "IN":
-			return foo.VisitIn(a.Args...)
+			return v.VisitIn(a.Args...)
 		case "AND":
-			return foo.PostVisitAnd(t)
+			return v.PostVisitAnd(t)
 		default:
 			return nil, fmt.Errorf("unsupported node type: %s", a.NodeType)
 		}
