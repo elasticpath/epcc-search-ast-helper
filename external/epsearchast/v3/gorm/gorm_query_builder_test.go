@@ -1,4 +1,4 @@
-package v3_gorm
+package epsearchast_v3_gorm
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 var binOps = []testOp{
 	{"LE", "<="},
 	{"LT", "<"},
-	{"EQ", "=="},
+	{"EQ", "="},
 	{"GT", ">"},
 	{"GE", ">="},
 	{"LIKE", "LIKE"},

@@ -1,4 +1,4 @@
-package v3_gorm
+package epsearchast_v3_gorm
 
 import (
 	"fmt"
@@ -45,7 +45,7 @@ func (g DefaultGormQueryBuilder) VisitIn(args ...string) (*SubQuery, error) {
 
 func (g DefaultGormQueryBuilder) VisitEq(first, second string) (*SubQuery, error) {
 	return &SubQuery{
-		Clause: fmt.Sprintf("%s == ?", first),
+		Clause: fmt.Sprintf("%s = ?", first),
 		Args:   []interface{}{second},
 	}, nil
 }

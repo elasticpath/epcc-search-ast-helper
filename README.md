@@ -2,10 +2,55 @@
 
 ## Introduction
 
-This project is designed to help consume the `EP-Internal-Search-Ast-v*` headers
+This project is designed to help consume the `EP-Internal-Search-Ast-v*` headers. In particular, it provides functions for converting for processing these headers in a variety of use cases.
 
 
+### Retrieving an AST
+The `GetAst` function will convert the JSON header into a struct that can be then be processed in various ways
 
+```go
+package example
+
+import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+
+func Example(headerValue string) (*epsearchast_v3.AstNode, error) {
+	
+	ast, err := epsearchast_v3.GetAst(headerValue)
+	
+	if err != nil { 
+		return nil, err
+    } else { 
+		return ast, nil
+    }
+	
+}
+
+```
+
+
+### Aliases
+
+This package provides a way to support aliases for fields, this will allow a user to specify multiple different names for a field, and still have it validated and converted properly.
+
+```go
+package example
+
+import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+
+func Example(ast *epsearchast_v3.AstNode) error {
+	
+	//The ast from the user will be converted into a new one, and if the user specified a payment_status field, the new ast will have it recorded as status. 
+	aliasedAst, err := ApplyAliases(ast, map[string]string{"payment_status": "status"})
+
+	if err != nil { 
+		return err
+    }
+	
+	DoSomethingElse(aliasedAst)
+	
+	return err
+}
+```
 
 ### Validation
 
@@ -63,3 +108,107 @@ func Example(ast *epsearchast_v3.AstNode) error {
 #### Limitations
 
 At present, you can only use string validators when validating a field, a simple pull request can be created to fix this issue if you need it.
+
+
+### Generating Queries
+
+#### GORM/SQL
+
+The following examples shows how to generate a Gorm query with this library.
+
+```go
+package example
+
+import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import epsearchast_v3_gorm "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
+import "gorm.io/gorm"
+
+func Example(ast *epsearchast_v3.AstNode, query *gorm.DB) error {
+	var err error
+	
+	// Not Shown: Validation
+	
+	// Create query builder
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_gorm.SubQuery] = epsearchast_v3_gorm.DefaultGormQueryBuilder{}
+
+	
+	sq, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+
+	if err != nil {
+		return err
+	}
+	
+	// Don't forget to expand the Args argument with ...
+	query.Where(sq.Clause, sq.Args...)
+}
+```
+
+
+##### Limitations
+
+1. The GORM builder does not support aliases (easy MR to fix).
+2. The GORM builder does not support joins (fixable in theory).
+3. There is no way currently to specify the type of a field for SQL, which means everything gets written as a string today (fixable with MR).
+
+##### Advanced Customization
+
+In some cases you may want to change the behaviour of the generated SQL, the following example shows how to do that
+in this case, we want all eq queries for emails to use the lower case, comparison, and for cart_items field to be numeric.
+
+```go
+package example
+
+import (
+	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"strconv"
+)
+import epsearchast_v3_gorm "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
+import "gorm.io/gorm"
+
+type CustomQueryBuilder struct {
+	epsearchast_v3_gorm.DefaultGormQueryBuilder
+}
+
+func (l *CustomQueryBuilder) VisitEq(first, second string) (*epsearchast_v3_gorm.SubQuery, error) {
+	if first == "email" {
+		return &epsearchast_v3_gorm.SubQuery{
+			Clause: fmt.Sprintf("LOWER(%s::text) = LOWER(?)", first),
+			Args:   []interface{}{second},
+		}, nil
+	} else if first == "cart_items" {
+		return &epsearchast_v3_gorm.SubQuery{
+			Clause: fmt.Sprintf("%s = ?", first),
+			Args:   []interface{}{strconv.Atoi(second)},
+		}, nil
+	} else {
+		return DefaultGormQueryBuilder.VisitEq(l.DefaultGormQueryBuilder, first, second)
+	}
+}
+
+func Example(ast *epsearchast_v3.AstNode, query *gorm.DB) error {
+	var err error
+
+	// Not Shown: Validation
+
+	// Create query builder
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_gorm.SubQuery] = &CustomQueryBuilder{}
+
+	sq, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+
+	if err != nil {
+		return err
+	}
+
+	// Don't forget to expand the Args argument with ...
+	query.Where(sq.Clause, sq.Args...)
+}
+```
+
+
+### FAQ
+
+#### Design
+
+##### Why does validation include alias resolution, why not process aliases first?
+
+When validation errors occur, those errors go back to the user, so telling the user the error that occurred using the term they specified improves usability.
