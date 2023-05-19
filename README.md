@@ -2,11 +2,11 @@
 
 ## Introduction
 
-This project is designed to help consume the `EP-Internal-Search-Ast-v*` headers. In particular, it provides functions for converting for processing these headers in a variety of use cases.
+This project is designed to help consume the `EP-Internal-Search-Ast-v*` headers. In particular, it provides functions for processing these headers in a variety of use cases.
 
 
 ### Retrieving an AST
-The `GetAst` function will convert the JSON header into a struct that can be then be processed in various ways
+The `GetAst()` function will convert the JSON header into a struct that can be then be processed by other functions:
 
 ```go
 package example
@@ -30,7 +30,7 @@ func Example(headerValue string) (*epsearchast_v3.AstNode, error) {
 
 ### Aliases
 
-This package provides a way to support aliases for fields, this will allow a user to specify multiple different names for a field, and still have it validated and converted properly.
+This package provides a way to support aliases for fields, this will allow a user to specify multiple different names for a field, and still have it validated and converted properly:
 
 ```go
 package example
@@ -54,7 +54,7 @@ func Example(ast *epsearchast_v3.AstNode) error {
 
 ### Validation
 
-This package provides a concise way to validate that the operators and specified in the header are permitted:
+This package provides a concise way to validate that the operators and fields specified in the header are permitted:
 
 ```go
 package example
@@ -165,25 +165,6 @@ import (
 import epsearchast_v3_gorm "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
 import "gorm.io/gorm"
 
-type CustomQueryBuilder struct {
-	epsearchast_v3_gorm.DefaultGormQueryBuilder
-}
-
-func (l *CustomQueryBuilder) VisitEq(first, second string) (*epsearchast_v3_gorm.SubQuery, error) {
-	if first == "email" {
-		return &epsearchast_v3_gorm.SubQuery{
-			Clause: fmt.Sprintf("LOWER(%s::text) = LOWER(?)", first),
-			Args:   []interface{}{second},
-		}, nil
-	} else if first == "cart_items" {
-		return &epsearchast_v3_gorm.SubQuery{
-			Clause: fmt.Sprintf("%s = ?", first),
-			Args:   []interface{}{strconv.Atoi(second)},
-		}, nil
-	} else {
-		return DefaultGormQueryBuilder.VisitEq(l.DefaultGormQueryBuilder, first, second)
-	}
-}
 
 func Example(ast *epsearchast_v3.AstNode, query *gorm.DB) error {
 	var err error
@@ -201,6 +182,30 @@ func Example(ast *epsearchast_v3.AstNode, query *gorm.DB) error {
 
 	// Don't forget to expand the Args argument with ...
 	query.Where(sq.Clause, sq.Args...)
+}
+
+type CustomQueryBuilder struct {
+	epsearchast_v3_gorm.DefaultGormQueryBuilder
+}
+
+func (l *CustomQueryBuilder) VisitEq(first, second string) (*epsearchast_v3_gorm.SubQuery, error) {
+	if first == "email" {
+		return &epsearchast_v3_gorm.SubQuery{
+			Clause: fmt.Sprintf("LOWER(%s::text) = LOWER(?)", first),
+			Args:   []interface{}{second},
+		}, nil
+	} else if first == "cart_items" {
+		n, err := strconv.Atoi(second)
+		if err != nil {
+			return nil, err
+		}
+		return &epsearchast_v3_gorm.SubQuery{
+			Clause: fmt.Sprintf("%s = ?", first),
+			Args:   []interface{}{n},
+		}, nil
+	} else {
+		return DefaultGormQueryBuilder.VisitEq(l.DefaultGormQueryBuilder, first, second)
+	}
 }
 ```
 

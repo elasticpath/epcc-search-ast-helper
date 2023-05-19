@@ -5,6 +5,7 @@ import (
 	"fmt"
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"github.com/stretchr/testify/require"
+	"strconv"
 	"testing"
 )
 
@@ -162,7 +163,7 @@ func TestSimpleRecursiveStructure(t *testing.T) {
 	require.Equal(t, []interface{}{[]interface{}{"new", "paid"}, "5"}, query.Args)
 }
 
-func TestSimpleRecursiveWithOverrideStructure(t *testing.T) {
+func TestSimpleRecursiveWithStringOverrideStruct(t *testing.T) {
 	//Fixture Setup
 	//language=JSON
 	jsonTxt := `
@@ -198,6 +199,43 @@ func TestSimpleRecursiveWithOverrideStructure(t *testing.T) {
 	require.Equal(t, "( status IN ? AND LOWER(email::text) = LOWER(?) )", query.Clause)
 }
 
+func TestSimpleRecursiveWithIntFieldStruct(t *testing.T) {
+	//Fixture Setup
+	//language=JSON
+	jsonTxt := `
+				{
+					"type":  "AND",
+					"children": [
+					{
+						"type": "IN",
+						"args": ["status", "new", "paid"]
+					},
+					{
+						"type": "EQ",
+						"args": [ "amount",  "5"]
+					}
+					]
+				}
+				`
+
+	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+
+	err = json.Unmarshal([]byte(jsonTxt), astNode)
+	require.NoError(t, err)
+
+	var sr epsearchast_v3.SemanticReducer[SubQuery] = &IntFieldQueryBuilder{}
+
+	// Execute SUT
+	query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
+
+	// Verification
+
+	require.NoError(t, err)
+
+	require.Equal(t, "( status IN ? AND amount = ? )", query.Clause)
+	require.Equal(t, []interface{}{[]interface{}{"new", "paid"}, 5}, query.Args)
+}
+
 type LowerCaseEmail struct {
 	DefaultGormQueryBuilder
 }
@@ -210,5 +248,24 @@ func (l *LowerCaseEmail) VisitEq(first, second string) (*SubQuery, error) {
 		}, nil
 	} else {
 		return DefaultGormQueryBuilder.VisitEq(l.DefaultGormQueryBuilder, first, second)
+	}
+}
+
+type IntFieldQueryBuilder struct {
+	DefaultGormQueryBuilder
+}
+
+func (i *IntFieldQueryBuilder) VisitEq(first, second string) (*SubQuery, error) {
+	if first == "amount" {
+		n, err := strconv.Atoi(second)
+		if err != nil {
+			return nil, err
+		}
+		return &SubQuery{
+			Clause: fmt.Sprintf("%s = ?", first),
+			Args:   []interface{}{n},
+		}, nil
+	} else {
+		return DefaultGormQueryBuilder.VisitEq(i.DefaultGormQueryBuilder, first, second)
 	}
 }
