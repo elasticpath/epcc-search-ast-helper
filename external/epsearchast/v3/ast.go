@@ -1,3 +1,4 @@
+// Package epsearchast_v3 implements structs and functions for working with the EP-Internal-Search-AST-v3 header.
 package epsearchast_v3
 
 import (
@@ -6,12 +7,14 @@ import (
 	"strings"
 )
 
+// An AstNode presents a particular level in the Abstract Syntax Tree.
 type AstNode struct {
-	NodeType string    `json:"type"`
-	Children []AstNode `json:"children"`
-	Args     []string  `json:"args"`
+	NodeType string     `json:"type"`
+	Children []*AstNode `json:"children"`
+	Args     []string   `json:"args"`
 }
 
+// GetAst converts the JSON to an AstNode if possible, returning an error otherwise.
 func GetAst(jsonTxt string) (*AstNode, error) {
 	astNode := &AstNode{}
 
@@ -26,11 +29,17 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 	}
 }
 
+// The AstVisitor interface provides a way of specifying a [Visitor] for visiting an AST.
+//
+// This interface is clunky to use for conversions or when you need to return state, and you should use [epsearchast_v3.ReduceAst] instead.
+// In particular because the return values are restricted to error, you need to manage and combine the state yourself, which can be more annoying than necessary.
+//
+// [Visitor]: https://en.wikipedia.org/wiki/Visitor_pattern
 type AstVisitor interface {
 	PreVisit() error
 	PostVisit() error
 	PreVisitAnd(astNode *AstNode) (bool, error)
-	PostVisitAnd(astNode *AstNode) (bool, error)
+	PostVisitAnd(astNode *AstNode) error
 	VisitIn(astNode *AstNode) (bool, error)
 	VisitEq(astNode *AstNode) (bool, error)
 	VisitLe(astNode *AstNode) (bool, error)
@@ -40,6 +49,7 @@ type AstVisitor interface {
 	VisitLike(astNode *AstNode) (bool, error)
 }
 
+// Accept triggers a visit of the AST.
 func (a *AstNode) Accept(v AstVisitor) error {
 	err := v.PreVisit()
 
@@ -97,7 +107,7 @@ func (a *AstNode) accept(v AstVisitor) error {
 
 	switch a.NodeType {
 	case "AND":
-		descend, err = v.PostVisitAnd(a)
+		err = v.PostVisitAnd(a)
 
 		if err != nil {
 			return err
