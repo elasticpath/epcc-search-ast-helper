@@ -8,7 +8,7 @@ func ApplyAliases(a *AstNode, aliases map[string]string) (*AstNode, error) {
 		newArgs := make([]string, len(a.Args))
 		copy(newArgs, a.Args)
 
-		if (len(newArgs) > 0) {
+		if len(newArgs) > 0 {
 			if v, ok := aliases[newArgs[0]]; ok {
 				newArgs[0] = v
 			}
