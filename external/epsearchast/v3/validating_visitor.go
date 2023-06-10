@@ -136,6 +136,16 @@ func (v *validatingVisitor) VisitLike(astNode *AstNode) (bool, error) {
 	return false, nil
 }
 
+func (v *validatingVisitor) VisitIsNull(astNode *AstNode) (bool, error) {
+	fieldName := astNode.Args[0]
+
+	if err := v.validateFieldAndValue("is_null", fieldName); err != nil {
+		return false, err
+	}
+
+	return false, nil
+}
+
 func (v *validatingVisitor) isOperatorValidForField(operator, requestField string) (bool, error) {
 
 	canonicalField := requestField

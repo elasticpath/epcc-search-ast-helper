@@ -85,6 +85,12 @@ func (g DefaultGormQueryBuilder) VisitLike(first, second string) (*SubQuery, err
 	}, nil
 }
 
+func (g DefaultGormQueryBuilder) VisitIsNull(first string) (*SubQuery, error) {
+	return &SubQuery{
+		Clause: fmt.Sprintf("%s IS NULL", first),
+	}, nil
+}
+
 func (g DefaultGormQueryBuilder) ProcessLikeWildcards(valString string) string {
 	if valString == "*" {
 		return "%"

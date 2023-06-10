@@ -119,6 +119,10 @@ func TestApplyAliasesReturnsCorrectAstWhenAliasTwoFieldsAreAliasedInAnAnd(t *tes
 			{
 				"type": "EQ",
 				"args": [ "customer.email",  "ron@swanson.com"]
+			},
+			{
+				"type": "IS_NULL",
+				"args": [ "billing-email"]
 			}		
 		]
 	}
@@ -140,7 +144,11 @@ func TestApplyAliasesReturnsCorrectAstWhenAliasTwoFieldsAreAliasedInAnAnd(t *tes
 			{
 				"type": "EQ",
 				"args": [ "customer.email",  "ron@swanson.com"]
-			}		
+			},
+			{
+				"type": "IS_NULL",
+				"args": [ "billing.email"]
+			}	
 		]
 	}`
 
@@ -151,7 +159,7 @@ func TestApplyAliasesReturnsCorrectAstWhenAliasTwoFieldsAreAliasedInAnAnd(t *tes
 	require.NoError(t, err)
 
 	// Execute SUT
-	aliasedAst, err := ApplyAliases(inputAstNode, map[string]string{"payment_status": "status", "customer_name": "customer.name"})
+	aliasedAst, err := ApplyAliases(inputAstNode, map[string]string{"payment_status": "status", "customer_name": "customer.name", "billing-email": "billing.email"})
 
 	// Verify
 	require.NoError(t, err)
