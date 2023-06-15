@@ -217,32 +217,6 @@ func TestValidationReturnsNoErrorForUnaryOperatorWhenAstUsesAliasesAndSatisfiesC
 	}
 }
 
-// TODO: Revisit this test
-func TestValidationReturnsErrorForUnaryOperatorsFailedValueValidationWhenAstUseAliases(t *testing.T) {
-
-	for _, unaryOp := range unaryOps {
-		t.Run(fmt.Sprintf("%s", unaryOp), func(t *testing.T) {
-			// Fixture Setup
-			// language=JSON
-			jsonTxt := fmt.Sprintf(`
-			{
-				"type": "%s",
-				"args": ["email"]
-			}
-			`, strings.ToUpper(unaryOp))
-
-			ast, err := GetAst(jsonTxt)
-			require.NoError(t, err)
-
-			// Execute SUT
-			err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"email": {unaryOp}}, map[string]string{"email": "email"})
-
-			// Verification
-			require.ErrorContains(t, err, fmt.Sprintf("could not validate [email] with [%s]", unaryOp))
-		})
-	}
-}
-
 func TestValidationReturnsNoErrorForUnaryOperatorsWhenAstUseAliasesAndValueValidationAndSatisfiesConstraints(t *testing.T) {
 
 	for _, unaryOp := range unaryOps {

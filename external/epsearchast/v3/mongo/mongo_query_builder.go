@@ -55,6 +55,12 @@ func (d DefaultMongoQueryBuilder) VisitLike(first, second string) (*bson.D, erro
 	return &bson.D{{first, bson.D{{"$regex", d.ProcessLikeWildcards(second)}}}}, nil
 }
 
+func (d DefaultMongoQueryBuilder) VisitIsNull(first string) (*bson.D, error) {
+	// https://www.mongodb.com/docs/manual/reference/operator/query/eq/#std-label-eq-usage-examples
+	// This is equivalent to { key: value } but makes for easier tests.
+	return &bson.D{{first, bson.D{{"$eq", nil}}}}, nil
+}
+
 func (d DefaultMongoQueryBuilder) ProcessLikeWildcards(valString string) string {
 	if valString == "*" {
 		return "^.*$"
