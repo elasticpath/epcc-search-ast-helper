@@ -259,7 +259,7 @@ func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBo
 
 ##### Limitations
 
-1. The Mongo Query builder is designed to produce filter ocmpatible with the [filter argument in a Query](https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/read-operations/query-document/#specify-a-query), if a field in the API is a projection that requires computation via the aggregation pipeline, then we would likely need code changes to support that.
+1. The Mongo Query builder is designed to produce filter compatible with the [filter argument in a Query](https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/read-operations/query-document/#specify-a-query), if a field in the API is a projection that requires computation via the aggregation pipeline, then we would likely need code changes to support that.
 
 ##### Advanced Customization
 
