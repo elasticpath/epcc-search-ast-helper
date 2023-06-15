@@ -72,8 +72,6 @@ func TestSimpleUnaryOperatorFiltersGeneratesCorrectWhereClause(t *testing.T) {
 			}`, unaryOp.AstOp)
 
 			astNode, err := epsearchast_v3.GetAst(jsonTxt)
-
-			err = json.Unmarshal([]byte(jsonTxt), astNode)
 			require.NoError(t, err)
 
 			var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
