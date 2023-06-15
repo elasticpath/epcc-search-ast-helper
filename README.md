@@ -123,7 +123,7 @@ import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/ep
 import epsearchast_v3_gorm "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
 import "gorm.io/gorm"
 
-func Example(ast *epsearchast_v3.AstNode, query *gorm.DB) error {
+func Example(ast *epsearchast_v3.AstNode, query *gorm.DB, tenantBoundaryId string) error {
 	var err error
 	
 	// Not Shown: Validation
@@ -137,6 +137,9 @@ func Example(ast *epsearchast_v3.AstNode, query *gorm.DB) error {
 	if err != nil {
 		return err
 	}
+
+	// Don't forget to add additional filters 
+	query.Where("tenant_boundary_id = ?", tenantBoundaryId)
 	
 	// Don't forget to expand the Args argument with ...
 	query.Where(sq.Clause, sq.Args...)
@@ -166,7 +169,7 @@ import epsearchast_v3_gorm "github.com/elasticpath/epcc-search-ast-helper/extern
 import "gorm.io/gorm"
 
 
-func Example(ast *epsearchast_v3.AstNode, query *gorm.DB) error {
+func Example(ast *epsearchast_v3.AstNode, query *gorm.DB, tenantBoundaryId string) error {
 	var err error
 
 	// Not Shown: Validation
@@ -180,6 +183,9 @@ func Example(ast *epsearchast_v3.AstNode, query *gorm.DB) error {
 		return err
 	}
 
+	// Don't forget to add additional filters 
+	query.Where("tenant_boundary_id = ?", tenantBoundaryId)
+	
 	// Don't forget to expand the Args argument with ...
 	query.Where(sq.Clause, sq.Args...)
 }
@@ -205,6 +211,106 @@ func (l *CustomQueryBuilder) VisitEq(first, second string) (*epsearchast_v3_gorm
 		}, nil
 	} else {
 		return DefaultGormQueryBuilder.VisitEq(l.DefaultGormQueryBuilder, first, second)
+	}
+}
+```
+
+#### Mongo
+
+The following examples shows how to generate a Mongo Query with this library.
+
+```go
+package example
+
+import (
+	"context"
+	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	epsearchast_v3_mongo "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBoundaryQuery bson.M)  (*mongo.Cursor, error) {
+	// Not Shown: Validation
+
+	// Create query builder
+	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+
+	// Create Query Object
+	queryObj, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+
+	if err != nil {
+		return nil, err
+	}
+
+	mongoQuery := bson.D{
+		{"$and",
+			bson.A{
+				tenantBoundaryQuery,
+				queryObj,
+			},
+		}}
+	
+	
+	return collection.Find(context.TODO(), mongoQuery)
+}
+```
+
+
+##### Limitations
+
+1. The Mongo Query builder is designed to produce filter compatible with the [filter argument in a Query](https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/read-operations/query-document/#specify-a-query), if a field in the API is a projection that requires computation via the aggregation pipeline, then we would likely need code changes to support that.
+
+##### Advanced Customization
+
+In some cases you may want to change the behaviour of the generated Mongo, the following example shows how to do that in this case we want to change emails because
+we store them only in lower case in the db.
+
+```go
+package example
+
+import (
+	"context"
+	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	epsearchast_v3_mongo "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"strings"
+)
+
+func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBoundaryQuery *bson.M)  (*mongo.Cursor, error) {
+	// Not Shown: Validation
+
+	// Create query builder
+	var qb epsearchast_v3.SemanticReducer[bson.D] = &LowerCaseEmail{}
+
+	// Create Query Object
+	queryObj, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+
+	if err != nil {
+		return nil, err
+	}
+
+	mongoQuery := bson.D{
+		{"$and",
+			bson.A{
+				tenantBoundaryQuery,
+				queryObj,
+			},
+		}}
+	
+	return collection.Find(context.TODO(), mongoQuery)
+}
+
+type LowerCaseEmail struct {
+	epsearchast_v3_mongo.DefaultMongoQueryBuilder
+}
+
+func (l *LowerCaseEmail) VisitEq(first, second string) (*bson.D, error) {
+	if first == "email" {
+		return &bson.D{{first, bson.D{{"$eq", strings.ToLower(second)}}}}, nil
+	} else {
+		return DefaultMongoQueryBuilder.VisitEq(l.DefaultMongoQueryBuilder, first, second)
 	}
 }
 ```

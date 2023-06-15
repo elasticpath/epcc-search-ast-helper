@@ -1,7 +1,6 @@
 package epsearchast_v3_gorm
 
 import (
-	"encoding/json"
 	"fmt"
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"github.com/stretchr/testify/require"
@@ -39,14 +38,12 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectWhereClause(t *testing.T) {
 			}`, binOp.AstOp)
 
 			astNode, err := epsearchast_v3.GetAst(jsonTxt)
-
-			err = json.Unmarshal([]byte(jsonTxt), astNode)
 			require.NoError(t, err)
 
-			var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
+			var qb epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
 
 			// Execute SUT
-			query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
+			query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -71,14 +68,12 @@ func TestSimpleVariableOperatorFiltersGeneratesCorrectWhereClause(t *testing.T) 
 			}`, varOp.AstOp)
 
 			astNode, err := epsearchast_v3.GetAst(jsonTxt)
-
-			err = json.Unmarshal([]byte(jsonTxt), astNode)
 			require.NoError(t, err)
 
-			var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
+			var qb epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
 
 			// Execute SUT
-			query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
+			query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -102,14 +97,12 @@ func TestLikeFilterWildCards(t *testing.T) {
 			}`, astLiteral)
 
 			astNode, err := epsearchast_v3.GetAst(jsonTxt)
-
-			err = json.Unmarshal([]byte(jsonTxt), astNode)
 			require.NoError(t, err)
 
-			var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
+			var qb epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
 
 			// Execute SUT
-			query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
+			query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -146,14 +139,12 @@ func TestSimpleRecursiveStructure(t *testing.T) {
 				`
 
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
-
-	err = json.Unmarshal([]byte(jsonTxt), astNode)
 	require.NoError(t, err)
 
-	var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
+	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
 
 	// Verification
 
@@ -183,14 +174,12 @@ func TestSimpleRecursiveWithStringOverrideStruct(t *testing.T) {
 				`
 
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
-
-	err = json.Unmarshal([]byte(jsonTxt), astNode)
 	require.NoError(t, err)
 
-	var sr epsearchast_v3.SemanticReducer[SubQuery] = &LowerCaseEmail{}
+	var qb epsearchast_v3.SemanticReducer[SubQuery] = &LowerCaseEmail{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
+	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
 
 	// Verification
 
@@ -219,14 +208,12 @@ func TestSimpleRecursiveWithIntFieldStruct(t *testing.T) {
 				`
 
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
-
-	err = json.Unmarshal([]byte(jsonTxt), astNode)
 	require.NoError(t, err)
 
-	var sr epsearchast_v3.SemanticReducer[SubQuery] = &IntFieldQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[SubQuery] = &IntFieldQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
+	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
 
 	// Verification
 
