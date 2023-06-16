@@ -17,6 +17,10 @@ var binOps = []testOp{
 	{"LIKE", "LIKE"},
 }
 
+var unaryOps = []testOp{
+	{"IS_NULL", "IS NULL"},
+}
+
 var varOps = []testOp{
 	{"IN", "IN"},
 }
@@ -51,6 +55,35 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectWhereClause(t *testing.T) {
 
 			require.Equal(t, fmt.Sprintf("amount %s ?", binOp.SqlOp), query.Clause)
 			require.Equal(t, []interface{}{"5"}, query.Args)
+		})
+	}
+
+}
+
+func TestSimpleUnaryOperatorFiltersGeneratesCorrectWhereClause(t *testing.T) {
+	for _, unaryOp := range unaryOps {
+		t.Run(fmt.Sprintf("%s", unaryOp.AstOp), func(t *testing.T) {
+			//Fixture Setup
+			//language=JSON
+			jsonTxt := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "amount"]
+			}`, unaryOp.AstOp)
+
+			astNode, err := epsearchast_v3.GetAst(jsonTxt)
+			require.NoError(t, err)
+
+			var sr epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
+
+			// Execute SUT
+			query, err := epsearchast_v3.SemanticReduceAst(astNode, sr)
+
+			// Verification
+
+			require.NoError(t, err)
+
+			require.Equal(t, fmt.Sprintf("amount %s", unaryOp.SqlOp), query.Clause)
 		})
 	}
 

@@ -21,6 +21,10 @@ var binOps = []testOp{
 	//{"LIKE", "$regex"},
 }
 
+var unaryOps = []testOp{
+	{"IS_NULL", `"$eq":null`},
+}
+
 var varOps = []testOp{
 	{"IN", "$in"},
 }
@@ -93,6 +97,38 @@ func TestLikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 
 	require.Equal(t, expectedSearchJson, string(doc))
 
+}
+
+func TestSimpleUnaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
+	for _, unaryOp := range unaryOps {
+		t.Run(fmt.Sprintf("%s", unaryOp.AstOp), func(t *testing.T) {
+			//Fixture Setup
+			//language=JSON
+			astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "amount"]
+			}`, unaryOp.AstOp)
+
+			astNode, err := epsearchast_v3.GetAst(astJson)
+
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+
+			expectedSearchJson := fmt.Sprintf(`{"amount":{%s}}`, unaryOp.MongoOp)
+
+			// Execute SUT
+			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+			// Verification
+
+			require.NoError(t, err)
+
+			doc, err := bson.MarshalExtJSON(queryObj, true, false)
+			require.NoError(t, err)
+
+			require.Equal(t, expectedSearchJson, string(doc))
+		})
+	}
 }
 
 func TestSimpleVariableOperatorFiltersGeneratesCorrectFilter(t *testing.T) {

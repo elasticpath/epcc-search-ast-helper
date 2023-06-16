@@ -15,6 +15,7 @@ type SemanticReducer[R any] interface {
 	VisitGe(first, second string) (*R, error)
 	VisitGt(first, second string) (*R, error)
 	VisitLike(first, second string) (*R, error)
+	VisitIsNull(first string) (*R, error)
 }
 
 // SemanticReduceAst adapts an epsearchast_v3.SemanticReducer for use with the epsearchast_v3.ReduceAst function.
@@ -37,6 +38,8 @@ func SemanticReduceAst[T any](a *AstNode, v SemanticReducer[T]) (*T, error) {
 			return v.VisitIn(a.Args...)
 		case "AND":
 			return v.PostVisitAnd(t)
+		case "IS_NULL":
+			return v.VisitIsNull(a.Args[0])
 		default:
 			return nil, fmt.Errorf("unsupported node type: %s", a.NodeType)
 		}

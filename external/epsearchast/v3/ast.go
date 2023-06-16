@@ -47,6 +47,7 @@ type AstVisitor interface {
 	VisitGe(astNode *AstNode) (bool, error)
 	VisitGt(astNode *AstNode) (bool, error)
 	VisitLike(astNode *AstNode) (bool, error)
+	VisitIsNull(astNode *AstNode) (bool, error)
 }
 
 // Accept triggers a visit of the AST.
@@ -88,6 +89,8 @@ func (a *AstNode) accept(v AstVisitor) error {
 		descend, err = v.VisitGe(a)
 	case "LIKE":
 		descend, err = v.VisitLike(a)
+	case "IS_NULL":
+		descend, err = v.VisitIsNull(a)
 	default:
 		return fmt.Errorf("unknown operator %s", a.NodeType)
 	}
@@ -144,6 +147,15 @@ func (a *AstNode) checkValid() error {
 
 		if len(a.Args) != 2 {
 			return fmt.Errorf("operator %v should have exactly 2 arguments", strings.ToLower(a.NodeType))
+
+		}
+	case "IS_NULL":
+		if len(a.Children) > 0 {
+			return fmt.Errorf("operator %v should not have any children", strings.ToLower(a.NodeType))
+		}
+
+		if len(a.Args) != 1 {
+			return fmt.Errorf("operator %v should have exactly 1 argument", strings.ToLower(a.NodeType))
 
 		}
 	default:
