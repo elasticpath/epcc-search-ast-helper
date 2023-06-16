@@ -234,6 +234,7 @@ func TestValidationReturnsNoErrorForUnaryOperatorsWhenAstUseAliasesAndValueValid
 			require.NoError(t, err)
 
 			// Execute SUT
+                        // Note: value validation doesn't do anything with is_null but importantly it doesn't crash which is what we test
 			err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidation(ast, map[string][]string{"status": {unaryOp}}, map[string]string{"order_status": "status"}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
 
 			// Verification
