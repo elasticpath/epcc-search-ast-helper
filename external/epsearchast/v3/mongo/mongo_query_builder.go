@@ -58,7 +58,7 @@ func (d DefaultMongoQueryBuilder) VisitLike(first, second string) (*bson.D, erro
 func (d DefaultMongoQueryBuilder) VisitIsNull(first string) (*bson.D, error) {
 	// https://www.mongodb.com/docs/manual/tutorial/query-for-null-fields/#equality-filter
 	// This will match fields that either contain the item field whose value is nil or those that do not contain the field
-	// Customize this method if you need different nil handling (i.e., explicit nil)	
+	// Customize this method if you need different nil handling (i.e., explicit nil)
 	return &bson.D{{first, bson.D{{"$eq", nil}}}}, nil
 }
 
