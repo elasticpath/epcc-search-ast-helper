@@ -14,7 +14,7 @@ var binOps = []testOp{
 	{"EQ", "="},
 	{"GT", ">"},
 	{"GE", ">="},
-	{"LIKE", "LIKE"},
+	{"LIKE", "ILIKE"},
 }
 
 var unaryOps = []testOp{
@@ -141,7 +141,7 @@ func TestLikeFilterWildCards(t *testing.T) {
 
 			require.NoError(t, err)
 
-			require.Equal(t, fmt.Sprintf("email LIKE ?"), query.Clause)
+			require.Equal(t, fmt.Sprintf("email ILIKE ?"), query.Clause)
 			require.Equal(t, []interface{}{sqlLiteral}, query.Args)
 		}
 	}

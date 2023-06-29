@@ -80,7 +80,7 @@ func (g DefaultGormQueryBuilder) VisitGt(first, second string) (*SubQuery, error
 
 func (g DefaultGormQueryBuilder) VisitLike(first, second string) (*SubQuery, error) {
 	return &SubQuery{
-		Clause: fmt.Sprintf("%s LIKE ?", first),
+		Clause: fmt.Sprintf("%s ILIKE ?", first),
 		Args:   []interface{}{g.ProcessLikeWildcards(second)},
 	}, nil
 }
