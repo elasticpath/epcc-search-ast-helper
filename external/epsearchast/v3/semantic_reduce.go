@@ -14,7 +14,7 @@ type SemanticReducer[R any] interface {
 	VisitLt(first, second string) (*R, error)
 	VisitGe(first, second string) (*R, error)
 	VisitGt(first, second string) (*R, error)
-	VisitLike(first, second string) (*R, error)
+	VisitLike(first, second, caseInsensitive string) (*R, error)
 	VisitIsNull(first string) (*R, error)
 }
 
@@ -33,7 +33,7 @@ func SemanticReduceAst[T any](a *AstNode, v SemanticReducer[T]) (*T, error) {
 		case "GT":
 			return v.VisitGt(a.Args[0], a.Args[1])
 		case "LIKE":
-			return v.VisitLike(a.Args[0], a.Args[1])
+			return v.VisitLike(a.Args[0], a.Args[1], a.Args[2])
 		case "IN":
 			return v.VisitIn(a.Args...)
 		case "AND":

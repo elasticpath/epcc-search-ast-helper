@@ -3,6 +3,7 @@ package epsearchast_v3_gorm
 import (
 	"fmt"
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"strconv"
 	"strings"
 )
 
@@ -78,9 +79,17 @@ func (g DefaultGormQueryBuilder) VisitGt(first, second string) (*SubQuery, error
 	}, nil
 }
 
-func (g DefaultGormQueryBuilder) VisitLike(first, second string) (*SubQuery, error) {
+func (g DefaultGormQueryBuilder) VisitLike(first, second, booleanStr string) (*SubQuery, error) {
+	keyword := "LIKE"
+	caseInsensitive, err := strconv.ParseBool(booleanStr)
+	if err != nil {
+		return nil, err
+	}
+	if caseInsensitive {
+		keyword = "ILIKE"
+	}
 	return &SubQuery{
-		Clause: fmt.Sprintf("%s ILIKE ?", first),
+		Clause: fmt.Sprintf("%s %s ?", first, keyword),
 		Args:   []interface{}{g.ProcessLikeWildcards(second)},
 	}, nil
 }
