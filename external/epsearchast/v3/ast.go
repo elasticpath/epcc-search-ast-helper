@@ -21,9 +21,9 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 	err := json.Unmarshal([]byte(jsonTxt), astNode)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not parse filter:%w", err)
+		return nil, NewParsingErr(err)
 	} else if err := astNode.checkValid(); err != nil {
-		return nil, fmt.Errorf("error validating filter:%w", err)
+		return nil, NewValidationErr(err)
 	} else {
 		return astNode, nil
 	}
