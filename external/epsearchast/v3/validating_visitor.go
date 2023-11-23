@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -154,7 +155,14 @@ func (v *validatingVisitor) isOperatorValidForField(operator, requestField strin
 	}
 
 	if _, ok := v.AllowedOperators[canonicalField]; !ok {
-		return false, fmt.Errorf("unknown field [%s] specified in search filter, allowed fields are %v", requestField, reflect.ValueOf(v.AllowedOperators).MapKeys())
+		allowedFields := reflect.ValueOf(v.AllowedOperators).MapKeys()
+		// Sort the allowed fields to give consistent errors
+		sortedAllowedFields := make([]string, len(allowedFields))
+		for i := range allowedFields {
+			sortedAllowedFields[i] = allowedFields[i].String()
+		}
+		sort.Strings(sortedAllowedFields)
+		return false, fmt.Errorf("unknown field [%s] specified in search filter, allowed fields are %v", requestField, sortedAllowedFields)
 	}
 
 	for _, op := range v.AllowedOperators[canonicalField] {

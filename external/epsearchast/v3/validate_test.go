@@ -58,10 +58,10 @@ func TestValidationReturnsErrorForBinaryOperatorsWhenAstUsesUnknownField(t *test
 			otherBinOp := binOps[(idx+1)%len(binOps)]
 
 			// Execute SUT
-			err = ValidateAstFieldAndOperators(ast, map[string][]string{"other_field": {otherBinOp}})
+			err = ValidateAstFieldAndOperators(ast, map[string][]string{"other_field": {otherBinOp}, "another_field": {otherBinOp}})
 
 			// Verification
-			require.ErrorContains(t, err, fmt.Sprintf("unknown field [amount] specified in search filter, allowed fields are [other_field]"))
+			require.EqualError(t, err, fmt.Sprintf("unknown field [amount] specified in search filter, allowed fields are [another_field other_field]"))
 		})
 	}
 
