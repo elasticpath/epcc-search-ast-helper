@@ -11,11 +11,13 @@ import (
 func TestSimpleBinaryOperatorGeneratesCorrectQueryWithFieldOveride(t *testing.T) {
 	//Fixture Setup
 	//language=JSON
-	jsonTxt := `
-				{
-					"type": "GT",
-					"args": [ "updated_at",  "2020-12-25" ]
-		}
+	jsonTxt := `{
+  "type": "GT",
+  "args": [
+    "updated_at",
+    "2020-12-25"
+  ]
+}
 `
 
 	//language=JSON
@@ -52,11 +54,13 @@ func TestSimpleBinaryOperatorGeneratesCorrectQueryWithFieldOveride(t *testing.T)
 func TestSimpleBinaryOperatorGeneratesCorrectQuery(t *testing.T) {
 	//Fixture Setup
 	//language=JSON
-	jsonTxt := `
-				{
-					"type": "EQ",
-					"args": [ "email",  "foo@test.com" ]
-		}
+	jsonTxt := `{
+  "type": "EQ",
+  "args": [
+    "email",
+    "foo@test.com"
+  ]
+}
 `
 
 	//language=JSON
@@ -86,20 +90,26 @@ func TestSimpleRecursiveStructure(t *testing.T) {
 	//Fixture Setup
 	//language=JSON
 	jsonTxt := `
-				{
-					"type":  "AND",
-					"children": [
-					{
-						"type": "IN",
-						"args": ["status", "new", "paid"]
-					},
-					{
-						"type": "GE",
-						"args": [ "amount",  "5"]
-					}
-					]
-				}
-				`
+{
+  "type": "AND",
+  "children": [
+    {
+      "type": "IN",
+      "args": [
+        "status",
+        "new",
+        "paid"
+      ]
+    },
+    {
+      "type": "GE",
+      "args": [
+        "amount",
+        "5"
+      ]
+    }
+  ]
+}`
 
 	//language=JSON
 	expectedJson := `{
