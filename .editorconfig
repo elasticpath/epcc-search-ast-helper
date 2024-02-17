@@ -1,0 +1,7 @@
+; https://editorconfig.org/
+root = true
+; Primarily to fix the tab width of GitHub
+
+[{go.mod,go.sum,*.go,.gitmodules}]
+indent_style = tab
+indent_size = 4
