@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -27,12 +28,24 @@ var _ AstVisitor = (*validatingVisitor)(nil)
 func NewValidatingVisitor(allowedOps map[string][]string, aliases map[string]string, valueValidators map[string]string) (AstVisitor, error) {
 
 	for k, v := range aliases {
+		if len(k) > 0 && k[0] == '^' && k[len(k)-1] == '$' {
+			// We can't validate regular expression based aliases without being too rigid, and having a lot of validation complexity for an edge case.
+			// For example, you could declare an alias of `t.(a|b)` to `$1` (i.e., a or b) and then specify validators on just a or b.
+			continue
+		}
+
 		if _, ok := allowedOps[v]; !ok {
 			return nil, fmt.Errorf("alias from `%s` to `%s` points to a field not in the allowed ops", k, v)
 		}
 	}
 
 	for k, v := range valueValidators {
+		if len(k) > 0 && k[0] == '^' && k[len(k)-1] == '$' {
+			// We can't validate regular expression based aliases without being too rigid, and having a lot of validation complexity for an edge case.
+			// For example, you could declare an alias of `t.(a|b)` to `$1` (i.e., a or b) and then specify validators on just a or b.
+			continue
+		}
+
 		if _, ok := allowedOps[k]; !ok {
 			if target, ok := aliases[k]; ok {
 				// Supporting aliases for validators would be messy because it could be many to one.
@@ -148,13 +161,11 @@ func (v *validatingVisitor) VisitIsNull(astNode *AstNode) (bool, error) {
 }
 
 func (v *validatingVisitor) isOperatorValidForField(operator, requestField string) (bool, error) {
+	canonicalField := v.resolveFieldName(requestField)
 
-	canonicalField := requestField
-	if realName, ok := v.ColumnAliases[requestField]; ok {
-		canonicalField = realName
-	}
+	allowedOperatorsForField, ok := findMatchInMap(canonicalField, v.AllowedOperators)
 
-	if _, ok := v.AllowedOperators[canonicalField]; !ok {
+	if !ok {
 		allowedFields := reflect.ValueOf(v.AllowedOperators).MapKeys()
 		// Sort the allowed fields to give consistent errors
 		sortedAllowedFields := make([]string, len(allowedFields))
@@ -165,13 +176,13 @@ func (v *validatingVisitor) isOperatorValidForField(operator, requestField strin
 		return false, fmt.Errorf("unknown field [%s] specified in search filter, allowed fields are %v", requestField, sortedAllowedFields)
 	}
 
-	for _, op := range v.AllowedOperators[canonicalField] {
+	for _, op := range allowedOperatorsForField {
 		if strings.ToLower(operator) == strings.ToLower(op) {
 			return true, nil
 		}
 	}
 
-	return false, fmt.Errorf("unknown operator [%s] specified in search filter for field [%s], allowed operators are %v", strings.ToLower(operator), requestField, v.AllowedOperators[canonicalField])
+	return false, fmt.Errorf("unknown operator [%s] specified in search filter for field [%s], allowed operators are %v", strings.ToLower(operator), requestField, allowedOperatorsForField)
 }
 
 func (v *validatingVisitor) validateFieldAndValue(operator, requestField string, values ...string) error {
@@ -180,14 +191,13 @@ func (v *validatingVisitor) validateFieldAndValue(operator, requestField string,
 		return err
 	}
 
-	canonicalField := requestField
-	if realName, ok := v.ColumnAliases[requestField]; ok {
-		canonicalField = realName
-	}
+	canonicalField := v.resolveFieldName(requestField)
 
-	if vv, ok := v.ValueValidators[canonicalField]; ok {
+	valueValidatorsForField, ok := findMatchInMap(canonicalField, v.ValueValidators)
+
+	if ok {
 		for _, value := range values {
-			err := validate.Var(value, vv)
+			err := validate.Var(value, valueValidatorsForField)
 
 			if err != nil {
 
@@ -205,4 +215,39 @@ func (v *validatingVisitor) validateFieldAndValue(operator, requestField string,
 	}
 
 	return nil
+}
+
+func (v *validatingVisitor) resolveFieldName(requestField string) string {
+	canonicalField := requestField
+	if realName, ok := v.ColumnAliases[requestField]; ok {
+		canonicalField = realName
+	} else {
+		for k, v := range v.ColumnAliases {
+			if len(k) > 0 && k[0] == '^' && k[len(k)-1] == '$' {
+				r := regexp.MustCompile(k)
+				canonicalField = string(r.ReplaceAll([]byte(canonicalField), []byte(v)))
+			}
+		}
+	}
+
+	return canonicalField
+}
+
+func findMatchInMap[T any](key string, m map[string]T) (T, bool) {
+
+	if v, ok := m[key]; ok {
+		return v, true
+	}
+
+	for k, v := range m {
+		if len(k) > 0 && k[0] == '^' && k[len(k)-1] == '$' {
+			r := regexp.MustCompile(k)
+			if r.MatchString(key) {
+				return v, true
+			}
+		}
+	}
+	var zero T
+
+	return zero, false
 }

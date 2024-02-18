@@ -533,3 +533,290 @@ func TestNewConstructorDetectsAliasedValueValidatorTarget(t *testing.T) {
 	// Verification
 	require.ErrorContains(t, err, fmt.Sprintf("validator for field `state` with type `int` points to an alias of `status` instead of the field"))
 }
+
+func TestValidateAstFieldAndOperatorsAllowsRegularExpressionsWithAllowedOps(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "attributes.name",  "Foo"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperators(ast, map[string][]string{"^attributes.([^.]+)$": {"eq"}})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstFieldAndOperatorsReturnsErrorIfNoRegularExpressionMatchesTheValue(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "attributes.name",  "Foo"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperators(ast, map[string][]string{"^values.([^.]+)$": {"eq"}})
+
+	// Verification
+	require.ErrorContains(t, err, "unknown field [attributes.name]")
+	require.ErrorContains(t, err, "allowed fields are [^values.([^.]+)$]")
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesWithoutError(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "attributes.name",  "Foo"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{"name": {"eq"}}, map[string]string{"^attributes\\.([^.]+)$": "$1"})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesWithoutErrorAndMultipleValidators(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "LIKE",
+				"args": [ "attributes.description",  "Foo"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{"name": {"eq"}, "description": {"like"}}, map[string]string{"^attributes\\.([^.]+)$": "$1"})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndDetectsErrorsWhenFieldIsMissing(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "LIKE",
+				"args": [ "attributes.description",  "Foo"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{"name": {"eq"}}, map[string]string{"^attributes\\.([^.]+)$": "$1"})
+
+	// Verification
+	require.ErrorContains(t, err, "unknown field [attributes.description]")
+	require.ErrorContains(t, err, "allowed fields are [name]")
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidatorsWithoutError(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "attributes.locales.fr-CA.name",  "Foo"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{"^locales\\.[^.]+\\.name$": {"eq"}}, map[string]string{"^attributes\\.(.+)$": "$1"})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidatorsWithoutErrorWithConjunction(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{
+		"type": "AND",
+		"children": [
+			{
+			"type": "LIKE",
+			"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+			},
+			{
+			"type": "EQ",
+			"args": [ "attributes.locales.en-CA.name",  "Bar"]
+			}
+		]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"like"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidatorsWithErrorWithConjunction(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{
+		"type": "AND",
+		"children": [
+			{
+			"type": "IN",
+			"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+			},
+			{
+			"type": "EQ",
+			"args": [ "attributes.locales.en-CA.name",  "Bar"]
+			}
+		]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"like"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"})
+
+	// Verification
+	require.ErrorContains(t, err, "unknown operator [in]")
+	require.ErrorContains(t, err, "for field [attributes.locales.fr-CA.description]")
+	require.ErrorContains(t, err, "allowed operators are [like]")
+}
+
+func TestValidateAstWithValueValidationUsingARegularExpressionReturnsErrorWhenTermIsNotAllowed(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "LIKE",
+				"args": [ "name",  "poppycock"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"name": {"like"}}, map[string]string{"^(name|description)$": "excludes=poppycock"})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [name] with [like]")
+	require.ErrorContains(t, err, "value [poppycock]")
+	require.ErrorContains(t, err, "requirement [excludes]")
+}
+
+func TestValidateAstWithValueValidationUsingARegularExpressionReturnsNoErrorWhenRequestIsValid(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "status",  "paid"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"status": {"eq"}}, map[string]string{"^(name|description)$": "oneOf=paid unpaid"})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAndValueValidationReturnsNoErrorInConjunctionWhenAValueValidatorIsSatisfied(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{
+		"type": "AND",
+		"children": [
+			{
+			"type": "LIKE",
+			"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+			},
+			{
+			"type": "EQ",
+			"args": [ "attributes.locales.en-CA.name",  "Bar"]
+			}
+		]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidation(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"like"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"},
+		map[string]string{"^locales\\.[^.]+\\.[a-zA-Z0-9_-]+$": "min=1"})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAndValueValidationDetectsAnErrorInConjunctionWhenAValueValidatorIsNotSatisfied(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{
+		"type": "AND",
+		"children": [
+			{
+			"type": "LIKE",
+			"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+			},
+			{
+			"type": "EQ",
+			"args": [ "attributes.locales.en-CA.name",  ""]
+			}
+		]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidation(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"like"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"},
+		map[string]string{"^locales\\.[^.]+\\.[a-zA-Z0-9_-]+$": "min=1"})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [attributes.locales.en-CA.name]")
+	require.ErrorContains(t, err, "with [eq]")
+	require.ErrorContains(t, err, "value []")
+	require.ErrorContains(t, err, "requirement [min]")
+}

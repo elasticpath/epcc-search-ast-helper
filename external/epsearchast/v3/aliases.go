@@ -1,5 +1,7 @@
 package epsearchast_v3
 
+import "regexp"
+
 // ApplyAliases will return a new AST where all aliases have been resolved to their new value.
 // This function should be called after validating it.
 func ApplyAliases(a *AstNode, aliases map[string]string) (*AstNode, error) {
@@ -11,6 +13,14 @@ func ApplyAliases(a *AstNode, aliases map[string]string) (*AstNode, error) {
 		if len(newArgs) > 0 {
 			if v, ok := aliases[newArgs[0]]; ok {
 				newArgs[0] = v
+			} else {
+				for k, v := range aliases {
+					if len(k) > 0 && k[0] == '^' && k[len(k)-1] == '$' {
+						r := regexp.MustCompile(k)
+
+						newArgs[0] = string(r.ReplaceAll([]byte(newArgs[0]), []byte(v)))
+					}
+				}
 			}
 		} else {
 			newArgs = nil

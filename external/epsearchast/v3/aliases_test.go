@@ -167,3 +167,70 @@ func TestApplyAliasesReturnsCorrectAstWhenAliasTwoFieldsAreAliasedInAnAnd(t *tes
 
 	require.Equal(t, expectedAstNode, aliasedAst)
 }
+
+func TestApplyAliasesReturnsCorrectAstWhenAliasUsesWildCardTwoFieldsAreAliasedInAnAnd(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	inputAstJson := `
+	{ 
+		"type": "AND",
+		"children": [
+			{
+				"type": "EQ",
+				"args": [ "translations.fr-CA.name",  "Gros électroménagers"]
+			},
+			{
+				"type": "IN",
+				"args": [ "translations.fr-CA.description", "Appareils autonomes", "Appareils manual"]
+			},
+			{
+				"type": "EQ",
+				"args": [ "locales.en-US.name",  "Major Appliances"]
+			},
+			{
+				"type": "IN",
+				"args": [ "locales.en-US.description",  "Appliances*"]
+			}		
+		]
+	}
+	`
+
+	// language=JSON
+	expectedAstJson := `
+	{ 
+		"type": "AND",
+		"children": [
+			{
+				"type": "EQ",
+				"args": [ "locales.fr-CA.name",  "Gros électroménagers"]
+			},
+			{
+				"type": "IN",
+				"args": [ "locales.fr-CA.description", "Appareils autonomes", "Appareils manual"]
+			},
+			{
+				"type": "EQ",
+				"args": [ "locales.en-US.name",  "Major Appliances"]
+			},
+			{
+				"type": "IN",
+				"args": [ "locales.en-US.description",  "Appliances*"]
+			}		
+		]
+	}`
+
+	inputAstNode, err := GetAst(inputAstJson)
+	require.NoError(t, err)
+
+	expectedAstNode, err := GetAst(expectedAstJson)
+	require.NoError(t, err)
+
+	// Execute SUT
+	aliasedAst, err := ApplyAliases(inputAstNode, map[string]string{"^translations.([^.]+).name$": "locales.$1.name", "^translations.([^.]+).description$": "locales.$1.description"})
+
+	// Verify
+	require.NoError(t, err)
+	require.NotNil(t, aliasedAst)
+
+	require.Equal(t, expectedAstNode, aliasedAst)
+}

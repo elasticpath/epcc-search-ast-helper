@@ -52,6 +52,18 @@ func Example(ast *epsearchast_v3.AstNode) error {
 }
 ```
 
+#### Regular Expressions
+
+Aliases can also match Regular Expressions. Regular expresses are specified starting with the `^` and ending with `$`, as the key to the alias. The regular expression can include capture groups and use the same syntax as [Regexp.Expand()](https://pkg.go.dev/regexp#Regexp.Expand) to refer to the groups in the replacement (e.g., `$1`).
+
+**Note**: Regular expressions are an advanced use case, and care is needed as the validation involved is maybe more limited than expected. In general if more than one regular expression can a key, then it's not defined which one will be used. Some errors may only be caught at runtime.
+
+**Note**: Another catch concerns the fact that `.` is a wild card in regex and often a path seperator in JSON, so if you aren't careful you can allow or create inconsistent rules. In general, you should escape `.` in separators to `\.` and use `([^.]+)` to match a wild card part of the attribute name (or maybe even `[a-zA-Z0-9_-]+`) 
+
+**Incorrect**: `^attributes.locales..+.description$` - This would match `attributesXlocalesXXXdescription`, it would also match `attributes.locales.en-US.foo.bar.description`
+
+**Correct**: `^attributes\.locales\.([a-zA-Z0-9_-]+)\.description$`
+
 ### Validation
 
 This package provides a concise way to validate that the operators and fields specified in the header are permitted:
@@ -105,10 +117,13 @@ func Example(ast *epsearchast_v3.AstNode) error {
 }
 ```
 
+#### Regular Expressions
+
+Regular Expressions can also be set when using the Validation functions, the same rules apply as for aliases (see above). In general aliases are resolved prior to validation rules and operator checks.
+
 #### Limitations
 
 At present, you can only use string validators when validating a field, a simple pull request can be created to fix this issue if you need it.
-
 
 ### Generating Queries
 
