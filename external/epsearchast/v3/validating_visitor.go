@@ -137,6 +137,16 @@ func (v *validatingVisitor) VisitLike(astNode *AstNode) (bool, error) {
 	return false, nil
 }
 
+func (v *validatingVisitor) VisitText(astNode *AstNode) (bool, error) {
+	fieldName := astNode.Args[0]
+
+	if err := v.validateFieldAndValue("text", fieldName, astNode.Args[1]); err != nil {
+		return false, err
+	}
+
+	return false, nil
+}
+
 func (v *validatingVisitor) VisitIsNull(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 

@@ -260,6 +260,7 @@ func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBo
 ##### Limitations
 
 1. The Mongo Query builder is designed to produce filter compatible with the [filter argument in a Query](https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/read-operations/query-document/#specify-a-query), if a field in the API is a projection that requires computation via the aggregation pipeline, then we would likely need code changes to support that.
+2. The [$text](https://www.mongodb.com/docs/v7.0/reference/operator/query/text/#behavior) operator in Mongo has a number of limitations that make it unsuitable for arbitrary queries. In particular in mongo you can only search a collection, not fields for text data, and you must declare a text index. This means that any supplied field in the filter, is just dropped. It is recommended that when using `text` with Mongo, you only allow users to search `text(*,search)` , i.e., force them to use a wildcard as the field name.
 
 ##### Advanced Customization
 

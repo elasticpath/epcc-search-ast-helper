@@ -1,0 +1,41 @@
+version: '3.6'
+
+services:
+  mongo:
+    image: 'mongo:7.0'
+    hostname: mongo
+    ports:
+      - 47219:27017
+    healthcheck:
+      test: >
+        mongo --quiet "localhost/test" --eval 'quit(db.runCommand({ ping: 1
+        }).ok ? 0 : 2)'
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: epcc-search-ast-helper
+  postgres:
+    image: 'postgres:15.3-bullseye'
+    ports:
+      - '45432:5432'
+    hostname: postgres
+    environment:
+      POSTGRES_PASSWORD: 'password'
+    expose:
+      - "5432"
+  mongo-migrate:
+    image: migrate/migrate:v4.16.2
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command:  -path=/migrations/ -database "mongodb://root:root@mongo:27017/epcc-search-ast-helper?authSource=admin&tls=false" up
+
+    volumes:
+      - ./db/examples/migrations/mongo/:/migrations
+
+
+
+

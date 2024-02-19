@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-var binOps = []string{"le", "lt", "eq", "ge", "gt", "like"}
+var binOps = []string{"le", "lt", "eq", "ge", "gt", "like", "text"}
 
 var unaryOps = []string{"is_null"}
 
