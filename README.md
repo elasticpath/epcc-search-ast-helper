@@ -152,6 +152,9 @@ func Example(ast *epsearchast_v3.AstNode, query *gorm.DB, tenantBoundaryId strin
 1. The GORM builder does not support aliases (easy MR to fix).
 2. The GORM builder does not support joins (fixable in theory).
 3. There is no way currently to specify the type of a field for SQL, which means everything gets written as a string today (fixable with MR).
+4. The `text` operator implementation makes a number of assumptions, and you likely will want to override it's implementation:
+   * English is hard coded as the language.
+   * Postgres recommends using a [distinct tsvector column and using a stored generated column](https://www.postgresql.org/docs/current/textsearch-tables.html#TEXTSEARCH-TABLES-INDEX). The current implementation does not support this and, you would need to override the method to support it. A simple MR could be made to allow for the Gorm query builder to know if there is a tsvector column and use that.
 
 ##### Advanced Customization
 
