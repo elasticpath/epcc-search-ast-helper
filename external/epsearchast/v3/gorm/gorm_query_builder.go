@@ -87,7 +87,7 @@ func (g DefaultGormQueryBuilder) VisitLike(first, second string) (*SubQuery, err
 
 func (g DefaultGormQueryBuilder) VisitText(first, second string) (*SubQuery, error) {
 	return &SubQuery{
-		Clause: fmt.Sprintf("%s LIKE ?", first),
+		Clause: fmt.Sprintf("to_tsvector('english', %s) @@ to_tsquery('english', ?)", first),
 		Args:   []interface{}{second},
 	}, nil
 }
