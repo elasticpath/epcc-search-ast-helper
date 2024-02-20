@@ -152,6 +152,9 @@ func Example(ast *epsearchast_v3.AstNode, query *gorm.DB, tenantBoundaryId strin
 1. The GORM builder does not support aliases (easy MR to fix).
 2. The GORM builder does not support joins (fixable in theory).
 3. There is no way currently to specify the type of a field for SQL, which means everything gets written as a string today (fixable with MR).
+4. The `text` operator implementation makes a number of assumptions, and you likely will want to override it's implementation:
+   * English is hard coded as the language.
+   * Postgres recommends using a [distinct tsvector column and using a stored generated column](https://www.postgresql.org/docs/current/textsearch-tables.html#TEXTSEARCH-TABLES-INDEX). The current implementation does not support this and, you would need to override the method to support it. A simple MR could be made to allow for the Gorm query builder to know if there is a tsvector column and use that.
 
 ##### Advanced Customization
 
@@ -260,6 +263,7 @@ func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBo
 ##### Limitations
 
 1. The Mongo Query builder is designed to produce filter compatible with the [filter argument in a Query](https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/read-operations/query-document/#specify-a-query), if a field in the API is a projection that requires computation via the aggregation pipeline, then we would likely need code changes to support that.
+2. The [$text](https://www.mongodb.com/docs/v7.0/reference/operator/query/text/#behavior) operator in Mongo has a number of limitations that make it unsuitable for arbitrary queries. In particular in mongo you can only search a collection, not fields for text data, and you must declare a text index. This means that any supplied field in the filter, is just dropped. It is recommended that when using `text` with Mongo, you only allow users to search `text(*,search)` , i.e., force them to use a wildcard as the field name. It is also recommended that you use a [Wildcard](https://www.mongodb.com/docs/manual/core/indexes/index-types/index-text/create-wildcard-text-index/) index to avoid the need of having to remove and modify it over time.
 
 ##### Advanced Customization
 

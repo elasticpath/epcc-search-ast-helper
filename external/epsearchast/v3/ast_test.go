@@ -141,6 +141,23 @@ func TestValidObjectWithLikeReturnsAst(t *testing.T) {
 	require.NotNil(t, astNode)
 }
 
+func TestValidObjectWithTextReturnsAst(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "TEXT",
+	"args": [ "name",  "John"]
+}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.NoError(t, err)
+	require.NotNil(t, astNode)
+}
+
 func TestEqWithChildReturnsError(t *testing.T) {
 	// Fixture Setup
 	// language=JSON

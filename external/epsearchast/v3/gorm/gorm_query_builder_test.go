@@ -152,6 +152,33 @@ func TestLikeFilterWildCards(t *testing.T) {
 	t.Run("Wildcard Prefix & Suffix", genTest("*s*", "%s%"))
 	t.Run("No Wildcards", genTest("s", "s"))
 }
+
+func TestTextBinaryOperatorFiltersGeneratesCorrectWhereClause(t *testing.T) {
+
+	//Fixture Setup
+	//language=JSON
+	jsonTxt := fmt.Sprintf(`
+	{
+		"type": "%s",
+		"args": [ "name",  "computer"]
+	}`, "TEXT")
+
+	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	var qb epsearchast_v3.SemanticReducer[SubQuery] = DefaultGormQueryBuilder{}
+
+	// Execute SUT
+	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+	// Verification
+
+	require.NoError(t, err)
+
+	require.Equal(t, fmt.Sprintf(`to_tsvector('english', %s) @@ to_tsquery('english', ?)`, "name"), query.Clause)
+	require.Equal(t, []interface{}{"computer"}, query.Args)
+}
+
 func TestSimpleRecursiveStructure(t *testing.T) {
 	//Fixture Setup
 	//language=JSON

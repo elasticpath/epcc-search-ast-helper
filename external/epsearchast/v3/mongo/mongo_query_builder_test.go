@@ -66,6 +66,35 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 	}
 }
 
+func TestTextBinaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
+	//Fixture Setup
+	//language=JSON
+	astJson := fmt.Sprintf(`
+		{
+		"type": "%s",
+		"args": [ "*",  "computer"]
+	}`, "TEXT")
+
+	astNode, err := epsearchast_v3.GetAst(astJson)
+
+	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+
+	expectedSearchJson := `{"$text":{"$search":"computer"}}`
+
+	// Execute SUT
+	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+	// Verification
+
+	require.NoError(t, err)
+
+	doc, err := bson.MarshalExtJSON(queryObj, true, false)
+	require.NoError(t, err)
+
+	require.Equal(t, expectedSearchJson, string(doc))
+
+}
+
 func TestLikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 
 	//Fixture Setup
