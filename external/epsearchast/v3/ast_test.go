@@ -2,6 +2,7 @@ package epsearchast_v3
 
 import (
 	"github.com/stretchr/testify/require"
+	"net/url"
 	"testing"
 )
 
@@ -298,5 +299,49 @@ func TestAndReturnsErrorWithAnInvalidChild(t *testing.T) {
 	// Verify
 	require.Error(t, err)
 	require.ErrorContains(t, err, "unknown operator FOO")
+	require.Nil(t, astNode)
+}
+
+func TestValidObjectThatIsUrlEncodedReturnsAst(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "EQ",
+	"args": [ "status",  "paid"]
+}
+`
+	// Execute SUT
+	astNode, err := GetAst(url.QueryEscape(jsonTxt))
+
+	// Verify
+	require.NoError(t, err)
+	require.NotNil(t, astNode)
+}
+
+func TestInValidObjectThatIsUrlEncodedReturnsError(t *testing.T) {
+	// Fixture Setup
+	jsonTxt := `
+{
+	"type": "EQ",
+	"args": [ "status",  "paid"]
+`
+	// Execute SUT
+	astNode, err := GetAst(url.QueryEscape(jsonTxt))
+
+	// Verify
+	require.Error(t, err)
+	require.ErrorContains(t, err, "unexpected end of JSON input")
+	require.Nil(t, astNode)
+}
+
+func TestInValidUrlEncodingReturnsError(t *testing.T) {
+	// Fixture Setup
+	// Execute SUT
+	astNode, err := GetAst("%4")
+
+	// Verify
+	require.Error(t, err)
+	require.ErrorContains(t, err, "invalid URL escape")
 	require.Nil(t, astNode)
 }

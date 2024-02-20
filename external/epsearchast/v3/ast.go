@@ -4,6 +4,7 @@ package epsearchast_v3
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -21,8 +22,21 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 	err := json.Unmarshal([]byte(jsonTxt), astNode)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not parse filter:%w", err)
-	} else if err := astNode.checkValid(); err != nil {
+		// url decode jsonTxt
+		decoded, urlDecodingError := url.QueryUnescape(jsonTxt)
+
+		if urlDecodingError == nil {
+			urlDecodingError = json.Unmarshal([]byte(decoded), astNode)
+
+			if urlDecodingError != nil {
+				return nil, fmt.Errorf("could not parse filter:%w, error parsing decoded filter: %v", err, urlDecodingError)
+			}
+		} else {
+			return nil, fmt.Errorf("could not parse filter:%w, error decoding: %v", err, urlDecodingError)
+		}
+	}
+
+	if err := astNode.checkValid(); err != nil {
 		return nil, fmt.Errorf("error validating filter:%w", err)
 	} else {
 		return astNode, nil
