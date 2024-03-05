@@ -2,10 +2,11 @@ package epsearchast_v3_els
 
 import (
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"strings"
 )
 
 type DefaultElsQueryBuilder struct {
-	OpTypeToFieldNames map[string]OperatorTypeToMultiFieldName
+	OpTypeToFieldNames map[string]*OperatorTypeToMultiFieldName
 }
 
 type JsonObject map[string]interface{}
@@ -56,6 +57,14 @@ func (d DefaultElsQueryBuilder) VisitEq(first, second string) (*JsonObject, erro
 	}), nil
 }
 
+func (d DefaultElsQueryBuilder) VisitText(first, second string) (*JsonObject, error) {
+	return (*JsonObject)(&map[string]interface{}{
+		"match_phrase": map[string]interface{}{
+			d.getFieldMapping(first).Text: second,
+		},
+	}), nil
+}
+
 // Useful doc: https://www.elastic.co/guide/en/elasticsearch/reference/7.17/query-dsl-range-query.html
 
 func (d DefaultElsQueryBuilder) VisitLe(first, second string) (*JsonObject, error) {
@@ -101,7 +110,7 @@ func (d DefaultElsQueryBuilder) VisitGt(first, second string) (*JsonObject, erro
 func (d DefaultElsQueryBuilder) VisitLike(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"wildcard": map[string]interface{}{
-			d.getFieldMapping(first).Wildcard: second,
+			d.getFieldMapping(first).Wildcard: d.EscapeWildcardString(second),
 		},
 	}), nil
 }
@@ -122,7 +131,7 @@ func (d DefaultElsQueryBuilder) VisitIsNull(first string) (*JsonObject, error) {
 func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFieldName {
 	var o *OperatorTypeToMultiFieldName
 
-	if d.OpTypeToFieldNames == nil {
+	if d.OpTypeToFieldNames[f] == nil {
 		o = &OperatorTypeToMultiFieldName{
 			Equality:   f,
 			Relational: f,
@@ -163,6 +172,21 @@ func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFi
 	}
 
 	return o
+}
+
+func (d DefaultElsQueryBuilder) EscapeWildcardString(s string) string {
+	str := strings.ReplaceAll(s, "?", `\?`)
+	str = strings.ReplaceAll(str, "*", `\*`)
+
+	if strings.HasPrefix(str, `\*`) {
+		str = str[1:]
+	}
+
+	if strings.HasSuffix(str, `\*`) {
+		str = str[:len(str)-2] + "*"
+	}
+
+	return str
 }
 
 // Generate an implementation of SemanticReducer[JsonObject] for the Elasticsearch query builder.
