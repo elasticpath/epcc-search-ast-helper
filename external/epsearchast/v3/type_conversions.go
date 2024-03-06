@@ -14,9 +14,24 @@ const (
 	Float64
 )
 
+func (f FieldType) String() string {
+	switch f {
+	case String:
+		return "string"
+	case Int64:
+		return "int64"
+	case Boolean:
+		return "bool"
+	case Float64:
+		return "float64"
+	default:
+		return "unknown"
+	}
+}
+
 func Convert(t FieldType, v string) (interface{}, error) {
 
-	err := IsValid(t, v)
+	err := ValidateValue(t, v)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +68,7 @@ func ConvertAll(t FieldType, vAll ...string) ([]interface{}, error) {
 	return newVAll, nil
 }
 
-func IsValid(t FieldType, v string) error {
+func ValidateValue(t FieldType, v string) error {
 
 	switch t {
 	case String:
@@ -82,9 +97,9 @@ func IsValid(t FieldType, v string) error {
 	}
 }
 
-func AreAllValid(t FieldType, v ...string) error {
+func ValidateAllValues(t FieldType, v ...string) error {
 	for idx, value := range v {
-		err := IsValid(t, value)
+		err := ValidateValue(t, value)
 		if err != nil {
 			return fmt.Errorf("could not validate position %d, the value [%s] could not be converted: %w", idx, value, err)
 		}

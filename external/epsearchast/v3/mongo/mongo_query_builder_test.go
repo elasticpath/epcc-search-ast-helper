@@ -66,7 +66,7 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 	}
 }
 
-func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithTypeConversion(t *testing.T) {
+func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithInt64TypeConversion(t *testing.T) {
 	for _, binOp := range binOps {
 		t.Run(fmt.Sprintf("%s", binOp.AstOp), func(t *testing.T) {
 			//Fixture Setup
@@ -99,6 +99,99 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithTypeConversion(t *
 	}
 }
 
+func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithFloat64TypeConversion(t *testing.T) {
+	for _, binOp := range binOps {
+		t.Run(fmt.Sprintf("%s", binOp.AstOp), func(t *testing.T) {
+			//Fixture Setup
+			//language=JSON
+			astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "amount",  "5"]
+			}`, binOp.AstOp)
+
+			astNode, err := epsearchast_v3.GetAst(astJson)
+
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Float64}}
+
+			// https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/#mongodb-bsontype-Int64
+			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":{"$numberDouble":"5.0"}}}`, binOp.MongoOp)
+
+			// Execute SUT
+			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+			// Verification
+
+			require.NoError(t, err)
+
+			doc, err := bson.MarshalExtJSON(queryObj, true, false)
+			require.NoError(t, err)
+
+			require.Equal(t, expectedSearchJson, string(doc))
+		})
+	}
+}
+
+func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithBooleanTypeConversion(t *testing.T) {
+	for _, binOp := range binOps {
+		t.Run(fmt.Sprintf("%s", binOp.AstOp), func(t *testing.T) {
+			//Fixture Setup
+			//language=JSON
+			astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "paid",  "true"]
+			}`, binOp.AstOp)
+
+			astNode, err := epsearchast_v3.GetAst(astJson)
+
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"paid": epsearchast_v3.Boolean}}
+
+			// https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/#mongodb-bsontype-Int64
+			expectedSearchJson := fmt.Sprintf(`{"paid":{"%s":true}}`, binOp.MongoOp)
+
+			// Execute SUT
+			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+			// Verification
+
+			require.NoError(t, err)
+
+			doc, err := bson.MarshalExtJSON(queryObj, true, false)
+			require.NoError(t, err)
+
+			require.Equal(t, expectedSearchJson, string(doc))
+		})
+	}
+}
+
+func TestSimpleBinaryOperatorFiltersGeneratesErrorWhenValueCantBeConverted(t *testing.T) {
+	for _, fieldType := range []epsearchast_v3.FieldType{epsearchast_v3.Int64, epsearchast_v3.Float64, epsearchast_v3.Boolean} {
+		for _, binOp := range binOps {
+			t.Run(fmt.Sprintf("%s %s", fieldType, binOp.AstOp), func(t *testing.T) {
+				//Fixture Setup
+				//language=JSON
+				astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "foo",  "Hello World!"]
+			}`, binOp.AstOp)
+
+				astNode, err := epsearchast_v3.GetAst(astJson)
+
+				var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"foo": fieldType}}
+
+				// Execute SUT
+				_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+				// Verification
+				errStr := fmt.Sprintf("invalid value for %s", fieldType)
+				require.ErrorContains(t, err, errStr)
+			})
+		}
+	}
+}
+
 func TestTextBinaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 	//Fixture Setup
 	//language=JSON
@@ -126,6 +219,51 @@ func TestTextBinaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 
 	require.Equal(t, expectedSearchJson, string(doc))
 
+}
+
+func TestTextBinaryOperatorFiltersGeneratesErrorWhenNotAStringType(t *testing.T) {
+	//Fixture Setup
+	//language=JSON
+	astJson := fmt.Sprintf(`
+		{
+		"type": "%s",
+		"args": [ "*",  "computer"]
+	}`, "TEXT")
+
+	astNode, err := epsearchast_v3.GetAst(astJson)
+
+	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{
+		"*": epsearchast_v3.Int64,
+	}}
+
+	// Execute SUT
+	_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+	// Verification
+	require.ErrorContains(t, err, "text() operator is only supported for string fields")
+	require.ErrorContains(t, err, "[*] is not a string")
+}
+func TestLikeBinaryOperatorFiltersGeneratesErrorWhenNotAStringType(t *testing.T) {
+	//Fixture Setup
+	//language=JSON
+	astJson := fmt.Sprintf(`
+		{
+		"type": "%s",
+		"args": [ "foo",  "52"]
+	}`, "LIKE")
+
+	astNode, err := epsearchast_v3.GetAst(astJson)
+
+	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{
+		"foo": epsearchast_v3.Int64,
+	}}
+
+	// Execute SUT
+	_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+	// Verification
+	require.ErrorContains(t, err, "like() operator is only supported for string fields")
+	require.ErrorContains(t, err, "[foo] is not a string")
 }
 
 func TestLikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
@@ -223,6 +361,138 @@ func TestSimpleVariableOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, expectedSearchJson, string(doc))
+		})
+	}
+}
+
+func TestSimpleVariableOperatorFiltersGeneratesCorrectFilterWithInt64(t *testing.T) {
+	for _, varOp := range varOps {
+		t.Run(fmt.Sprintf("%s", varOp.AstOp), func(t *testing.T) {
+			//Fixture Setup
+			//language=JSON
+			astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "amount",  "5", "6", "7"]
+			}`, varOp.AstOp)
+
+			astNode, err := epsearchast_v3.GetAst(astJson)
+
+			require.NoError(t, err)
+
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Int64}}
+
+			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":[{"$numberLong":"5"},{"$numberLong":"6"},{"$numberLong":"7"}]}}`, varOp.MongoOp)
+
+			// Execute SUT
+			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+			// Verification
+
+			require.NoError(t, err)
+
+			doc, err := bson.MarshalExtJSON(queryObj, true, false)
+			require.NoError(t, err)
+
+			require.Equal(t, expectedSearchJson, string(doc))
+		})
+	}
+}
+
+func TestSimpleVariableOperatorFiltersGeneratesCorrectFilterWithFloat64(t *testing.T) {
+	for _, varOp := range varOps {
+		t.Run(fmt.Sprintf("%s", varOp.AstOp), func(t *testing.T) {
+			//Fixture Setup
+			//language=JSON
+			astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "amount",  "5", "6", "7"]
+			}`, varOp.AstOp)
+
+			astNode, err := epsearchast_v3.GetAst(astJson)
+
+			require.NoError(t, err)
+
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Float64}}
+
+			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":[{"$numberDouble":"5.0"},{"$numberDouble":"6.0"},{"$numberDouble":"7.0"}]}}`, varOp.MongoOp)
+
+			// Execute SUT
+			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+			// Verification
+
+			require.NoError(t, err)
+
+			doc, err := bson.MarshalExtJSON(queryObj, true, false)
+			require.NoError(t, err)
+
+			require.Equal(t, expectedSearchJson, string(doc))
+		})
+	}
+}
+
+func TestSimpleVariableOperatorFiltersGeneratesCorrectFilterWithBoolean(t *testing.T) {
+	for _, varOp := range varOps {
+		t.Run(fmt.Sprintf("%s", varOp.AstOp), func(t *testing.T) {
+			// Yes this test is kind of silly the query is stupid,
+			// but we should support it.
+
+			//Fixture Setup
+			//language=JSON
+			astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "paid",  "true", "false", "true", "true", "false"]
+			}`, varOp.AstOp)
+
+			astNode, err := epsearchast_v3.GetAst(astJson)
+
+			require.NoError(t, err)
+
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"paid": epsearchast_v3.Boolean}}
+
+			expectedSearchJson := fmt.Sprintf(`{"paid":{"%s":[true,false,true,true,false]}}`, varOp.MongoOp)
+
+			// Execute SUT
+			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+			// Verification
+
+			require.NoError(t, err)
+
+			doc, err := bson.MarshalExtJSON(queryObj, true, false)
+			require.NoError(t, err)
+
+			require.Equal(t, expectedSearchJson, string(doc))
+		})
+	}
+}
+
+func TestSimpleVariableOperatorFiltersGeneratesErrorIfInvalidValue(t *testing.T) {
+	for _, varOp := range varOps {
+		t.Run(fmt.Sprintf("%s", varOp.AstOp), func(t *testing.T) {
+			//Fixture Setup
+			//language=JSON
+			astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "amount",  "5", "Nothing!", "7"]
+			}`, varOp.AstOp)
+
+			astNode, err := epsearchast_v3.GetAst(astJson)
+
+			require.NoError(t, err)
+
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Int64}}
+
+			// Execute SUT
+			_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+			// Verification
+
+			require.NoError(t, err)
 		})
 	}
 }

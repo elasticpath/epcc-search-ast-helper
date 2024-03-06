@@ -229,10 +229,10 @@ func (v *validatingVisitor) validateFieldAndValue(operator, requestField string,
 	}
 
 	for _, value := range values {
-		err := IsValid(fieldType, value)
+		err := ValidateValue(fieldType, value)
 
 		if err != nil {
-			return fmt.Errorf("could not validate [%s], the value [%s] could not be converted: %w", requestField, value, err)
+			return fmt.Errorf("could not validate [%s], the value [%s] could not be converted to %s: %w", requestField, value, fieldType, err)
 		}
 	}
 
