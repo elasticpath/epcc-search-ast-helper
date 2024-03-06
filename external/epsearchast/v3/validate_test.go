@@ -820,3 +820,243 @@ func TestValidateAstFieldAndOperatorsWithAliasesAndValueValidationDetectsAnError
 	require.ErrorContains(t, err, "value []")
 	require.ErrorContains(t, err, "requirement [min]")
 }
+
+func TestValidateAstWithTypeValidationReturnsNoErrorWhenRequestIsValidAsString(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "status",  "paid"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string{"status": {"eq"}}, map[string]FieldType{"status": String})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstWithTypeValidationReturnsNoErrorWhenRequestIsValidAsBoolean(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "paid",  "true"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string{"paid": {"eq"}}, map[string]FieldType{"paid": Boolean})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstWithTypeValidationReturnsErrorWhenRequestIsNotValidAsBoolean(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "paid",  "Yes Sir!"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string{"paid": {"eq"}}, map[string]FieldType{"paid": Boolean})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [paid]")
+	require.ErrorContains(t, err, "the value [Yes Sir!]")
+	require.ErrorContains(t, err, "invalid value for boolean")
+}
+
+func TestValidateAstWithTypeValidationReturnsNoErrorWhenRequestIsValidAsInt64(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "amount",  "16"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]FieldType{"amount": Int64})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstWithTypeValidationReturnsErrorWhenRequestIsNotValidAsInt64(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "amount",  "Nothing"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]FieldType{"amount": Int64})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [amount]")
+	require.ErrorContains(t, err, "the value [Nothing]")
+	require.ErrorContains(t, err, "invalid value for int64")
+}
+
+func TestValidateAstWithTypeValidationReturnsNoErrorWhenRequestIsValidAsInt64AndPassesValidator(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "amount",  "16"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]string{}, map[string]string{"amount": "gt=12"}, map[string]FieldType{"amount": Int64})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstWithTypeValidationReturnsErrorWhenRequestIsAnInt64ButFailsValidator(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "amount",  "4572"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]string{}, map[string]string{"amount": "lt=128"}, map[string]FieldType{"amount": Int64})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [amount]")
+	require.ErrorContains(t, err, "with [eq]")
+	require.ErrorContains(t, err, "value [4572] does not satisfy requirement [lt]")
+}
+
+func TestValidateAstWithTypeValidationReturnsErrorWhenRequestIsNotValidAsFloat64(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "amount",  "Nothing"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]FieldType{"amount": Float64})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [amount]")
+	require.ErrorContains(t, err, "the value [Nothing]")
+	require.ErrorContains(t, err, "invalid value for float64")
+}
+
+func TestValidateAstWithTypeValidationReturnsNoErrorWhenRequestIsValidAsFloat64AndIntegerAndPassesValidator(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "amount",  "16"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]string{}, map[string]string{"amount": "gt=12"}, map[string]FieldType{"amount": Float64})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstWithTypeValidationReturnsNoErrorWhenRequestIsValidAsFloat64AndNonIntegerAndPassesValidator(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "amount",  "16.57"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]string{}, map[string]string{"amount": "gt=12"}, map[string]FieldType{"amount": Float64})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstWithTypeValidationReturnsErrorWhenRequestIsAnFloat64AndIntegerButFailsValidator(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "amount",  "4572"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]string{}, map[string]string{"amount": "lt=128"}, map[string]FieldType{"amount": Float64})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [amount]")
+	require.ErrorContains(t, err, "with [eq]")
+	require.ErrorContains(t, err, "value [4572] does not satisfy requirement [lt]")
+}
+
+func TestValidateAstWithTypeValidationReturnsErrorWhenRequestIsAFloat64AndNonIntegerButFailsValidator(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "amount",  "457.42"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]string{}, map[string]string{"amount": "lt=128"}, map[string]FieldType{"amount": Float64})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [amount]")
+	require.ErrorContains(t, err, "with [eq]")
+	require.ErrorContains(t, err, "value [457.42] does not satisfy requirement [lt]")
+}

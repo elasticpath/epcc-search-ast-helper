@@ -66,6 +66,39 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 	}
 }
 
+func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithTypeConversion(t *testing.T) {
+	for _, binOp := range binOps {
+		t.Run(fmt.Sprintf("%s", binOp.AstOp), func(t *testing.T) {
+			//Fixture Setup
+			//language=JSON
+			astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "amount",  "5"]
+			}`, binOp.AstOp)
+
+			astNode, err := epsearchast_v3.GetAst(astJson)
+
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Int64}}
+
+			// https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/#mongodb-bsontype-Int64
+			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":{"$numberLong":"5"}}}`, binOp.MongoOp)
+
+			// Execute SUT
+			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+			// Verification
+
+			require.NoError(t, err)
+
+			doc, err := bson.MarshalExtJSON(queryObj, true, false)
+			require.NoError(t, err)
+
+			require.Equal(t, expectedSearchJson, string(doc))
+		})
+	}
+}
+
 func TestTextBinaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 	//Fixture Setup
 	//language=JSON
