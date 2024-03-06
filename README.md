@@ -66,7 +66,7 @@ Aliases can also match Regular Expressions. Regular expresses are specified star
 
 ### Validation
 
-This package provides a concise way to validate that the operators and fields specified in the header are permitted:
+This package provides a concise way to validate that the operators and fields specified in the header are permitted, as well as contrain the allowed values to specific types such as Boolean, Int64, and Float64:
 
 ```go
 package example

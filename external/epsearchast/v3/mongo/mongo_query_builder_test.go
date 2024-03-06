@@ -471,29 +471,35 @@ func TestSimpleVariableOperatorFiltersGeneratesCorrectFilterWithBoolean(t *testi
 }
 
 func TestSimpleVariableOperatorFiltersGeneratesErrorIfInvalidValue(t *testing.T) {
-	for _, varOp := range varOps {
-		t.Run(fmt.Sprintf("%s", varOp.AstOp), func(t *testing.T) {
-			//Fixture Setup
-			//language=JSON
-			astJson := fmt.Sprintf(`
+	for _, fieldType := range []epsearchast_v3.FieldType{epsearchast_v3.Int64, epsearchast_v3.Float64, epsearchast_v3.Boolean} {
+		for _, varOp := range varOps {
+			t.Run(fmt.Sprintf("%s %s", fieldType, varOp.AstOp), func(t *testing.T) {
+				// Yes also this test case is kind of silly, for booleans.
+
+				//Fixture Setup
+				//language=JSON
+				astJson := fmt.Sprintf(`
 				{
 				"type": "%s",
-				"args": [ "amount",  "5", "Nothing!", "7"]
+				"args": [ "amount", "Nothing!", "5", "7"]
 			}`, varOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+				astNode, err := epsearchast_v3.GetAst(astJson)
 
-			require.NoError(t, err)
+				require.NoError(t, err)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Int64}}
+				var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": fieldType}}
 
-			// Execute SUT
-			_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+				// Execute SUT
+				_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
 
-			// Verification
+				// Verification
 
-			require.NoError(t, err)
-		})
+				require.ErrorContains(t, err, "could not validate position")
+				require.ErrorContains(t, err, "Nothing!")
+				require.ErrorContains(t, err, fieldType.String())
+			})
+		}
 	}
 }
 
