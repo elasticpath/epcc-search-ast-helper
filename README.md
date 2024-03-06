@@ -290,6 +290,52 @@ func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBo
 
 ##### Advanced Customization
 
+
+###### Field Types
+
+In some cases, depending on how data is stored in Mongo you might need to instruct the query builder what the type of the field is. The following example shows how to do that in this case we want to specify that `with_tax` is a number.
+
+```go
+package example
+
+import (
+	"context"
+	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	epsearchast_v3_mongo "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"strings"
+)
+
+func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBoundaryQuery *bson.M)  (*mongo.Cursor, error) {
+	// Not Shown: Validation
+
+	// Create query builder
+	var qb epsearchast_v3.SemanticReducer[bson.D] = &epsearchast_v3_mongo.DefaultMongoQueryBuilder{
+		FieldTypes: map[string]epsearchast_v3_mongo.FieldType{"with_tax": epsearchast_v3_mongo.Int64},
+    }
+
+	// Create Query Object
+	queryObj, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+
+	if err != nil {
+		return nil, err
+	}
+
+	mongoQuery := bson.D{
+		{"$and",
+			bson.A{
+				tenantBoundaryQuery,
+				queryObj,
+			},
+		}}
+	
+	return collection.Find(context.TODO(), mongoQuery)
+}
+```
+
+###### Custom Queries
+
 In some cases you may want to change the behaviour of the generated Mongo, the following example shows how to do that in this case we want to change emails because
 we store them only in lower case in the db.
 
@@ -342,6 +388,7 @@ func (l *LowerCaseEmail) VisitEq(first, second string) (*bson.D, error) {
 }
 ```
 
+You can of course use the `FieldTypes` and `CustomQueryBuilder` together.
 
 ### FAQ
 
