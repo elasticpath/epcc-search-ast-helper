@@ -68,7 +68,7 @@ func NewValidatingVisitor(allowedOps map[string][]string, aliases map[string]str
 		}
 	}
 
-	for k, _ := range allowedOps {
+	for k := range allowedOps {
 		if _, ok := ftMap[k]; !ok {
 			ftMap[k] = String
 		}
