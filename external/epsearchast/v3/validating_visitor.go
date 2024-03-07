@@ -13,6 +13,7 @@ type validatingVisitor struct {
 	AllowedOperators map[string][]string
 	ColumnAliases    map[string]string
 	ValueValidators  map[string]string
+	FieldTypes       map[string]FieldType
 }
 
 // use a single instance of Validate, it caches struct info
@@ -25,7 +26,7 @@ func init() {
 var _ AstVisitor = (*validatingVisitor)(nil)
 
 // Returns a new validatingVisitor though you should use the helper functions (e.g., [ValidateAstFieldAndOperators]) instead of this method
-func NewValidatingVisitor(allowedOps map[string][]string, aliases map[string]string, valueValidators map[string]string) (AstVisitor, error) {
+func NewValidatingVisitor(allowedOps map[string][]string, aliases map[string]string, valueValidators map[string]string, fieldTypeMap map[string]FieldType) (AstVisitor, error) {
 
 	for k, v := range aliases {
 		if len(k) > 0 && k[0] == '^' && k[len(k)-1] == '$' {
@@ -57,10 +58,27 @@ func NewValidatingVisitor(allowedOps map[string][]string, aliases map[string]str
 		}
 	}
 
+	ftMap := map[string]FieldType{}
+
+	for k, v := range fieldTypeMap {
+		ftMap[k] = v
+
+		if allowedOps[k] == nil {
+			return nil, fmt.Errorf("field type map for field `%s` is specified  but this is an unknown field", k)
+		}
+	}
+
+	for k := range allowedOps {
+		if _, ok := ftMap[k]; !ok {
+			ftMap[k] = String
+		}
+	}
+
 	return &validatingVisitor{
 		AllowedOperators: allowedOps,
 		ColumnAliases:    aliases,
 		ValueValidators:  valueValidators,
+		FieldTypes:       ftMap,
 	}, nil
 }
 
@@ -203,18 +221,35 @@ func (v *validatingVisitor) validateFieldAndValue(operator, requestField string,
 
 	canonicalField := v.resolveFieldName(requestField)
 
+	fieldType, ok := findMatchInMap(canonicalField, v.FieldTypes)
+
+	if !ok {
+		// This is almost certainly a bug, we should always get a string back if something wasn't set.
+		return fmt.Errorf("unknown field type for field [%s]", requestField)
+	}
+
+	for _, value := range values {
+		err := ValidateValue(fieldType, value)
+
+		if err != nil {
+			return fmt.Errorf("could not validate [%s], the value [%s] could not be converted to %s: %w", requestField, value, fieldType, err)
+		}
+	}
+
 	valueValidatorsForField, ok := findMatchInMap(canonicalField, v.ValueValidators)
 
 	if ok {
 		for _, value := range values {
-			err := validate.Var(value, valueValidatorsForField)
+
+			vt, _ := Convert(fieldType, value)
+			err := validate.Var(vt, valueValidatorsForField)
 
 			if err != nil {
 
 				if verrors, ok := err.(validator.ValidationErrors); ok {
 					if len(verrors) > 0 {
 						verror := verrors[0]
-						return fmt.Errorf("could not validate [%s] with [%s], value [%s] does not satisify requirement [%s]", requestField, operator, verror.Value(), verror.Tag())
+						return fmt.Errorf("could not validate [%s] with [%s], value [%v] does not satisfy requirement [%s]", requestField, operator, verror.Value(), verror.Tag())
 					}
 				}
 
