@@ -390,6 +390,42 @@ func (l *LowerCaseEmail) VisitEq(first, second string) (*bson.D, error) {
 
 You can of course use the `FieldTypes` and `CustomQueryBuilder` together.
 
+#### Elastic Search (Open Search)
+
+The following examples shows how to generate a Elastic Search Query with this library.
+
+```go
+package example
+import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import epsearchast_v3_els "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/els"
+
+func Example(ast *epsearchast_v3.AstNode, tenantBoundaryId string)  (string, error) {
+   // Not Shown: Validation
+
+   // Create query builder
+   var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.LowerCaseEmail{}
+
+   // Create Query Object
+   queryObj, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+
+   if err != nil {
+      return nil, err
+   }
+
+   ...
+}
+
+type LowerCaseEmail struct {
+   epsearchast_v3_els.DefaultElsQueryBuilder
+}
+
+func (l *LowerCaseEmail) VisitEq(first, second string) (*bson.D, error) {
+   ....
+}
+
+```
+
+
 ### FAQ
 
 #### Design
