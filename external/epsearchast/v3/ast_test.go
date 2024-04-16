@@ -49,7 +49,7 @@ func TestInvalidObjectReturnsError(t *testing.T) {
 
 	// Verify
 	require.Error(t, err)
-	require.EqualError(t, err, "error validating filter: unknown operator FOO")
+	require.EqualError(t, err, "error validating filter: unsupported operator foo()")
 	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
@@ -280,7 +280,7 @@ func TestInvalidOperatorReturnsError(t *testing.T) {
 
 	// Verify
 	require.Error(t, err)
-	require.ErrorContains(t, err, "unknown operator FOO")
+	require.ErrorContains(t, err, "unsupported operator foo()")
 	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
@@ -351,7 +351,7 @@ func TestAndReturnsErrorWithAnInvalidChild(t *testing.T) {
 
 	// Verify
 	require.Error(t, err)
-	require.ErrorContains(t, err, "unknown operator FOO")
+	require.ErrorContains(t, err, "unsupported operator foo()")
 	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
