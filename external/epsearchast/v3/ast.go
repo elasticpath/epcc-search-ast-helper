@@ -54,15 +54,15 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 			urlDecodingError = json.Unmarshal([]byte(decoded), astNode)
 
 			if urlDecodingError != nil {
-				return nil, fmt.Errorf("could not parse filter:%w, error parsing decoded filter: %v", err, urlDecodingError)
+				return nil, NewParsingErr(fmt.Errorf("could not parse filter:%w, error parsing decoded filter: %v", err, urlDecodingError))
 			}
 		} else {
-			return nil, fmt.Errorf("could not parse filter:%w, error decoding: %v", err, urlDecodingError)
+			return nil, NewParsingErr(fmt.Errorf("could not parse filter:%w, error decoding: %v", err, urlDecodingError))
 		}
 	}
 
 	if err := astNode.checkValid(); err != nil {
-		return nil, fmt.Errorf("error validating filter (%s) :%w", astNode.AsFilter(), err)
+		return nil, NewValidationErr(fmt.Errorf("error validating filter (%s) :%w", astNode.AsFilter(), err))
 	} else {
 		return astNode, nil
 	}
