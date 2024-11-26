@@ -15,6 +15,31 @@ type AstNode struct {
 	Args     []string   `json:"args"`
 }
 
+func (a *AstNode) AsFilter() string {
+	sb := strings.Builder{}
+	switch a.NodeType {
+	case "AND":
+		for _, c := range a.Children {
+			sb.WriteString(c.AsFilter())
+			sb.WriteString(":")
+		}
+	default:
+		sb.WriteString(strings.ToLower(a.NodeType))
+		sb.WriteString("(")
+		for i, arg := range a.Args {
+			sb.WriteRune('"')
+			sb.WriteString(strings.Replace(arg, `"`, `\"`, -1))
+			sb.WriteRune('"')
+			if i < len(a.Args)-1 {
+				sb.WriteString(",")
+			}
+		}
+		sb.WriteString(")")
+	}
+
+	return sb.String()
+}
+
 // GetAst converts the JSON to an AstNode if possible, returning an error otherwise.
 func GetAst(jsonTxt string) (*AstNode, error) {
 	astNode := &AstNode{}
@@ -37,7 +62,7 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 	}
 
 	if err := astNode.checkValid(); err != nil {
-		return nil, fmt.Errorf("error validating filter:%w", err)
+		return nil, fmt.Errorf("error validating filter (%s) :%w", astNode.AsFilter(), err)
 	} else {
 		return astNode, nil
 	}
@@ -61,7 +86,8 @@ type AstVisitor interface {
 	VisitGe(astNode *AstNode) (bool, error)
 	VisitGt(astNode *AstNode) (bool, error)
 	VisitLike(astNode *AstNode) (bool, error)
-
+	VisitILike(astNode *AstNode) (bool, error)
+	VisitContains(astNode *AstNode) (bool, error)
 	VisitText(astNode *AstNode) (bool, error)
 	VisitIsNull(astNode *AstNode) (bool, error)
 }
@@ -105,6 +131,10 @@ func (a *AstNode) accept(v AstVisitor) error {
 		descend, err = v.VisitGe(a)
 	case "LIKE":
 		descend, err = v.VisitLike(a)
+	case "ILIKE":
+		descend, err = v.VisitLike(a)
+	case "CONTAINS":
+		descend, err = v.VisitContains(a)
 	case "TEXT":
 		descend, err = v.VisitText(a)
 	case "IS_NULL":
@@ -158,7 +188,7 @@ func (a *AstNode) checkValid() error {
 		if len(a.Args) < 2 {
 			return fmt.Errorf("insufficient number of arguments to %s", strings.ToLower(a.NodeType))
 		}
-	case "EQ", "LE", "LT", "GT", "GE", "LIKE", "TEXT":
+	case "EQ", "LE", "LT", "GT", "GE", "LIKE", "ILIKE", "CONTAINS", "TEXT":
 		if len(a.Children) > 0 {
 			return fmt.Errorf("operator %v should not have any children", strings.ToLower(a.NodeType))
 		}

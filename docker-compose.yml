@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:15.0-bullseye
+    ports:
+      - '20001:5432'
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+  mongo:
+    image: mongo:7.0
+    ports:
+      - '20002:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+  elasticsearch:
+    image: elasticsearch:7.17.25
+    ports:
+      - '20003:9200'
+

@@ -243,6 +243,7 @@ func TestTextBinaryOperatorFiltersGeneratesErrorWhenNotAStringType(t *testing.T)
 	require.ErrorContains(t, err, "text() operator is only supported for string fields")
 	require.ErrorContains(t, err, "[*] is not a string")
 }
+
 func TestLikeBinaryOperatorFiltersGeneratesErrorWhenNotAStringType(t *testing.T) {
 	//Fixture Setup
 	//language=JSON
@@ -266,10 +267,33 @@ func TestLikeBinaryOperatorFiltersGeneratesErrorWhenNotAStringType(t *testing.T)
 	require.ErrorContains(t, err, "[foo] is not a string")
 }
 
-func TestLikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
+func TestILikeBinaryOperatorFiltersGeneratesErrorWhenNotAStringType(t *testing.T) {
+	//Fixture Setup
+	//language=JSON
+	astJson := fmt.Sprintf(`
+		{
+		"type": "%s",
+		"args": [ "foo",  "52"]
+	}`, "ILIKE")
+
+	astNode, err := epsearchast_v3.GetAst(astJson)
+
+	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{
+		"foo": epsearchast_v3.Int64,
+	}}
+
+	// Execute SUT
+	_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+	// Verification
+	require.ErrorContains(t, err, "like() operator is only supported for string fields")
+	require.ErrorContains(t, err, "[foo] is not a string")
+}
+
+func TestILikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 
 	//Fixture Setup
-	astOp := "LIKE"
+	astOp := "ILIKE"
 	mongoOp := "$regex"
 	//language=JSON
 	astJson := fmt.Sprintf(`
@@ -283,7 +307,7 @@ func TestLikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 
 	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
-	expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":"^5$"}}`, mongoOp)
+	expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":"^5$","$options":"i"}}`, mongoOp)
 
 	// Execute SUT
 	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
