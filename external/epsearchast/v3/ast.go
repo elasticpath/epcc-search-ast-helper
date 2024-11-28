@@ -15,6 +15,31 @@ type AstNode struct {
 	Args     []string   `json:"args"`
 }
 
+func (a *AstNode) AsFilter() string {
+	sb := strings.Builder{}
+	switch a.NodeType {
+	case "AND":
+		for _, c := range a.Children {
+			sb.WriteString(c.AsFilter())
+			sb.WriteString(":")
+		}
+	default:
+		sb.WriteString(strings.ToLower(a.NodeType))
+		sb.WriteString("(")
+		for i, arg := range a.Args {
+			sb.WriteRune('"')
+			sb.WriteString(strings.Replace(arg, `"`, `\"`, -1))
+			sb.WriteRune('"')
+			if i < len(a.Args)-1 {
+				sb.WriteString(",")
+			}
+		}
+		sb.WriteString(")")
+	}
+
+	return sb.String()
+}
+
 // GetAst converts the JSON to an AstNode if possible, returning an error otherwise.
 func GetAst(jsonTxt string) (*AstNode, error) {
 	astNode := &AstNode{}
@@ -37,7 +62,7 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 	}
 
 	if err := astNode.checkValid(); err != nil {
-		return nil, fmt.Errorf("error validating filter:%w", err)
+		return nil, fmt.Errorf("error validating filter (%s) :%w", astNode.AsFilter(), err)
 	} else {
 		return astNode, nil
 	}
@@ -163,7 +188,7 @@ func (a *AstNode) checkValid() error {
 		if len(a.Args) < 2 {
 			return fmt.Errorf("insufficient number of arguments to %s", strings.ToLower(a.NodeType))
 		}
-	case "EQ", "LE", "LT", "GT", "GE", "LIKE", "TEXT", "ILIKE", "CONTAINS":
+	case "EQ", "LE", "LT", "GT", "GE", "LIKE", "ILIKE", "CONTAINS", "TEXT", "ILIKE", "CONTAINS":
 		if len(a.Children) > 0 {
 			return fmt.Errorf("operator %v should not have any children", strings.ToLower(a.NodeType))
 		}

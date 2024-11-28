@@ -85,6 +85,25 @@ func (g DefaultGormQueryBuilder) VisitLike(first, second string) (*SubQuery, err
 	}, nil
 }
 
+func (g DefaultGormQueryBuilder) VisitILike(first, second string) (*SubQuery, error) {
+	return &SubQuery{
+		Clause: fmt.Sprintf("%s ILIKE ?", first),
+		Args:   []interface{}{g.ProcessLikeWildcards(second)},
+	}, nil
+}
+
+func (g DefaultGormQueryBuilder) VisitContains(first, second string) (*SubQuery, error) {
+	// Please feel free to submit an MR.
+
+	// It might be array_position(first, second) IS NOT NULL
+	// https://www.postgresql.org/docs/9.5/functions-array.html
+	return nil, fmt.Errorf("contains is not supported")
+	return &SubQuery{
+		Clause: fmt.Sprintf("%s ILIKE ?", first),
+		Args:   []interface{}{g.ProcessLikeWildcards(second)},
+	}, nil
+}
+
 func (g DefaultGormQueryBuilder) VisitText(first, second string) (*SubQuery, error) {
 	return &SubQuery{
 		Clause: fmt.Sprintf("to_tsvector('english', %s) @@ to_tsquery('english', ?)", first),

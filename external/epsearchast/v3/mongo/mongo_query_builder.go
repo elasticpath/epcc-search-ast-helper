@@ -110,7 +110,7 @@ func (d DefaultMongoQueryBuilder) VisitContains(first, second string) (*bson.D, 
 		return nil, err
 	}
 
-	// https://www.mongodb.com/docs/manual/reference/operator/query/eq/#std-label-eq-usage-examples
+	// https://www.mongodb.com/docs/manual/reference/operator/query/elemMatch/
 	// This is equivalent to { key: value } but makes for easier tests.
 	return &bson.D{{first,
 		bson.D{

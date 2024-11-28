@@ -1,6 +1,7 @@
 package epsearchast_v3_els
 
 import (
+	"fmt"
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"strings"
 )
@@ -29,6 +30,9 @@ type OperatorTypeToMultiFieldName struct {
 
 	// The field name for wild card fields
 	Wildcard string
+
+	// The field name for lower case fields
+	Lowercase string
 }
 
 var _ epsearchast_v3.SemanticReducer[JsonObject] = (*DefaultElsQueryBuilder)(nil)
@@ -55,6 +59,11 @@ func (d DefaultElsQueryBuilder) VisitEq(first, second string) (*JsonObject, erro
 			d.getFieldMapping(first).Equality: second,
 		},
 	}), nil
+}
+
+func (d DefaultElsQueryBuilder) VisitContains(first, second string) (*JsonObject, error) {
+	// Please submit an MR I think this is just a term query, but I didn't have a reference example.
+	return nil, fmt.Errorf("contains() is not supported")
 }
 
 func (d DefaultElsQueryBuilder) VisitText(first, second string) (*JsonObject, error) {
@@ -115,6 +124,12 @@ func (d DefaultElsQueryBuilder) VisitLike(first, second string) (*JsonObject, er
 	}), nil
 }
 
+func (d DefaultElsQueryBuilder) VisitILike(first, second string) (*JsonObject, error) {
+	// Please submit an MR, it should be easy to override, but it depends on how you have mapped the data.
+	// I didn't want to implement anything without a reference example
+	return nil, fmt.Errorf("ilike() is not supported")
+}
+
 func (d DefaultElsQueryBuilder) VisitIsNull(first string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"bool": map[string]interface{}{
@@ -138,6 +153,7 @@ func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFi
 			Text:       f,
 			Array:      f,
 			Wildcard:   f,
+			Lowercase:  f,
 		}
 	}
 
@@ -148,6 +164,7 @@ func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFi
 			Text:       v.Text,
 			Array:      v.Array,
 			Wildcard:   v.Wildcard,
+			Lowercase:  v.Lowercase,
 		}
 
 		if o.Equality == "" {
@@ -168,6 +185,10 @@ func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFi
 
 		if o.Wildcard == "" {
 			o.Wildcard = f
+		}
+
+		if o.Lowercase == "" {
+			o.Lowercase = f
 		}
 	}
 
