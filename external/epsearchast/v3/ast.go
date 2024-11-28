@@ -61,7 +61,8 @@ type AstVisitor interface {
 	VisitGe(astNode *AstNode) (bool, error)
 	VisitGt(astNode *AstNode) (bool, error)
 	VisitLike(astNode *AstNode) (bool, error)
-
+	VisitILike(astNode *AstNode) (bool, error)
+	VisitContains(astNode *AstNode) (bool, error)
 	VisitText(astNode *AstNode) (bool, error)
 	VisitIsNull(astNode *AstNode) (bool, error)
 }
@@ -105,6 +106,10 @@ func (a *AstNode) accept(v AstVisitor) error {
 		descend, err = v.VisitGe(a)
 	case "LIKE":
 		descend, err = v.VisitLike(a)
+	case "ILIKE":
+		descend, err = v.VisitILike(a)
+	case "CONTAINS":
+		descend, err = v.VisitContains(a)
 	case "TEXT":
 		descend, err = v.VisitText(a)
 	case "IS_NULL":
@@ -158,7 +163,7 @@ func (a *AstNode) checkValid() error {
 		if len(a.Args) < 2 {
 			return fmt.Errorf("insufficient number of arguments to %s", strings.ToLower(a.NodeType))
 		}
-	case "EQ", "LE", "LT", "GT", "GE", "LIKE", "TEXT":
+	case "EQ", "LE", "LT", "GT", "GE", "LIKE", "TEXT", "ILIKE", "CONTAINS":
 		if len(a.Children) > 0 {
 			return fmt.Errorf("operator %v should not have any children", strings.ToLower(a.NodeType))
 		}

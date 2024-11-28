@@ -88,6 +88,41 @@ func (d DefaultMongoQueryBuilder) VisitLike(first, second string) (*bson.D, erro
 	return &bson.D{{first, bson.D{{"$regex", d.ProcessLikeWildcards(second)}}}}, nil
 }
 
+func (d DefaultMongoQueryBuilder) VisitILike(first, second string) (*bson.D, error) {
+	if v, ok := d.FieldTypes[first]; ok {
+		if v != epsearchast_v3.String {
+			return nil, fmt.Errorf("ilike() operator is only supported for string fields, and [%s] is not a string", first)
+		}
+	}
+
+	return &bson.D{
+		{first,
+			bson.D{
+				{"$regex", d.ProcessLikeWildcards(second)},
+				{"$options", "i"},
+			},
+		},
+	}, nil
+}
+
+func (d DefaultMongoQueryBuilder) VisitContains(first, second string) (*bson.D, error) {
+	if err := d.ValidateValue(first, second); err != nil {
+		return nil, err
+	}
+
+	// https://www.mongodb.com/docs/manual/reference/operator/query/eq/#std-label-eq-usage-examples
+	// This is equivalent to { key: value } but makes for easier tests.
+	return &bson.D{{first,
+		bson.D{
+			{"$elemMatch", bson.D{
+				{"$eq", d.ConvertValue(first, second)},
+			},
+			},
+		},
+	}}, nil
+
+}
+
 func (d DefaultMongoQueryBuilder) VisitText(first, second string) (*bson.D, error) {
 	if v, ok := d.FieldTypes[first]; ok {
 		if v != epsearchast_v3.String {

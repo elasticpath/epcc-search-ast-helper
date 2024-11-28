@@ -657,6 +657,16 @@ func (m *MyMockedVisitor) VisitLike(astNode *AstNode) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MyMockedVisitor) VisitILike(astNode *AstNode) (bool, error) {
+	args := m.Called(astNode)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MyMockedVisitor) VisitContains(astNode *AstNode) (bool, error) {
+	args := m.Called(astNode)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *MyMockedVisitor) VisitText(astNode *AstNode) (bool, error) {
 	args := m.Called(astNode)
 	return args.Bool(0), args.Error(1)

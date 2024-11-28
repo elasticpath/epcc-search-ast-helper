@@ -299,6 +299,66 @@ func TestLikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 
 }
 
+func TestILikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
+
+	//Fixture Setup
+	//language=JSON
+	astJson := `{
+				"type": "ILIKE",
+				"args": [ "amount",  "5"]
+			}`
+
+	astNode, err := epsearchast_v3.GetAst(astJson)
+	require.NoError(t, err)
+
+	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+
+	expectedSearchJson :=
+		`{"amount":{"$regex":"^5$","$options":"i"}}`
+
+	// Execute SUT
+	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+	// Verification
+
+	require.NoError(t, err)
+
+	doc, err := bson.MarshalExtJSON(queryObj, true, false)
+	require.NoError(t, err)
+
+	require.Equal(t, expectedSearchJson, string(doc))
+}
+
+func TestContainsOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
+
+	//Fixture Setup
+	//language=JSON
+	astJson := `{
+				"type": "CONTAINS",
+				"args": [ "favourite_colors",  "red"]
+			}`
+
+	astNode, err := epsearchast_v3.GetAst(astJson)
+	require.NoError(t, err)
+
+	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+
+	expectedSearchJson :=
+		`{"favourite_colors":{"$elemMatch":{"$eq":"red"}}}`
+
+	// Execute SUT
+	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+	// Verification
+
+	require.NoError(t, err)
+
+	doc, err := bson.MarshalExtJSON(queryObj, true, false)
+	require.NoError(t, err)
+
+	require.Equal(t, expectedSearchJson, string(doc))
+}
+
 func TestSimpleUnaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 	for _, unaryOp := range unaryOps {
 		t.Run(fmt.Sprintf("%s", unaryOp.AstOp), func(t *testing.T) {
@@ -528,6 +588,57 @@ func TestLikeFilterWildCards(t *testing.T) {
 			require.NoError(t, err)
 
 			expectedSearchJson := fmt.Sprintf(`{"status":{"%s":%s}}`, mongoOp, jsonMongoRegexLiteral)
+
+			// Execute SUT
+			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+
+			// Verification
+
+			require.NoError(t, err)
+
+			doc, err := bson.MarshalExtJSON(queryObj, true, false)
+			require.NoError(t, err)
+
+			require.Equal(t, expectedSearchJson, string(doc))
+
+		}
+	}
+
+	t.Run("Wildcard Only", genTest("*", "^.*$"))
+	t.Run("Wildcard Prefix", genTest("*aid", "^.*aid$"))
+	t.Run("Wildcard Suffix", genTest("pai*", "^pai.*$"))
+	t.Run("Wildcard Prefix & Suffix", genTest("*ai*", "^.*ai.*$"))
+	t.Run("No Wildcards", genTest("paid", "^paid$"))
+	t.Run("Middle wildcards escaped", genTest("p*d", `^p\*d$`))
+	t.Run("Only Middle wildcards escaped", genTest("*p*d*", `^.*p\*d.*$`))
+	t.Run("Middle dot escaped", genTest("p..d", `^p\.\.d$`))
+}
+
+func TestILikeFilterWildCards(t *testing.T) {
+	astOp := "ILIKE"
+	mongoOp := "$regex"
+
+	genTest := func(astLiteral string, mongoRegexLiteral string) func(t *testing.T) {
+		return func(t *testing.T) {
+
+			//Fixture Setup
+
+			//language=JSON
+			astJson := fmt.Sprintf(`
+				{
+				"type": "%s",
+				"args": [ "status",  "%s"]
+			}`, astOp, astLiteral)
+
+			astNode, err := epsearchast_v3.GetAst(astJson)
+			require.NoError(t, err)
+
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+
+			jsonMongoRegexLiteral, err := json.Marshal(mongoRegexLiteral)
+			require.NoError(t, err)
+
+			expectedSearchJson := fmt.Sprintf(`{"status":{"%s":%s,"$options":"i"}}`, mongoOp, jsonMongoRegexLiteral)
 
 			// Execute SUT
 			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
