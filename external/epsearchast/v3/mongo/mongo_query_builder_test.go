@@ -323,36 +323,6 @@ func TestILikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 
 }
 
-func TestILikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
-
-	//Fixture Setup
-	//language=JSON
-	astJson := `{
-				"type": "ILIKE",
-				"args": [ "amount",  "5"]
-			}`
-
-	astNode, err := epsearchast_v3.GetAst(astJson)
-	require.NoError(t, err)
-
-	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
-
-	expectedSearchJson :=
-		`{"amount":{"$regex":"^5$","$options":"i"}}`
-
-	// Execute SUT
-	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
-
-	// Verification
-
-	require.NoError(t, err)
-
-	doc, err := bson.MarshalExtJSON(queryObj, true, false)
-	require.NoError(t, err)
-
-	require.Equal(t, expectedSearchJson, string(doc))
-}
-
 func TestContainsOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 
 	//Fixture Setup

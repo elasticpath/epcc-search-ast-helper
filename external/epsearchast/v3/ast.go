@@ -188,7 +188,7 @@ func (a *AstNode) checkValid() error {
 		if len(a.Args) < 2 {
 			return fmt.Errorf("insufficient number of arguments to %s", strings.ToLower(a.NodeType))
 		}
-	case "EQ", "LE", "LT", "GT", "GE", "LIKE", "ILIKE", "CONTAINS", "TEXT", "ILIKE", "CONTAINS":
+	case "EQ", "LE", "LT", "GT", "GE", "LIKE", "ILIKE", "CONTAINS", "TEXT":
 		if len(a.Children) > 0 {
 			return fmt.Errorf("operator %v should not have any children", strings.ToLower(a.NodeType))
 		}

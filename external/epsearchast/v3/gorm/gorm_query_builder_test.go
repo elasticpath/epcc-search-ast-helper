@@ -175,7 +175,7 @@ func TestTextBinaryOperatorFiltersGeneratesCorrectWhereClause(t *testing.T) {
 
 	require.NoError(t, err)
 
-	require.Equal(t, fmt.Sprintf(`to_tsvector('english', %s) @@ to_tsquery('english', ?)`, "name"), query.Clause)
+	require.Equal(t, fmt.Sprintf(`to_tsvector('english', %s) @@ plainto_tsquery('english', ?)`, "name"), query.Clause)
 	require.Equal(t, []interface{}{"computer"}, query.Args)
 }
 

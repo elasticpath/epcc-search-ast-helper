@@ -6,6 +6,7 @@ services:
     environment:
       POSTGRES_PASSWORD: admin
       POSTGRES_USER: admin
+      POSTGRES_DB: test_db
   mongo:
     image: mongo:7.0
     ports:
@@ -13,6 +14,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
+
   elasticsearch:
     image: elasticsearch:7.17.25
     ports:
