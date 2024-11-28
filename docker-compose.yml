@@ -7,6 +7,11 @@ services:
       POSTGRES_PASSWORD: admin
       POSTGRES_USER: admin
       POSTGRES_DB: test_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d test_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   mongo:
     image: mongo:7.0
     ports:
@@ -14,6 +19,11 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'db.runCommand({ ping: 1 })' | mongosh mongodb://localhost:27017/test_db --quiet" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   elasticsearch:
     image: elasticsearch:7.17.25
@@ -21,4 +31,9 @@ services:
       - '20003:9200'
     environment:
       discovery.type: single-node
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cat/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
