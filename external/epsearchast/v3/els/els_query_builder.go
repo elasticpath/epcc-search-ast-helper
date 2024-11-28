@@ -1,7 +1,6 @@
 package epsearchast_v3_els
 
 import (
-	"fmt"
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"strings"
 )
@@ -25,14 +24,14 @@ type OperatorTypeToMultiFieldName struct {
 	// The field name to use for text fields (nothing yet)
 	Text string
 
-	// The field name for use with array fields (not yet)
+	// The field name for use with array fields
 	Array string
 
 	// The field name for wild card fields
 	Wildcard string
 
-	// The field name for lower case fields
-	Lowercase string
+	// The field name for contain operations
+	Contains string
 }
 
 var _ epsearchast_v3.SemanticReducer[JsonObject] = (*DefaultElsQueryBuilder)(nil)
@@ -62,13 +61,16 @@ func (d DefaultElsQueryBuilder) VisitEq(first, second string) (*JsonObject, erro
 }
 
 func (d DefaultElsQueryBuilder) VisitContains(first, second string) (*JsonObject, error) {
-	// Please submit an MR I think this is just a term query, but I didn't have a reference example.
-	return nil, fmt.Errorf("contains() is not supported")
+	return (*JsonObject)(&map[string]interface{}{
+		"term": map[string]interface{}{
+			d.getFieldMapping(first).Array: second,
+		},
+	}), nil
 }
 
 func (d DefaultElsQueryBuilder) VisitText(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
-		"match_phrase": map[string]interface{}{
+		"match": map[string]interface{}{
 			d.getFieldMapping(first).Text: second,
 		},
 	}), nil
@@ -119,15 +121,23 @@ func (d DefaultElsQueryBuilder) VisitGt(first, second string) (*JsonObject, erro
 func (d DefaultElsQueryBuilder) VisitLike(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"wildcard": map[string]interface{}{
-			d.getFieldMapping(first).Wildcard: d.EscapeWildcardString(second),
+			d.getFieldMapping(first).Wildcard: map[string]interface{}{
+				"value":            d.EscapeWildcardString(second),
+				"case_insensitive": false,
+			},
 		},
 	}), nil
 }
 
 func (d DefaultElsQueryBuilder) VisitILike(first, second string) (*JsonObject, error) {
-	// Please submit an MR, it should be easy to override, but it depends on how you have mapped the data.
-	// I didn't want to implement anything without a reference example
-	return nil, fmt.Errorf("ilike() is not supported")
+	return (*JsonObject)(&map[string]interface{}{
+		"wildcard": map[string]interface{}{
+			d.getFieldMapping(first).Wildcard: map[string]interface{}{
+				"value":            d.EscapeWildcardString(second),
+				"case_insensitive": true,
+			},
+		},
+	}), nil
 }
 
 func (d DefaultElsQueryBuilder) VisitIsNull(first string) (*JsonObject, error) {
@@ -153,7 +163,7 @@ func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFi
 			Text:       f,
 			Array:      f,
 			Wildcard:   f,
-			Lowercase:  f,
+			Contains:   f,
 		}
 	}
 
@@ -164,7 +174,6 @@ func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFi
 			Text:       v.Text,
 			Array:      v.Array,
 			Wildcard:   v.Wildcard,
-			Lowercase:  v.Lowercase,
 		}
 
 		if o.Equality == "" {
@@ -185,10 +194,6 @@ func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFi
 
 		if o.Wildcard == "" {
 			o.Wildcard = f
-		}
-
-		if o.Lowercase == "" {
-			o.Lowercase = f
 		}
 	}
 

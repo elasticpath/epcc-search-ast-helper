@@ -19,4 +19,6 @@ services:
     image: elasticsearch:7.17.25
     ports:
       - '20003:9200'
+    environment:
+      discovery.type: single-node
 
