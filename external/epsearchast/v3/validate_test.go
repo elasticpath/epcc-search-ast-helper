@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-var binOps = []string{"le", "lt", "eq", "ge", "gt", "like", "text"}
+var binOps = []string{"le", "lt", "eq", "ge", "gt", "like", "text", "ilike", "contains"}
 
 var unaryOps = []string{"is_null"}
 
@@ -658,7 +658,7 @@ func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidat
 		"type": "AND",
 		"children": [
 			{
-			"type": "LIKE",
+			"type": "ILIKE",
 			"args": [ "attributes.locales.fr-CA.description",  "Foo"]
 			},
 			{
@@ -674,7 +674,7 @@ func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidat
 	// Execute SUT
 	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{
 		"^locales\\.[^.]+\\.name$":        {"eq"},
-		"^locales\\.[^.]+\\.description$": {"like"},
+		"^locales\\.[^.]+\\.description$": {"ilike"},
 	}, map[string]string{"^attributes\\.(.+)$": "$1"})
 
 	// Verification

@@ -421,7 +421,10 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQuery(t *testing.T) {
 	//language=JSON
 	expectedJson := `{
   "wildcard": {
-    "email": "@test.com"
+    "email": {
+      "case_insensitive": false,
+      "value": "@test.com"
+    }
   }
 }`
 
@@ -456,7 +459,10 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
 	//language=JSON
 	expectedJson := `{
   "wildcard": {
-    "email.keyword": "@test.com"
+    "email.keyword": {
+      "case_insensitive": false,
+      "value": "@test.com"
+    }
   }
 }`
 
@@ -514,7 +520,10 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQueryWithWildcards(t *testing.T
 			//language=JSON
 			expectedJson := fmt.Sprintf(`{
   "wildcard": {
-    "email": "%s"
+    "email": {
+      "case_insensitive": false,
+      "value": "%s"
+    }
   }
 }`, strings.ReplaceAll(tc.expectedWildcardTerm, `\`, `\\`))
 
@@ -620,7 +629,7 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQuery(t *testing.T) {
 
 	//language=JSON
 	expectedJson := `{
-  "match_phrase": {
+  "match": {
     "description": "Cars"
   }
 }`
@@ -655,7 +664,7 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
 
 	//language=JSON
 	expectedJson := `{
-  "match_phrase": {
+  "match": {
     "description.text": "Cars"
   }
 }`

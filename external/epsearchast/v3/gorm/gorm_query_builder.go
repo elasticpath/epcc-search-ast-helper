@@ -85,9 +85,24 @@ func (g DefaultGormQueryBuilder) VisitLike(first, second string) (*SubQuery, err
 	}, nil
 }
 
+func (g DefaultGormQueryBuilder) VisitILike(first, second string) (*SubQuery, error) {
+	return &SubQuery{
+		Clause: fmt.Sprintf("%s ILIKE ?", first),
+		Args:   []interface{}{g.ProcessLikeWildcards(second)},
+	}, nil
+}
+
+func (g DefaultGormQueryBuilder) VisitContains(first, second string) (*SubQuery, error) {
+	return &SubQuery{
+		// ChatGPT says this is the cleanest way
+		Clause: fmt.Sprintf("? = ANY(%s)", first),
+		Args:   []interface{}{g.ProcessLikeWildcards(second)},
+	}, nil
+}
+
 func (g DefaultGormQueryBuilder) VisitText(first, second string) (*SubQuery, error) {
 	return &SubQuery{
-		Clause: fmt.Sprintf("to_tsvector('english', %s) @@ to_tsquery('english', ?)", first),
+		Clause: fmt.Sprintf("to_tsvector('english', %s) @@ plainto_tsquery('english', ?)", first),
 		Args:   []interface{}{second},
 	}, nil
 }

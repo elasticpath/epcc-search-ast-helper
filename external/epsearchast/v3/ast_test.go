@@ -142,6 +142,40 @@ func TestValidObjectWithLikeReturnsAst(t *testing.T) {
 	require.NotNil(t, astNode)
 }
 
+func TestValidObjectWithILikeReturnsAst(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "ILIKE",
+	"args": [ "status",  "p*"]
+}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.NoError(t, err)
+	require.NotNil(t, astNode)
+}
+
+func TestValidObjectWithContainsReturnsAst(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "CONTAINS",
+	"args": [ "status",  "paid"]
+}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.NoError(t, err)
+	require.NotNil(t, astNode)
+}
+
 func TestValidObjectWithTextReturnsAst(t *testing.T) {
 	// Fixture Setup
 	// language=JSON

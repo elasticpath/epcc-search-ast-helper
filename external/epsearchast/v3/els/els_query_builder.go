@@ -24,7 +24,7 @@ type OperatorTypeToMultiFieldName struct {
 	// The field name to use for text fields (nothing yet)
 	Text string
 
-	// The field name for use with array fields (not yet)
+	// The field name for use with array fields
 	Array string
 
 	// The field name for wild card fields
@@ -57,9 +57,17 @@ func (d DefaultElsQueryBuilder) VisitEq(first, second string) (*JsonObject, erro
 	}), nil
 }
 
+func (d DefaultElsQueryBuilder) VisitContains(first, second string) (*JsonObject, error) {
+	return (*JsonObject)(&map[string]interface{}{
+		"term": map[string]interface{}{
+			d.getFieldMapping(first).Array: second,
+		},
+	}), nil
+}
+
 func (d DefaultElsQueryBuilder) VisitText(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
-		"match_phrase": map[string]interface{}{
+		"match": map[string]interface{}{
 			d.getFieldMapping(first).Text: second,
 		},
 	}), nil
@@ -110,7 +118,21 @@ func (d DefaultElsQueryBuilder) VisitGt(first, second string) (*JsonObject, erro
 func (d DefaultElsQueryBuilder) VisitLike(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"wildcard": map[string]interface{}{
-			d.getFieldMapping(first).Wildcard: d.EscapeWildcardString(second),
+			d.getFieldMapping(first).Wildcard: map[string]interface{}{
+				"value":            d.EscapeWildcardString(second),
+				"case_insensitive": false,
+			},
+		},
+	}), nil
+}
+
+func (d DefaultElsQueryBuilder) VisitILike(first, second string) (*JsonObject, error) {
+	return (*JsonObject)(&map[string]interface{}{
+		"wildcard": map[string]interface{}{
+			d.getFieldMapping(first).Wildcard: map[string]interface{}{
+				"value":            d.EscapeWildcardString(second),
+				"case_insensitive": true,
+			},
 		},
 	}), nil
 }
