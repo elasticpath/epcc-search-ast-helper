@@ -49,7 +49,34 @@ func TestInvalidObjectReturnsError(t *testing.T) {
 
 	// Verify
 	require.Error(t, err)
-	require.EqualError(t, err, "error validating filter: unsupported operator foo()")
+	require.EqualError(t, err, "error validating filter: (foo()): unsupported operator foo()")
+	require.ErrorAs(t, err, &ValidationErr{})
+	require.Nil(t, astNode)
+}
+
+func TestUnrecognizedOperatorWithChildReturnsError(t *testing.T) {
+	// Fixture Setup
+
+	//language=JSON
+	jsonTxt := `{
+	  "type": "NOT",
+	  "children": [
+		{
+		  "type": "EQ",
+		  "args": [
+			"status",
+			"paid"
+		  ]
+		}
+	  ]
+	}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.Error(t, err)
+	require.EqualError(t, err, "error validating filter: (not()): unsupported operator not()")
 	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }

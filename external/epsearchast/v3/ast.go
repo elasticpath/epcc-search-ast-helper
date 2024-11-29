@@ -68,7 +68,7 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 		// we receive something that doesn't make any sense like ge(a). The main argument case where we should
 		// treat this as a validation is an unknown operator. However, in theory the upstream generator
 		// passing us something likely means we should treat it as unsupported if we are out of date.
-		return nil, NewValidationErr(fmt.Errorf("error validating filter (%s) :%w", astNode.AsFilter(), err))
+		return nil, NewValidationErr(fmt.Errorf("(%s): %w", astNode.AsFilter(), err))
 	} else {
 		return astNode, nil
 	}
