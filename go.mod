@@ -7,7 +7,7 @@ toolchain go1.23.3
 require (
 	github.com/go-playground/validator/v10 v10.12.0
 	github.com/lib/pq v1.10.9
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/mongo-driver v1.8.2
 	gorm.io/driver/postgres v1.5.10
 	gorm.io/gorm v1.25.12
@@ -30,7 +30,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
