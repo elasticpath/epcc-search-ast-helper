@@ -400,13 +400,13 @@ The following examples shows how to generate a Elastic Search Query with this li
 ```go
 package example
 import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-import epsearchast_v3_els "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/els"
+import epsearchast_v3_es "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/els"
 
 func Example(ast *epsearchast_v3.AstNode, tenantBoundaryId string)  (string, error) {
    // Not Shown: Validation
 
    // Create query builder
-   var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.LowerCaseEmail{}
+   var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.LowerCaseEmail{}
 
    // Create Query Object
    queryObj, err := epsearchast_v3.SemanticReduceAst(ast, qb)
@@ -419,7 +419,7 @@ func Example(ast *epsearchast_v3.AstNode, tenantBoundaryId string)  (string, err
 }
 
 type LowerCaseEmail struct {
-   epsearchast_v3_els.DefaultElsQueryBuilder
+   epsearchast_v3_es.DefaultEsQueryBuilder
 }
 
 func (l *LowerCaseEmail) VisitEq(first, second string) (*bson.D, error) {

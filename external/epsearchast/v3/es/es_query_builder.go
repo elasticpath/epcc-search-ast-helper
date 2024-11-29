@@ -1,11 +1,11 @@
-package epsearchast_v3_els
+package epsearchast_v3_es
 
 import (
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"strings"
 )
 
-type DefaultElsQueryBuilder struct {
+type DefaultEsQueryBuilder struct {
 	OpTypeToFieldNames map[string]*OperatorTypeToMultiFieldName
 }
 
@@ -31,9 +31,9 @@ type OperatorTypeToMultiFieldName struct {
 	Wildcard string
 }
 
-var _ epsearchast_v3.SemanticReducer[JsonObject] = (*DefaultElsQueryBuilder)(nil)
+var _ epsearchast_v3.SemanticReducer[JsonObject] = (*DefaultEsQueryBuilder)(nil)
 
-func (d DefaultElsQueryBuilder) PostVisitAnd(rs []*JsonObject) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) PostVisitAnd(rs []*JsonObject) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"bool": map[string]interface{}{
 			"must": rs,
@@ -41,7 +41,7 @@ func (d DefaultElsQueryBuilder) PostVisitAnd(rs []*JsonObject) (*JsonObject, err
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitIn(args ...string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitIn(args ...string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"terms": map[string]interface{}{
 			d.getFieldMapping(args[0]).Equality: args[1:],
@@ -49,7 +49,7 @@ func (d DefaultElsQueryBuilder) VisitIn(args ...string) (*JsonObject, error) {
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitEq(first, second string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitEq(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"term": map[string]interface{}{
 			d.getFieldMapping(first).Equality: second,
@@ -57,7 +57,7 @@ func (d DefaultElsQueryBuilder) VisitEq(first, second string) (*JsonObject, erro
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitContains(first, second string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitContains(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"term": map[string]interface{}{
 			d.getFieldMapping(first).Array: second,
@@ -65,7 +65,7 @@ func (d DefaultElsQueryBuilder) VisitContains(first, second string) (*JsonObject
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitText(first, second string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitText(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"match": map[string]interface{}{
 			d.getFieldMapping(first).Text: second,
@@ -75,7 +75,7 @@ func (d DefaultElsQueryBuilder) VisitText(first, second string) (*JsonObject, er
 
 // Useful doc: https://www.elastic.co/guide/en/elasticsearch/reference/7.17/query-dsl-range-query.html
 
-func (d DefaultElsQueryBuilder) VisitLe(first, second string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitLe(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"range": map[string]interface{}{
 			d.getFieldMapping(first).Relational: map[string]interface{}{
@@ -85,7 +85,7 @@ func (d DefaultElsQueryBuilder) VisitLe(first, second string) (*JsonObject, erro
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitLt(first, second string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitLt(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"range": map[string]interface{}{
 			d.getFieldMapping(first).Relational: map[string]interface{}{
@@ -95,7 +95,7 @@ func (d DefaultElsQueryBuilder) VisitLt(first, second string) (*JsonObject, erro
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitGe(first, second string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitGe(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"range": map[string]interface{}{
 			d.getFieldMapping(first).Relational: map[string]interface{}{
@@ -105,7 +105,7 @@ func (d DefaultElsQueryBuilder) VisitGe(first, second string) (*JsonObject, erro
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitGt(first, second string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitGt(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"range": map[string]interface{}{
 			d.getFieldMapping(first).Relational: map[string]interface{}{
@@ -115,7 +115,7 @@ func (d DefaultElsQueryBuilder) VisitGt(first, second string) (*JsonObject, erro
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitLike(first, second string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitLike(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"wildcard": map[string]interface{}{
 			d.getFieldMapping(first).Wildcard: map[string]interface{}{
@@ -126,7 +126,7 @@ func (d DefaultElsQueryBuilder) VisitLike(first, second string) (*JsonObject, er
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitILike(first, second string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitILike(first, second string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"wildcard": map[string]interface{}{
 			d.getFieldMapping(first).Wildcard: map[string]interface{}{
@@ -137,7 +137,7 @@ func (d DefaultElsQueryBuilder) VisitILike(first, second string) (*JsonObject, e
 	}), nil
 }
 
-func (d DefaultElsQueryBuilder) VisitIsNull(first string) (*JsonObject, error) {
+func (d DefaultEsQueryBuilder) VisitIsNull(first string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"bool": map[string]interface{}{
 			"must_not": map[string]interface{}{
@@ -150,7 +150,7 @@ func (d DefaultElsQueryBuilder) VisitIsNull(first string) (*JsonObject, error) {
 }
 
 // getFieldMapping returns the field name to use for a given operator type, the struct is always guaranteed to return f, if nothing was set.
-func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFieldName {
+func (d DefaultEsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFieldName {
 	var o *OperatorTypeToMultiFieldName
 
 	if d.OpTypeToFieldNames[f] == nil {
@@ -196,7 +196,7 @@ func (d DefaultElsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFi
 	return o
 }
 
-func (d DefaultElsQueryBuilder) EscapeWildcardString(s string) string {
+func (d DefaultEsQueryBuilder) EscapeWildcardString(s string) string {
 	str := strings.ReplaceAll(s, "?", `\?`)
 	str = strings.ReplaceAll(str, "*", `\*`)
 
