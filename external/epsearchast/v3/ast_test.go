@@ -25,6 +25,19 @@ func TestEmptyObjectReturnsError(t *testing.T) {
 
 	// Verify
 	require.ErrorContains(t, err, "error validating filter")
+	require.ErrorAs(t, err, &ValidationErr{})
+	require.Nil(t, astNode)
+}
+
+func TestInvalidQueryReturnsParsingError(t *testing.T) {
+	// Fixture Setup
+
+	// Execute SUT
+	astNode, err := GetAst("{!@")
+
+	// Verify
+	require.ErrorContains(t, err, "could not parse filter")
+	require.ErrorAs(t, err, &ParsingErr{})
 	require.Nil(t, astNode)
 }
 
@@ -36,7 +49,35 @@ func TestInvalidObjectReturnsError(t *testing.T) {
 
 	// Verify
 	require.Error(t, err)
-	require.ErrorContains(t, err, "unknown operator FOO")
+	require.EqualError(t, err, "error validating filter: (foo()): unsupported operator foo()")
+	require.ErrorAs(t, err, &ValidationErr{})
+	require.Nil(t, astNode)
+}
+
+func TestUnrecognizedOperatorWithChildReturnsError(t *testing.T) {
+	// Fixture Setup
+
+	//language=JSON
+	jsonTxt := `{
+	  "type": "NOT",
+	  "children": [
+		{
+		  "type": "EQ",
+		  "args": [
+			"status",
+			"paid"
+		  ]
+		}
+	  ]
+	}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.Error(t, err)
+	require.EqualError(t, err, "error validating filter: (not()): unsupported operator not()")
+	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
 
@@ -212,6 +253,7 @@ func TestEqWithChildReturnsError(t *testing.T) {
 	// Verify
 	require.Error(t, err)
 	require.ErrorContains(t, err, "should not have any children")
+	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
 
@@ -247,6 +289,7 @@ func TestOneArgumentToInReturnsError(t *testing.T) {
 	// Verify
 	require.Error(t, err)
 	require.ErrorContains(t, err, "insufficient number of arguments to in")
+	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
 
@@ -264,7 +307,8 @@ func TestInvalidOperatorReturnsError(t *testing.T) {
 
 	// Verify
 	require.Error(t, err)
-	require.ErrorContains(t, err, "unknown operator FOO")
+	require.ErrorContains(t, err, "unsupported operator foo()")
+	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
 
@@ -287,6 +331,7 @@ func TestInWithChildReturnsError(t *testing.T) {
 	// Verify
 	require.Error(t, err)
 	require.ErrorContains(t, err, "should not have any children")
+	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
 
@@ -308,6 +353,7 @@ func TestAndReturnsErrorWithOneChildren(t *testing.T) {
 	// Verify
 	require.Error(t, err)
 	require.ErrorContains(t, err, "and should have at least two children")
+	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
 
@@ -332,7 +378,8 @@ func TestAndReturnsErrorWithAnInvalidChild(t *testing.T) {
 
 	// Verify
 	require.Error(t, err)
-	require.ErrorContains(t, err, "unknown operator FOO")
+	require.ErrorContains(t, err, "unsupported operator foo()")
+	require.ErrorAs(t, err, &ValidationErr{})
 	require.Nil(t, astNode)
 }
 

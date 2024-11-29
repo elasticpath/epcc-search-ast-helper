@@ -45,5 +45,11 @@ func ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes(astN
 		return err
 	}
 
-	return astNode.Accept(visitor)
+	err = astNode.Accept(visitor)
+
+	if err != nil {
+		return NewValidationErr(err)
+	}
+
+	return nil
 }

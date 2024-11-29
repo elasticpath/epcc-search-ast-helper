@@ -41,6 +41,8 @@ func (a *AstNode) AsFilter() string {
 }
 
 // GetAst converts the JSON to an AstNode if possible, returning an error otherwise.
+// If the Error is a ParsingErr it largely means you should treat the error as a 5xx.
+// If the Error is a ValidationErr it largely means you should treat the error as a 4xx.
 func GetAst(jsonTxt string) (*AstNode, error) {
 	astNode := &AstNode{}
 
@@ -54,15 +56,19 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 			urlDecodingError = json.Unmarshal([]byte(decoded), astNode)
 
 			if urlDecodingError != nil {
-				return nil, fmt.Errorf("could not parse filter:%w, error parsing decoded filter: %v", err, urlDecodingError)
+				return nil, NewParsingErr(fmt.Errorf("error parsing decoded filter: %w %v", err, urlDecodingError))
 			}
 		} else {
-			return nil, fmt.Errorf("could not parse filter:%w, error decoding: %v", err, urlDecodingError)
+			return nil, NewParsingErr(fmt.Errorf("%w, error decoding: %v", err, urlDecodingError))
 		}
 	}
 
 	if err := astNode.checkValid(); err != nil {
-		return nil, fmt.Errorf("error validating filter (%s) :%w", astNode.AsFilter(), err)
+		// It might not be obvious why an invalid AST should be a validation error, especially if
+		// we receive something that doesn't make any sense like ge(a). The main argument case where we should
+		// treat this as a validation is an unknown operator. However, in theory the upstream generator
+		// passing us something likely means we should treat it as unsupported if we are out of date.
+		return nil, NewValidationErr(fmt.Errorf("(%s): %w", astNode.AsFilter(), err))
 	} else {
 		return astNode, nil
 	}
@@ -207,7 +213,7 @@ func (a *AstNode) checkValid() error {
 
 		}
 	default:
-		return fmt.Errorf("unknown operator %s", a.NodeType)
+		return fmt.Errorf("unsupported operator %s()", strings.ToLower(a.NodeType))
 	}
 
 	return nil

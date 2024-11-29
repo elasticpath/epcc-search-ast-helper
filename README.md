@@ -27,6 +27,9 @@ func Example(headerValue string) (*epsearchast_v3.AstNode, error) {
 
 ```
 
+If the error that comes back is a ValidationErr you should treat it as a 400 to the caller.
+
+
 
 ### Aliases
 
