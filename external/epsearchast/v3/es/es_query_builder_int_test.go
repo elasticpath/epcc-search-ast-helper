@@ -1,4 +1,4 @@
-package epsearchast_v3_els
+package epsearchast_v3_es
 
 import (
 	"bytes"
@@ -239,7 +239,7 @@ func TestSmokeTestElasticSearchWithFilters(t *testing.T) {
 				t.Fatalf("Failed to parse filter: %v", err)
 			}
 
-			var qb epsearchast_v3.SemanticReducer[JsonObject] = DefaultElsQueryBuilder{}
+			var qb epsearchast_v3.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 			query, err := epsearchast_v3.SemanticReduceAst(ast, qb)
 			if err != nil {
 				t.Fatalf("Failed to reduce AST: %v", err)

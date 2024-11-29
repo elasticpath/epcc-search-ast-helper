@@ -1,10 +1,10 @@
-package epsearchast_v3_els_test
+package epsearchast_v3_es_test
 
 import (
 	"encoding/json"
 	"fmt"
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	epsearchast_v3_els "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/els"
+	epsearchast_v3_es "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/es"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
@@ -32,7 +32,7 @@ func TestSimpleBinaryEqOperatorGeneratesCorrectQuery(t *testing.T) {
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
 
 	// Execute SUT
 	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
@@ -67,8 +67,8 @@ func TestSimpleBinaryEqOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_els.OperatorTypeToMultiFieldName{
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
 			"email": {
 				Equality: "email.keyword",
 			},
@@ -110,7 +110,7 @@ func TestSimpleBinaryLeOperatorGeneratesCorrectQuery(t *testing.T) {
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
 
 	// Execute SUT
 	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
@@ -147,8 +147,8 @@ func TestSimpleBinaryLeOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_els.OperatorTypeToMultiFieldName{
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
 			"amount": {
 				Relational: "amount.range",
 			},
@@ -190,7 +190,7 @@ func TestSimpleBinaryLtOperatorGeneratesCorrectQuery(t *testing.T) {
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
 
 	// Execute SUT
 	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
@@ -227,8 +227,8 @@ func TestSimpleBinaryLtOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_els.OperatorTypeToMultiFieldName{
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
 			"amount": {
 				Relational: "amount.range",
 			},
@@ -270,7 +270,7 @@ func TestSimpleBinaryGtOperatorGeneratesCorrectQuery(t *testing.T) {
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
 
 	// Execute SUT
 	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
@@ -307,8 +307,8 @@ func TestSimpleBinaryGtOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_els.OperatorTypeToMultiFieldName{
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
 			"amount": {
 				Relational: "amount.range",
 			},
@@ -350,7 +350,7 @@ func TestSimpleBinaryGEOperatorGeneratesCorrectQuery(t *testing.T) {
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
 
 	// Execute SUT
 	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
@@ -387,8 +387,8 @@ func TestSimpleBinaryGEOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_els.OperatorTypeToMultiFieldName{
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
 			"amount": {
 				Relational: "amount.range",
 			},
@@ -431,7 +431,7 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQuery(t *testing.T) {
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
 
 	// Execute SUT
 	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
@@ -469,8 +469,8 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_els.OperatorTypeToMultiFieldName{
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
 			"email": {
 				Wildcard: "email.keyword",
 			},
@@ -530,7 +530,7 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQueryWithWildcards(t *testing.T
 			astNode, err := epsearchast_v3.GetAst(jsonTxt)
 			require.NoError(t, err)
 
-			var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{}
+			var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
 
 			// Execute SUT
 			query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
@@ -596,8 +596,8 @@ func TestSimpleRecursiveStructure(t *testing.T) {
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_els.OperatorTypeToMultiFieldName{
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
 			"status": {
 				Equality: "status.keyword",
 			},
@@ -637,7 +637,7 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQuery(t *testing.T) {
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
 
 	// Execute SUT
 	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
@@ -672,8 +672,8 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_els.OperatorTypeToMultiFieldName{
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
 			"description": {
 				Text: "description.text",
 			},
@@ -716,7 +716,7 @@ func TestSimpleUnaryIsNullOperatorGeneratesCorrectQuery(t *testing.T) {
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{}
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
 
 	// Execute SUT
 	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
@@ -754,8 +754,8 @@ func TestSimpleUnaryIsNullOperatorGeneratesCorrectQueryWithFieldOverride(t *test
 	astNode, err := epsearchast_v3.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_els.JsonObject] = epsearchast_v3_els.DefaultElsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_els.OperatorTypeToMultiFieldName{
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
 			"sort_order": {
 				Equality: "sort_order.keyword",
 			},
