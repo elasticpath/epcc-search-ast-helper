@@ -7,6 +7,9 @@ package epsearchast_v3
 //
 // Depending on what you are doing you may find that [epsearchast_v3.SemanticReduceAst] to be simpler.
 func ReduceAst[T any](a *AstNode, f func(*AstNode, []*T) (*T, error)) (*T, error) {
+	if a == nil {
+		return nil, nil
+	}
 	collector := make([]*T, 0, len(a.Children))
 	for _, n := range a.Children {
 		v, err := ReduceAst(n, f)
