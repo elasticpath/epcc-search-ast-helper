@@ -98,6 +98,14 @@ func (v *validatingVisitor) PostVisitAnd(astNode *AstNode) error {
 	return nil
 }
 
+func (v *validatingVisitor) PreVisitOr(astNode *AstNode) (bool, error) {
+	return true, nil
+}
+
+func (v *validatingVisitor) PostVisitOr(astNode *AstNode) error {
+	return nil
+}
+
 func (v *validatingVisitor) VisitIn(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 

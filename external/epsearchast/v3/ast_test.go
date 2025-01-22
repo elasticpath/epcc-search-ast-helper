@@ -383,6 +383,54 @@ func TestAndReturnsErrorWithAnInvalidChild(t *testing.T) {
 	require.Nil(t, astNode)
 }
 
+func TestOrReturnsErrorWithOneChildren(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "OR",
+	"children": [{
+		"type": "EQ",
+		"args": [ "status",  "paid"]
+	}]
+}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.Error(t, err)
+	require.ErrorContains(t, err, "or should have at least two children")
+	require.ErrorAs(t, err, &ValidationErr{})
+	require.Nil(t, astNode)
+}
+
+func TestOrReturnsErrorWithAnInvalidChild(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "OR",
+	"children": [{
+		"type": "EQ",
+		"args": [ "status",  "paid"]
+	},
+	{
+		"type": "FOO"
+	}
+	]
+}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.Error(t, err)
+	require.ErrorContains(t, err, "unsupported operator foo()")
+	require.ErrorAs(t, err, &ValidationErr{})
+	require.Nil(t, astNode)
+}
+
 func TestValidObjectThatIsUrlEncodedReturnsAst(t *testing.T) {
 	// Fixture Setup
 	// language=JSON

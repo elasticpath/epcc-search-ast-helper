@@ -23,6 +23,15 @@ func (d DefaultMongoQueryBuilder) PostVisitAnd(rs []*bson.D) (*bson.D, error) {
 	}, nil
 }
 
+func (d DefaultMongoQueryBuilder) PostVisitOr(rs []*bson.D) (*bson.D, error) {
+	// https://www.mongodb.com/docs/manual/reference/operator/query/or/
+	return &bson.D{
+		{"$or",
+			rs,
+		},
+	}, nil
+}
+
 func (d DefaultMongoQueryBuilder) VisitIn(args ...string) (*bson.D, error) {
 
 	if err := d.ValidateValues(args[0], args[1:]...); err != nil {

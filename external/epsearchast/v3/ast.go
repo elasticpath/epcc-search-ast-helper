@@ -19,9 +19,35 @@ func (a *AstNode) AsFilter() string {
 	sb := strings.Builder{}
 	switch a.NodeType {
 	case "AND":
-		for _, c := range a.Children {
+		for idx, c := range a.Children {
+
+			if c.Children != nil {
+				sb.WriteString("(")
+			}
 			sb.WriteString(c.AsFilter())
-			sb.WriteString(":")
+
+			if c.Children != nil {
+				sb.WriteString(")")
+			}
+
+			if idx < len(a.Children)-1 {
+				sb.WriteString(":")
+			}
+		}
+	case "OR":
+		for idx, c := range a.Children {
+			if c.Children != nil {
+				sb.WriteString("(")
+			}
+			sb.WriteString(c.AsFilter())
+
+			if c.Children != nil {
+				sb.WriteString(")")
+			}
+
+			if idx < len(a.Children)-1 {
+				sb.WriteString("|")
+			}
 		}
 	default:
 		sb.WriteString(strings.ToLower(a.NodeType))
@@ -85,6 +111,8 @@ type AstVisitor interface {
 	PostVisit() error
 	PreVisitAnd(astNode *AstNode) (bool, error)
 	PostVisitAnd(astNode *AstNode) error
+	PreVisitOr(astNode *AstNode) (bool, error)
+	PostVisitOr(astNode *AstNode) error
 	VisitIn(astNode *AstNode) (bool, error)
 	VisitEq(astNode *AstNode) (bool, error)
 	VisitLe(astNode *AstNode) (bool, error)
@@ -123,6 +151,8 @@ func (a *AstNode) accept(v AstVisitor) error {
 	switch a.NodeType {
 	case "AND":
 		descend, err = v.PreVisitAnd(a)
+	case "OR":
+		descend, err = v.PreVisitOr(a)
 	case "IN":
 		descend, err = v.VisitIn(a)
 	case "EQ":
@@ -169,6 +199,12 @@ func (a *AstNode) accept(v AstVisitor) error {
 		if err != nil {
 			return err
 		}
+	case "OR":
+		err = v.PostVisitOr(a)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -185,6 +221,16 @@ func (a *AstNode) checkValid() error {
 		}
 		if len(a.Children) < 2 {
 			return fmt.Errorf("and should have at least two children")
+		}
+	case "OR":
+		for _, c := range a.Children {
+			err := c.checkValid()
+			if err != nil {
+				return err
+			}
+		}
+		if len(a.Children) < 2 {
+			return fmt.Errorf("or should have at least two children")
 		}
 	case "IN":
 		if len(a.Children) > 0 {

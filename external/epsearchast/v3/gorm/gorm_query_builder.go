@@ -31,6 +31,20 @@ func (g DefaultGormQueryBuilder) PostVisitAnd(sqs []*SubQuery) (*SubQuery, error
 	}, nil
 }
 
+func (g DefaultGormQueryBuilder) PostVisitOr(sqs []*SubQuery) (*SubQuery, error) {
+	clauses := make([]string, 0, len(sqs))
+	args := make([]interface{}, 0)
+	for _, sq := range sqs {
+		clauses = append(clauses, sq.Clause)
+		args = append(args, sq.Args...)
+	}
+
+	return &SubQuery{
+		Clause: "( " + strings.Join(clauses, " OR ") + " )",
+		Args:   args,
+	}, nil
+}
+
 func (g DefaultGormQueryBuilder) VisitIn(args ...string) (*SubQuery, error) {
 	s := make([]interface{}, len(args)-1)
 	for i, v := range args[1:] {
