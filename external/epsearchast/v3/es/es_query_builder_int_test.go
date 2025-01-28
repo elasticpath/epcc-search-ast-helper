@@ -181,7 +181,7 @@ func TestSmokeTestElasticSearchWithFilters(t *testing.T) {
 							},
 							{
 								"type": "EQ",
-								"args": ["string_field", "test2"]	
+								"args": ["string_field", "test2"]
 							}]
 					}`,
 			count: 1,
@@ -197,7 +197,7 @@ func TestSmokeTestElasticSearchWithFilters(t *testing.T) {
 							},
 							{
 								"type": "EQ",
-								"args": ["string_field", "test1"]	
+								"args": ["string_field", "test1"]
 							}]
 					}`,
 			count: 0,
@@ -210,11 +210,394 @@ func TestSmokeTestElasticSearchWithFilters(t *testing.T) {
 					}`,
 			count: 2,
 		},
+		{
+			//language=JSON
+			filter: `{
+					  "type": "OR",
+					  "children": [
+						{
+						  "type": "CONTAINS",
+						  "args": [
+							"array_field",
+							"d"
+						  ]
+						},
+						{
+						  "type": "CONTAINS",
+						  "args": [
+							"array_field",
+							"a"
+						  ]
+						}
+					  ]
+					}`,
+			count: 2,
+		},
+		{
+			//language=JSON
+			filter: `{
+					  "type": "OR",
+					  "children": [
+						{
+						  "type": "TEXT",
+						  "args": [
+							"text_field",
+							"developers"
+						  ]
+						},
+						{
+						  "type": "CONTAINS",
+						  "args": [
+							"array_field",
+							"c"
+						  ]
+						}
+					  ]
+					}`,
+			count: 3,
+		},
+		{
+			//language=JSON
+			filter: `{
+					  "type": "OR",
+					  "children": [
+						{
+						  "type": "TEXT",
+						  "args": [
+							"text_field",
+							"developers"
+						  ]
+						},
+						{
+						  "type": "AND",
+						  "children": [
+							{
+							  "type": "EQ",
+							  "args": [
+								"nullable_string_field",
+								"yay"
+							  ]
+							},
+							{
+							  "type": "CONTAINS",
+							  "args": [
+								"array_field",
+								"c"
+							  ]
+							}
+						  ]
+						}
+					  ]
+					}`,
+			count: 2,
+		},
+		{
+			//language=JSON
+			filter: `{
+					  "type": "AND",
+					  "children": [
+						{
+						  "type": "TEXT",
+						  "args": [
+							"text_field",
+							"developers"
+						  ]
+						},
+						{
+						  "type": "OR",
+						  "children": [
+							{
+							  "type": "EQ",
+							  "args": [
+								"nullable_string_field",
+								"yay"
+							  ]
+							},
+							{
+							  "type": "CONTAINS",
+							  "args": [
+								"array_field",
+								"b"
+							  ]
+							}
+						  ]
+						}
+					  ]
+					}`,
+			count: 2,
+		},
+		{
+			//language=JSON
+			filter: `{
+  "type": "AND",
+  "children": [
+    {
+      "type": "EQ",
+      "args": [
+        "string_field",
+        "test1"
+      ]
+    },
+    {
+      "type": "AND",
+      "children": [
+        {
+          "type": "EQ",
+          "args": [
+            "string_field",
+            "test1"
+          ]
+        },
+        {
+          "type": "AND",
+          "children": [
+            {
+              "type": "EQ",
+              "args": [
+                "string_field",
+                "test1"
+              ]
+            },
+            {
+              "type": "AND",
+              "children": [
+                {
+                  "type": "EQ",
+                  "args": [
+                    "string_field",
+                    "test1"
+                  ]
+                },
+                {
+                  "type": "AND",
+                  "children": [
+                    {
+                      "type": "EQ",
+                      "args": [
+                        "string_field",
+                        "test1"
+                      ]
+                    },
+                    {
+                      "type": "AND",
+                      "children": [
+                        {
+                          "type": "EQ",
+                          "args": [
+                            "string_field",
+                            "test1"
+                          ]
+                        },
+                        {
+                          "type": "AND",
+                          "children": [
+                            {
+                              "type": "EQ",
+                              "args": [
+                                "string_field",
+                                "test1"
+                              ]
+                            },
+                            {
+                              "type": "AND",
+                              "children": [
+                                {
+                                  "type": "EQ",
+                                  "args": [
+                                    "string_field",
+                                    "test1"
+                                  ]
+                                },
+                                {
+                                  "type": "AND",
+                                  "children": [
+                                    {
+                                      "type": "EQ",
+                                      "args": [
+                                        "string_field",
+                                        "test1"
+                                      ]
+                                    },
+                                    {
+                                      "type": "AND",
+                                      "children": [
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test1"
+                                          ]
+                                        },
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test1"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`,
+			count: 1,
+		},
+		{
+			//language=JSON
+			filter: `{
+  "type": "OR",
+  "children": [
+    {
+      "type": "EQ",
+      "args": [
+        "string_field",
+        "test1"
+      ]
+    },
+    {
+      "type": "OR",
+      "children": [
+        {
+          "type": "EQ",
+          "args": [
+            "string_field",
+            "test1"
+          ]
+        },
+        {
+          "type": "OR",
+          "children": [
+            {
+              "type": "EQ",
+              "args": [
+                "string_field",
+                "test1"
+              ]
+            },
+            {
+              "type": "OR",
+              "children": [
+                {
+                  "type": "EQ",
+                  "args": [
+                    "string_field",
+                    "test1"
+                  ]
+                },
+                {
+                  "type": "OR",
+                  "children": [
+                    {
+                      "type": "EQ",
+                      "args": [
+                        "string_field",
+                        "test1"
+                      ]
+                    },
+                    {
+                      "type": "OR",
+                      "children": [
+                        {
+                          "type": "EQ",
+                          "args": [
+                            "string_field",
+                            "test1"
+                          ]
+                        },
+                        {
+                          "type": "OR",
+                          "children": [
+                            {
+                              "type": "EQ",
+                              "args": [
+                                "string_field",
+                                "test1"
+                              ]
+                            },
+                            {
+                              "type": "OR",
+                              "children": [
+                                {
+                                  "type": "EQ",
+                                  "args": [
+                                    "string_field",
+                                    "test1"
+                                  ]
+                                },
+                                {
+                                  "type": "OR",
+                                  "children": [
+                                    {
+                                      "type": "EQ",
+                                      "args": [
+                                        "string_field",
+                                        "test1"
+                                      ]
+                                    },
+                                    {
+                                      "type": "OR",
+                                      "children": [
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test1"
+                                          ]
+                                        },
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test2"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`,
+			count: 2,
+		},
 	}
 
 	for _, tc := range testCases {
+		ast, err := epsearchast_v3.GetAst(tc.filter)
 
-		t.Run(tc.filter, func(t *testing.T) {
+		if err != nil {
+			t.Fatalf("Failed to get filter: %v", err)
+		}
+
+		t.Run(fmt.Sprintf("%s", ast.AsFilter()), func(t *testing.T) {
 
 			var indexName = "test_index"
 			err := deleteIndex(indexName)

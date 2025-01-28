@@ -598,6 +598,137 @@ func TestPreAndPreVisitAndEqAndPostVisitCalledOnAcceptWithError(t *testing.T) {
 	require.ErrorContains(t, err, "foo")
 }
 
+func TestPreAndPostOrEqAndAndCalledOnAccept(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "OR",
+	"children": [
+	{
+		"type": "EQ",
+		"args": [ "amount",  "5"]
+	},{
+		"type": "EQ",
+		"args": [ "amount",  "5"]
+	}]
+}
+`
+
+	mockObj := new(MyMockedVisitor)
+	mockObj.On("PreVisit").Return(nil).
+		On("PostVisit").Return(nil).
+		On("VisitEq", mock.Anything).Return(true, nil).
+		On("PreVisitOr", mock.Anything).Return(true, nil).
+		On("PostVisitOr", mock.Anything).Return(nil)
+
+	astNode, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = astNode.Accept(mockObj)
+
+	// Verification
+	require.NoError(t, err)
+
+}
+
+func TestPreAndPreVisitOrCalledOnAcceptWithError(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "OR",
+	"children": [
+	{
+		"type": "EQ",
+		"args": [ "amount",  "5"]
+	},{
+		"type": "EQ",
+		"args": [ "amount",  "5"]
+	}]
+}
+`
+
+	mockObj := new(MyMockedVisitor)
+	mockObj.On("PreVisit").Return(nil).
+		On("PreVisitOr", mock.Anything).Return(true, fmt.Errorf("foo"))
+
+	astNode, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = astNode.Accept(mockObj)
+
+	// Verification
+	require.ErrorContains(t, err, "foo")
+}
+
+func TestPreAndPreVisitOrEqCalledOnAcceptWithError(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "OR",
+	"children": [
+	{
+		"type": "EQ",
+		"args": [ "amount",  "5"]
+	},{
+		"type": "EQ",
+		"args": [ "amount",  "5"]
+	}]
+}
+`
+
+	mockObj := new(MyMockedVisitor)
+	mockObj.On("PreVisit").Return(nil).
+		On("PreVisitOr", mock.Anything).Return(true, nil).
+		On("VisitEq", mock.Anything).Return(true, fmt.Errorf("foo"))
+
+	astNode, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = astNode.Accept(mockObj)
+
+	// Verification
+	require.ErrorContains(t, err, "foo")
+}
+
+func TestPreAndPreVisitOrEqAndPostVisitCalledOnAcceptWithError(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "OR",
+	"children": [
+	{
+		"type": "EQ",
+		"args": [ "amount",  "5"]
+	},{
+		"type": "EQ",
+		"args": [ "amount",  "5"]
+	}]
+}
+`
+
+	mockObj := new(MyMockedVisitor)
+	mockObj.On("PreVisit").Return(nil).
+		On("PreVisitOr", mock.Anything).Return(true, nil).
+		On("VisitEq", mock.Anything).Return(true, nil).
+		On("PostVisitOr", mock.Anything).Return(fmt.Errorf("foo"))
+
+	astNode, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = astNode.Accept(mockObj)
+
+	// Verification
+	require.ErrorContains(t, err, "foo")
+}
+
 type MyMockedVisitor struct {
 	mock.Mock
 }
@@ -618,6 +749,16 @@ func (m *MyMockedVisitor) PreVisitAnd(astNode *AstNode) (bool, error) {
 }
 
 func (m *MyMockedVisitor) PostVisitAnd(astNode *AstNode) error {
+	args := m.Called(astNode)
+	return args.Error(0)
+}
+
+func (m *MyMockedVisitor) PreVisitOr(astNode *AstNode) (bool, error) {
+	args := m.Called(astNode)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MyMockedVisitor) PostVisitOr(astNode *AstNode) error {
 	args := m.Called(astNode)
 	return args.Error(0)
 }

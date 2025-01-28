@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+var logicOps = []string{"AND", "OR"}
+
 var binOps = []string{"le", "lt", "eq", "ge", "gt", "like", "text", "ilike", "contains"}
 
 var unaryOps = []string{"is_null"}
@@ -244,15 +246,16 @@ func TestValidationReturnsNoErrorForUnaryOperatorsWhenAstUseAliasesAndValueValid
 }
 
 func TestSmokeTestAndWithUnaryAndVariableReturnsErrorWhenBothAreInvalid(t *testing.T) {
-	for _, varOp := range varOps {
-		for _, unaryOp := range unaryOps {
+	for _, logicOp := range logicOps {
+		for _, varOp := range varOps {
+			for _, unaryOp := range unaryOps {
 
-			t.Run(fmt.Sprintf("%s/%s", varOp, unaryOp), func(t *testing.T) {
-				// Fixture Setup
-				// language=JSON
-				jsonTxt := fmt.Sprintf(`
+				t.Run(fmt.Sprintf("%s %s/%s", logicOp, varOp, unaryOp), func(t *testing.T) {
+					// Fixture Setup
+					// language=JSON
+					jsonTxt := fmt.Sprintf(`
 			{ 
-				"type": "AND",
+				"type": "%s",
 				"children": [
 					{
 					"type": "%s",
@@ -263,18 +266,19 @@ func TestSmokeTestAndWithUnaryAndVariableReturnsErrorWhenBothAreInvalid(t *testi
 					"args": [ "some_field"]
 					}
 				]
-}`, strings.ToUpper(varOp), strings.ToUpper(unaryOp))
+}`, logicOp, strings.ToUpper(varOp), strings.ToUpper(unaryOp))
 
-				ast, err := GetAst(jsonTxt)
-				require.NoError(t, err)
+					ast, err := GetAst(jsonTxt)
+					require.NoError(t, err)
 
-				// Execute SUT
-				err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"status": {varOp}, "other_field": {unaryOp}}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
+					// Execute SUT
+					err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"status": {varOp}, "other_field": {unaryOp}}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
 
-				// Verification
-				require.ErrorContains(t, err, fmt.Sprint("unknown field [some_field] specified in search filter"))
-			})
+					// Verification
+					require.ErrorContains(t, err, fmt.Sprint("unknown field [some_field] specified in search filter"))
+				})
 
+			}
 		}
 	}
 }
@@ -434,15 +438,16 @@ func TestValidationReturnsNoErrorForVariableOperatorsWhenAstUseAliasesAndValueVa
 }
 
 func TestSmokeTestAndWithBinaryAndVariableReturnsErrorWhenBothAreInvalid(t *testing.T) {
-	for _, varOp := range varOps {
-		for _, binOp := range binOps {
+	for _, logicOp := range logicOps {
+		for _, varOp := range varOps {
+			for _, binOp := range binOps {
 
-			t.Run(fmt.Sprintf("%s/%s", varOp, binOp), func(t *testing.T) {
-				// Fixture Setup
-				// language=JSON
-				jsonTxt := fmt.Sprintf(`
+				t.Run(fmt.Sprintf("%s %s/%s", logicOp, varOp, binOp), func(t *testing.T) {
+					// Fixture Setup
+					// language=JSON
+					jsonTxt := fmt.Sprintf(`
 			{ 
-				"type": "AND",
+				"type": "%s",
 				"children": [
 					{
 					"type": "%s",
@@ -453,32 +458,34 @@ func TestSmokeTestAndWithBinaryAndVariableReturnsErrorWhenBothAreInvalid(t *test
 					"args": [ "some_field",  "hello"]
 					}
 				]
-}`, strings.ToUpper(varOp), strings.ToUpper(binOp))
+}`, logicOp, strings.ToUpper(varOp), strings.ToUpper(binOp))
 
-				ast, err := GetAst(jsonTxt)
-				require.NoError(t, err)
+					ast, err := GetAst(jsonTxt)
+					require.NoError(t, err)
 
-				// Execute SUT
-				err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"status": {varOp}, "other_field": {binOp}}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
+					// Execute SUT
+					err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"status": {varOp}, "other_field": {binOp}}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
 
-				// Verification
-				require.ErrorContains(t, err, fmt.Sprint("unknown field [some_field] specified in search filter"))
-			})
+					// Verification
+					require.ErrorContains(t, err, fmt.Sprint("unknown field [some_field] specified in search filter"))
+				})
 
+			}
 		}
 	}
 }
 
 func TestSmokeTestAndWithBinaryAndVariableReturnsNoErrorWhenBothValid(t *testing.T) {
-	for _, varOp := range varOps {
-		for _, binOp := range binOps {
+	for _, logicOp := range logicOps {
+		for _, varOp := range varOps {
+			for _, binOp := range binOps {
 
-			t.Run(fmt.Sprintf("%s/%s", varOp, binOp), func(t *testing.T) {
-				// Fixture Setup
-				// language=JSON
-				jsonTxt := fmt.Sprintf(`
+				t.Run(fmt.Sprintf("%s %s/%s", logicOp, varOp, binOp), func(t *testing.T) {
+					// Fixture Setup
+					// language=JSON
+					jsonTxt := fmt.Sprintf(`
 			{ 
-				"type": "AND",
+				"type": "%s",
 				"children": [
 					{
 					"type": "%s",
@@ -489,18 +496,19 @@ func TestSmokeTestAndWithBinaryAndVariableReturnsNoErrorWhenBothValid(t *testing
 					"args": [ "some_field",  "hello"]
 					}
 				]
-}`, strings.ToUpper(varOp), strings.ToUpper(binOp))
+}`, logicOp, strings.ToUpper(varOp), strings.ToUpper(binOp))
 
-				ast, err := GetAst(jsonTxt)
-				require.NoError(t, err)
+					ast, err := GetAst(jsonTxt)
+					require.NoError(t, err)
 
-				// Execute SUT
-				err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"status": {varOp}, "some_field": {binOp}}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
+					// Execute SUT
+					err = ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string{"status": {varOp}, "some_field": {binOp}}, map[string]string{"status": "oneof=incomplete complete processing cancelled"})
 
-				// Verification
-				require.NoError(t, err)
-			})
+					// Verification
+					require.NoError(t, err)
+				})
 
+			}
 		}
 	}
 }
@@ -681,6 +689,78 @@ func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidat
 	require.NoError(t, err)
 }
 
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidatorsWithoutErrorWithDisjunction(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{
+		"type": "OR",
+		"children": [
+			{
+			"type": "ILIKE",
+			"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+			},
+			{
+			"type": "EQ",
+			"args": [ "attributes.locales.en-CA.name",  "Bar"]
+			}
+		]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"ilike"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidatorsWithoutErrorWithDisjunctionAndConjunction(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{  
+		"type": "AND",
+		"children": [
+		{
+			"type": "OR",
+			"children": [
+				{
+				"type": "ILIKE",
+				"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+				},
+				{
+				"type": "EQ",
+				"args": [ "attributes.locales.en-CA.name",  "Bar"]
+				}
+			]
+		}, 
+		{ 
+			"type": "EQ",
+			"args": [ "attributes.locales.en-US.name",  "Bar"]
+		}
+	]
+	}
+	`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"ilike"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"})
+
+	// Verification
+	require.NoError(t, err)
+}
+
 func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidatorsWithErrorWithConjunction(t *testing.T) {
 	// Fixture Setup
 	// language=JSON
@@ -697,6 +777,123 @@ func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidat
 			"args": [ "attributes.locales.en-CA.name",  "Bar"]
 			}
 		]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"like"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"})
+
+	// Verification
+	require.ErrorContains(t, err, "unknown operator [in]")
+	require.ErrorContains(t, err, "for field [attributes.locales.fr-CA.description]")
+	require.ErrorContains(t, err, "allowed operators are [like]")
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidatorsWithErrorWithDisjunction(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{
+		"type": "OR",
+		"children": [
+			{
+			"type": "IN",
+			"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+			},
+			{
+			"type": "EQ",
+			"args": [ "attributes.locales.en-CA.name",  "Bar"]
+			}
+		]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"like"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"})
+
+	// Verification
+	require.ErrorContains(t, err, "unknown operator [in]")
+	require.ErrorContains(t, err, "for field [attributes.locales.fr-CA.description]")
+	require.ErrorContains(t, err, "allowed operators are [like]")
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidatorsWithErrorWithDisjunctionInConjunction(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{  
+		"type": "AND",
+		"children": [
+		{
+			"type": "OR",
+			"children": [
+				{
+				"type": "IN",
+				"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+				},
+				{
+				"type": "EQ",
+				"args": [ "attributes.locales.en-CA.name",  "Bar"]
+				}
+			]
+		}, 
+		{ 
+			"type": "EQ",
+			"args": [ "attributes.locales.en-US.name",  "Bar"]
+		}
+	]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"like"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"})
+
+	// Verification
+	require.ErrorContains(t, err, "unknown operator [in]")
+	require.ErrorContains(t, err, "for field [attributes.locales.fr-CA.description]")
+	require.ErrorContains(t, err, "allowed operators are [like]")
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAllowsAliasesInRegexesAndValidatorsWithErrorWithConjunctionInDisjunction(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{  
+		"type": "OR",
+		"children": [
+		{
+			"type": "AND",
+			"children": [
+				{
+				"type": "IN",
+				"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+				},
+				{
+				"type": "EQ",
+				"args": [ "attributes.locales.en-CA.name",  "Bar"]
+				}
+			]
+		}, 
+		{ 
+			"type": "EQ",
+			"args": [ "attributes.locales.en-US.name",  "Bar"]
+		}
+	]
 	}`
 
 	ast, err := GetAst(jsonTxt)
@@ -786,12 +983,79 @@ func TestValidateAstFieldAndOperatorsWithAliasesAndValueValidationReturnsNoError
 	require.NoError(t, err)
 }
 
+func TestValidateAstFieldAndOperatorsWithAliasesAndValueValidationReturnsNoErrorInDisjunctionWhenAValueValidatorIsSatisfied(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{
+		"type": "OR",
+		"children": [
+			{
+			"type": "LIKE",
+			"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+			},
+			{
+			"type": "EQ",
+			"args": [ "attributes.locales.en-CA.name",  "Bar"]
+			}
+		]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidation(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"like"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"},
+		map[string]string{"^locales\\.[^.]+\\.[a-zA-Z0-9_-]+$": "min=1"})
+
+	// Verification
+	require.NoError(t, err)
+}
+
 func TestValidateAstFieldAndOperatorsWithAliasesAndValueValidationDetectsAnErrorInConjunctionWhenAValueValidatorIsNotSatisfied(t *testing.T) {
 	// Fixture Setup
 	// language=JSON
 	jsonTxt := `
 	{
 		"type": "AND",
+		"children": [
+			{
+			"type": "LIKE",
+			"args": [ "attributes.locales.fr-CA.description",  "Foo"]
+			},
+			{
+			"type": "EQ",
+			"args": [ "attributes.locales.en-CA.name",  ""]
+			}
+		]
+	}`
+
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidation(ast, map[string][]string{
+		"^locales\\.[^.]+\\.name$":        {"eq"},
+		"^locales\\.[^.]+\\.description$": {"like"},
+	}, map[string]string{"^attributes\\.(.+)$": "$1"},
+		map[string]string{"^locales\\.[^.]+\\.[a-zA-Z0-9_-]+$": "min=1"})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [attributes.locales.en-CA.name]")
+	require.ErrorContains(t, err, "with [eq]")
+	require.ErrorContains(t, err, "value []")
+	require.ErrorContains(t, err, "requirement [min]")
+}
+
+func TestValidateAstFieldAndOperatorsWithAliasesAndValueValidationDetectsAnErrorInDisjunctionWhenAValueValidatorIsNotSatisfied(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+	{
+		"type": "OR",
 		"children": [
 			{
 			"type": "LIKE",
@@ -1059,4 +1323,631 @@ func TestValidateAstWithTypeValidationReturnsErrorWhenRequestIsAFloat64AndNonInt
 	require.ErrorContains(t, err, "could not validate [amount]")
 	require.ErrorContains(t, err, "with [eq]")
 	require.ErrorContains(t, err, "value [457.42] does not satisfy requirement [lt]")
+}
+
+func TestValidateAstWithDefaultRestrictionOnOrComplexityReturnsAValidationErrorWhenFilterIsToComplex(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `{
+  "type": "AND",
+  "children": [
+    {
+      "type": "OR",
+      "children": [
+        {
+          "type": "EQ",
+          "args": [
+            "string_field",
+            "test1"
+          ]
+        },
+        {
+          "type": "EQ",
+          "args": [
+            "string_field",
+            "test2"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "OR",
+      "children": [
+        {
+          "type": "EQ",
+          "args": [
+            "num_field",
+            "1"
+          ]
+        },
+        {
+          "type": "EQ",
+          "args": [
+            "num_field",
+            "2"
+          ]
+        },
+        {
+          "type": "EQ",
+          "args": [
+            "num_field",
+            "3"
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+    `
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperators(ast, map[string][]string{"amount": {"eq"}})
+
+	// Verification
+	require.ErrorContains(t, err, "filter is too complex and has too many OR conditions")
+	require.ErrorContains(t, err, "6 vs allowed 4")
+}
+
+func TestValidateAstWithDefaultRestrictionOnOrComplexityReturnsAValidationErrorWhenFilterIsVeryDeepComplex(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `{
+  "type": "OR",
+  "children": [
+    {
+      "type": "EQ",
+      "args": [
+        "string_field",
+        "test1"
+      ]
+    },
+    {
+      "type": "OR",
+      "children": [
+        {
+          "type": "EQ",
+          "args": [
+            "string_field",
+            "test1"
+          ]
+        },
+        {
+          "type": "OR",
+          "children": [
+            {
+              "type": "EQ",
+              "args": [
+                "string_field",
+                "test1"
+              ]
+            },
+            {
+              "type": "OR",
+              "children": [
+                {
+                  "type": "EQ",
+                  "args": [
+                    "string_field",
+                    "test1"
+                  ]
+                },
+                {
+                  "type": "OR",
+                  "children": [
+                    {
+                      "type": "EQ",
+                      "args": [
+                        "string_field",
+                        "test1"
+                      ]
+                    },
+                    {
+                      "type": "OR",
+                      "children": [
+                        {
+                          "type": "EQ",
+                          "args": [
+                            "string_field",
+                            "test1"
+                          ]
+                        },
+                        {
+                          "type": "OR",
+                          "children": [
+                            {
+                              "type": "EQ",
+                              "args": [
+                                "string_field",
+                                "test1"
+                              ]
+                            },
+                            {
+                              "type": "OR",
+                              "children": [
+                                {
+                                  "type": "EQ",
+                                  "args": [
+                                    "string_field",
+                                    "test1"
+                                  ]
+                                },
+                                {
+                                  "type": "OR",
+                                  "children": [
+                                    {
+                                      "type": "EQ",
+                                      "args": [
+                                        "string_field",
+                                        "test1"
+                                      ]
+                                    },
+                                    {
+                                      "type": "OR",
+                                      "children": [
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test1"
+                                          ]
+                                        },
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test2"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes(ast, map[string][]string{"amount": {"eq"}}, map[string]string{}, map[string]string{"amount": "lt=128"}, map[string]FieldType{"amount": Float64})
+
+	// Verification
+	require.ErrorContains(t, err, "filter is too complex and has too many OR conditions")
+	require.ErrorContains(t, err, "11 vs allowed 4")
+}
+
+func TestValidateAstWithZeroRestrictionOnOrComplexityReturnsNoError(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `{
+  "type": "OR",
+  "children": [
+    {
+      "type": "EQ",
+      "args": [
+        "string_field",
+        "test1"
+      ]
+    },
+    {
+      "type": "OR",
+      "children": [
+        {
+          "type": "EQ",
+          "args": [
+            "string_field",
+            "test1"
+          ]
+        },
+        {
+          "type": "OR",
+          "children": [
+            {
+              "type": "EQ",
+              "args": [
+                "string_field",
+                "test1"
+              ]
+            },
+            {
+              "type": "OR",
+              "children": [
+                {
+                  "type": "EQ",
+                  "args": [
+                    "string_field",
+                    "test1"
+                  ]
+                },
+                {
+                  "type": "OR",
+                  "children": [
+                    {
+                      "type": "EQ",
+                      "args": [
+                        "string_field",
+                        "test1"
+                      ]
+                    },
+                    {
+                      "type": "OR",
+                      "children": [
+                        {
+                          "type": "EQ",
+                          "args": [
+                            "string_field",
+                            "test1"
+                          ]
+                        },
+                        {
+                          "type": "OR",
+                          "children": [
+                            {
+                              "type": "EQ",
+                              "args": [
+                                "string_field",
+                                "test1"
+                              ]
+                            },
+                            {
+                              "type": "OR",
+                              "children": [
+                                {
+                                  "type": "EQ",
+                                  "args": [
+                                    "string_field",
+                                    "test1"
+                                  ]
+                                },
+                                {
+                                  "type": "OR",
+                                  "children": [
+                                    {
+                                      "type": "EQ",
+                                      "args": [
+                                        "string_field",
+                                        "test1"
+                                      ]
+                                    },
+                                    {
+                                      "type": "OR",
+                                      "children": [
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test1"
+                                          ]
+                                        },
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test2"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypesAndIndexIntersections(ast, map[string][]string{"string_field": {"eq"}}, map[string]string{}, map[string]string{}, map[string]FieldType{"string_field": String}, 0)
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstWithZeroRestrictionOnOrComplexityReturnsNoErrorWhenValueIsHighEnough(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `{
+  "type": "OR",
+  "children": [
+    {
+      "type": "EQ",
+      "args": [
+        "string_field",
+        "test1"
+      ]
+    },
+    {
+      "type": "OR",
+      "children": [
+        {
+          "type": "EQ",
+          "args": [
+            "string_field",
+            "test1"
+          ]
+        },
+        {
+          "type": "OR",
+          "children": [
+            {
+              "type": "EQ",
+              "args": [
+                "string_field",
+                "test1"
+              ]
+            },
+            {
+              "type": "OR",
+              "children": [
+                {
+                  "type": "EQ",
+                  "args": [
+                    "string_field",
+                    "test1"
+                  ]
+                },
+                {
+                  "type": "OR",
+                  "children": [
+                    {
+                      "type": "EQ",
+                      "args": [
+                        "string_field",
+                        "test1"
+                      ]
+                    },
+                    {
+                      "type": "OR",
+                      "children": [
+                        {
+                          "type": "EQ",
+                          "args": [
+                            "string_field",
+                            "test1"
+                          ]
+                        },
+                        {
+                          "type": "OR",
+                          "children": [
+                            {
+                              "type": "EQ",
+                              "args": [
+                                "string_field",
+                                "test1"
+                              ]
+                            },
+                            {
+                              "type": "OR",
+                              "children": [
+                                {
+                                  "type": "EQ",
+                                  "args": [
+                                    "string_field",
+                                    "test1"
+                                  ]
+                                },
+                                {
+                                  "type": "OR",
+                                  "children": [
+                                    {
+                                      "type": "EQ",
+                                      "args": [
+                                        "string_field",
+                                        "test1"
+                                      ]
+                                    },
+                                    {
+                                      "type": "OR",
+                                      "children": [
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test1"
+                                          ]
+                                        },
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test2"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypesAndIndexIntersections(ast, map[string][]string{"string_field": {"eq"}}, map[string]string{}, map[string]string{}, map[string]FieldType{"string_field": String}, 12)
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstWithDefaultRestrictionReturnsNoErrorWithAndQueries(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `{
+  "type": "AND",
+  "children": [
+    {
+      "type": "EQ",
+      "args": [
+        "string_field",
+        "test1"
+      ]
+    },
+    {
+      "type": "AND",
+      "children": [
+        {
+          "type": "EQ",
+          "args": [
+            "string_field",
+            "test1"
+          ]
+        },
+        {
+          "type": "AND",
+          "children": [
+            {
+              "type": "EQ",
+              "args": [
+                "string_field",
+                "test1"
+              ]
+            },
+            {
+              "type": "AND",
+              "children": [
+                {
+                  "type": "EQ",
+                  "args": [
+                    "string_field",
+                    "test1"
+                  ]
+                },
+                {
+                  "type": "AND",
+                  "children": [
+                    {
+                      "type": "EQ",
+                      "args": [
+                        "string_field",
+                        "test1"
+                      ]
+                    },
+                    {
+                      "type": "AND",
+                      "children": [
+                        {
+                          "type": "EQ",
+                          "args": [
+                            "string_field",
+                            "test1"
+                          ]
+                        },
+                        {
+                          "type": "AND",
+                          "children": [
+                            {
+                              "type": "EQ",
+                              "args": [
+                                "string_field",
+                                "test1"
+                              ]
+                            },
+                            {
+                              "type": "AND",
+                              "children": [
+                                {
+                                  "type": "EQ",
+                                  "args": [
+                                    "string_field",
+                                    "test1"
+                                  ]
+                                },
+                                {
+                                  "type": "AND",
+                                  "children": [
+                                    {
+                                      "type": "EQ",
+                                      "args": [
+                                        "string_field",
+                                        "test1"
+                                      ]
+                                    },
+                                    {
+                                      "type": "AND",
+                                      "children": [
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test1"
+                                          ]
+                                        },
+                                        {
+                                          "type": "EQ",
+                                          "args": [
+                                            "string_field",
+                                            "test2"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypesAndIndexIntersections(ast, map[string][]string{"string_field": {"eq"}}, map[string]string{}, map[string]string{}, map[string]FieldType{"string_field": String}, 12)
+
+	// Verification
+	require.NoError(t, err)
 }

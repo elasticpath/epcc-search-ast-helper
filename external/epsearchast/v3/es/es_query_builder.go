@@ -41,6 +41,16 @@ func (d DefaultEsQueryBuilder) PostVisitAnd(rs []*JsonObject) (*JsonObject, erro
 	}), nil
 }
 
+func (d DefaultEsQueryBuilder) PostVisitOr(rs []*JsonObject) (*JsonObject, error) {
+	return (*JsonObject)(&map[string]interface{}{
+		"bool": map[string]interface{}{
+			"should": rs,
+			// https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-minimum-should-match.html
+			"minimum_should_match": 1,
+		},
+	}), nil
+}
+
 func (d DefaultEsQueryBuilder) VisitIn(args ...string) (*JsonObject, error) {
 	return (*JsonObject)(&map[string]interface{}{
 		"terms": map[string]interface{}{

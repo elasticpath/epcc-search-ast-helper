@@ -26,6 +26,10 @@ func (p PanicyReducer) PostVisitAnd(rs []*string) (*string, error) {
 	panic("not called")
 }
 
+func (p PanicyReducer) PostVisitOr(rs []*string) (*string, error) {
+	panic("not called")
+}
+
 func (p PanicyReducer) VisitIn(args ...string) (*string, error) {
 	panic("not called")
 }

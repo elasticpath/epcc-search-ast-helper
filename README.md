@@ -30,7 +30,6 @@ func Example(headerValue string) (*epsearchast_v3.AstNode, error) {
 If the error that comes back is a ValidationErr you should treat it as a 400 to the caller.
 
 
-
 ### Aliases
 
 This package provides a way to support aliases for fields, this will allow a user to specify multiple different names for a field, and still have it validated and converted properly:
@@ -61,7 +60,7 @@ Aliases can also match Regular Expressions. Regular expresses are specified star
 
 **Note**: Regular expressions are an advanced use case, and care is needed as the validation involved is maybe more limited than expected. In general if more than one regular expression can a key, then it's not defined which one will be used. Some errors may only be caught at runtime.
 
-**Note**: Another catch concerns the fact that `.` is a wild card in regex and often a path seperator in JSON, so if you aren't careful you can allow or create inconsistent rules. In general, you should escape `.` in separators to `\.` and use `([^.]+)` to match a wild card part of the attribute name (or maybe even `[a-zA-Z0-9_-]+`) 
+**Note**: Another catch concerns the fact that `.` is a wild card in regex and often a path separator in JSON, so if you aren't careful you can allow or create inconsistent rules. In general, you should escape `.` in separators to `\.` and use `([^.]+)` to match a wild card part of the attribute name (or maybe even `[a-zA-Z0-9_-]+`) 
 
 **Incorrect**: `^attributes.locales..+.description$` - This would match `attributesXlocalesXXXdescription`, it would also match `attributes.locales.en-US.foo.bar.description`
 
@@ -69,7 +68,7 @@ Aliases can also match Regular Expressions. Regular expresses are specified star
 
 ### Validation
 
-This package provides a concise way to validate that the operators and fields specified in the header are permitted, as well as contrain the allowed values to specific types such as Boolean, Int64, and Float64:
+This package provides a concise way to validate that the operators and fields specified in the header are permitted, as well as constrain the allowed values to specific types such as Boolean, Int64, and Float64:
 
 ```go
 package example
@@ -132,6 +131,19 @@ func Example(ast *epsearchast_v3.AstNode) error {
 }
 ```
 
+#### OR Filter Restrictions
+
+By default, when using validation in this library, it will cap the complexity of OR queries to 4. The terminology we use internally is effective index intersection count and conceptually it is computed as follows:
+
+1. The value is 1 for every leaf node in the AST.
+2. For AND nodes it is the product of the children.
+3. For OR nodes it is the sum of the children.
+
+For example if you were searching for (a=1 OR b=2) AND (c=3 OR d=4 OR e=5), we compute that there might be 6 index intersections needed, (a=1,c=3),(a=1,d=4),(a=1,e=5),... This provides a heuristic to cap costs and prevent 
+runaway queries from being generated. It was actually intended that we look at the number of index scans needed, and maybe that's a closer measure to expense in the DB, but the math would only be slightly different.
+
+Over time this value and argument might change as we get more experience, in the interm you can use 0 as a value to allow everything (say if the collection is small).
+
 #### Regular Expressions
 
 Regular Expressions can also be set when using the Validation functions, the same rules apply as for aliases (see above). In general aliases are resolved prior to validation rules and operator checks.
@@ -178,7 +190,7 @@ func Example(ast *epsearchast_v3.AstNode, query *gorm.DB, tenantBoundaryId strin
 1. The GORM builder does not support aliases (easy MR to fix).
 2. The GORM builder does not support joins (fixable in theory).
 3. There is no way currently to specify the type of a field for SQL, which means everything gets written as a string today (fixable with MR).
-4. The `text` operator implementation makes a number of assumptions, and you likely will want to override it's implementation:
+4. The `text` operator implementation makes a number of assumptions, and you likely will want to override its implementation:
    * English is hard coded as the language.
    * Postgres recommends using a [distinct tsvector column and using a stored generated column](https://www.postgresql.org/docs/current/textsearch-tables.html#TEXTSEARCH-TABLES-INDEX). The current implementation does not support this and, you would need to override the method to support it. A simple MR could be made to allow for the Gorm query builder to know if there is a tsvector column and use that.
 

@@ -8,6 +8,7 @@ import "fmt"
 // only conjunction operators are required to handle the child arguments, and most other types have there arguments passed in the right type.
 type SemanticReducer[R any] interface {
 	PostVisitAnd([]*R) (*R, error)
+	PostVisitOr([]*R) (*R, error)
 	VisitIn(args ...string) (*R, error)
 	VisitEq(first, second string) (*R, error)
 	VisitLe(first, second string) (*R, error)
@@ -47,6 +48,8 @@ func SemanticReduceAst[T any](a *AstNode, v SemanticReducer[T]) (*T, error) {
 			return v.VisitIn(a.Args...)
 		case "AND":
 			return v.PostVisitAnd(t)
+		case "OR":
+			return v.PostVisitOr(t)
 		case "IS_NULL":
 			return v.VisitIsNull(a.Args[0])
 		default:
