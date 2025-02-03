@@ -5,6 +5,7 @@ import (
 	"fmt"
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	epsearchast_v3_es "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/es"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
@@ -615,6 +616,71 @@ func TestSimpleRecursiveStructure(t *testing.T) {
 	require.Equal(t, expectedJson, string(queryJson))
 }
 
+func TestSimpleRecursiveWithStringOverrideStruct(t *testing.T) {
+	//Fixture Setup
+	//language=JSON
+	jsonTxt := `
+				{
+					"type":  "AND",
+					"children": [
+					{
+						"type": "IN",
+						"args": ["status", "new", "paid"]
+					},
+					{
+						"type": "EQ",
+						"args": [ "email",  "RON@SWANSON.COM"]
+					}
+					]
+				}
+				`
+
+	//language=JSON
+	expectedJson := `{
+  "bool": {
+    "must": [
+      {
+        "terms": {
+          "status.keyword": [
+            "new",
+            "paid"
+          ]
+        }
+      },
+      {
+        "term": {
+          "email": "ron@swanson.com"
+        }
+      }
+    ]
+  }
+}`
+
+	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	var qb = &LowerCaseEmail{
+		epsearchast_v3_es.DefaultEsQueryBuilder{
+			OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+				"status": {
+					Equality: "status.keyword",
+				},
+			},
+		},
+	}
+
+	// Execute SUT
+	query, err := epsearchast_v3.SemanticReduceAst[epsearchast_v3_es.JsonObject](astNode, qb)
+	require.NoError(t, err)
+	// Verification
+
+	// Verification
+	queryJson, err := json.MarshalIndent(query, "", "  ")
+	require.NoError(t, err)
+
+	require.Equal(t, expectedJson, string(queryJson))
+}
+
 func TestSimpleBinaryTextOperatorGeneratesCorrectQuery(t *testing.T) {
 	//Fixture Setup
 	//language=JSON
@@ -771,4 +837,369 @@ func TestSimpleUnaryIsNullOperatorGeneratesCorrectQueryWithFieldOverride(t *test
 	require.NoError(t, err)
 
 	require.Equal(t, expectedJson, string(queryJson))
+}
+
+func TestMustValidateDoesNotPanicOnEmptyObject(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{}
+
+	// Execute SUT & Verification
+	assert.NotPanics(t, func() {
+		qb.MustValidate()
+	})
+}
+
+func TestMustValidatePanicsWhenRegexDoesNotCompile(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		"tes(": {
+			Path: "foo",
+		},
+	}}
+
+	// Execute SUT & Verification
+	assert.PanicsWithValue(t, "regexp: Compile(`tes(`): error parsing regexp: missing closing ): `tes(`", func() {
+		qb.MustValidate()
+	})
+
+}
+
+func TestMustValidatePanicsWhenRegexDoesNotHaveStartAnchor(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		"test": {
+			Path: "foo",
+		},
+	}}
+
+	// Execute SUT & Verification
+	assert.PanicsWithValue(t, "All nested fields must be anchored to the start of the string (e.g., start with a ^), [test] does not", func() {
+		qb.MustValidate()
+	})
+
+}
+
+func TestMustValidatePanicsWhenRegexDoesNotHaveEndAnchor(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		"^test": {
+			Path: "foo",
+		},
+	}}
+
+	// Execute SUT & Verification
+	assert.PanicsWithValue(t, "All nested fields must be anchored at the end of the string (e.g., end in an $), [^test] does not", func() {
+		qb.MustValidate()
+	})
+
+}
+
+func TestMustValidatePanicsWhenNoPathIsSet(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		"^test.foo$": {},
+	}}
+
+	// Execute SUT & Verification
+	assert.PanicsWithValue(t, "Path must be set for nested field [^test.foo$]", func() {
+		qb.MustValidate()
+	})
+
+}
+
+func TestMustValidatePanicsWhenRegexHasValueCaptureGroup(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		"^test.(?P<value>.+)value$": {
+			Path: "foo",
+		},
+	}}
+
+	// Execute SUT & Verification
+	assert.PanicsWithValue(t, "Named capture group 'value' is reserved for the replacement value, [^test.(?P<value>.+)value$] cannot use this", func() {
+		qb.MustValidate()
+	})
+
+}
+
+func TestMustValidatePanicsWhenRegexKeyHasValueReplacement(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		"^test.(?P<id>.+).value$": {
+			Path: "foo",
+			Subqueries: map[string]epsearchast_v3_es.Replacement{
+				"foo.$value": {
+					Value: "$value",
+				},
+			},
+		},
+	}}
+
+	// Execute SUT & Verification
+	assert.PanicsWithValue(t, "You cannot use $value as replacement in a key in [foo.$value]", func() {
+		qb.MustValidate()
+	})
+
+}
+
+func TestMustValidatePanicsNoSubqueriesSet(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		"^test.(?P<id>.+).value$": {
+			Path:       "foo",
+			Subqueries: map[string]epsearchast_v3_es.Replacement{},
+		},
+	}}
+
+	// Execute SUT & Verification
+	assert.PanicsWithValue(t, "Subqueries must be set for nested field [^test.(?P<id>.+).value$]", func() {
+		qb.MustValidate()
+	})
+}
+
+func TestMustValidatePanicsWhenFieldHasTemplateNotInField(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		"^test.(?P<id>.+).value$": {
+			Path: "foo",
+			Subqueries: map[string]epsearchast_v3_es.Replacement{
+				"foo.$i.$id": {
+					Value: "$id",
+				},
+			},
+		},
+	}}
+
+	// Execute SUT & Verification
+	assert.PanicsWithValue(t, "Not all templates replaced in nested field [^test.(?P<id>.+).value$] key [foo.$i.$id], after replacement left over with: foo.$i. ", func() {
+		qb.MustValidate()
+	})
+}
+
+func TestMustValidatePanicsWhenFieldValueHasTemplateNotInField(t *testing.T) {
+	// Fixture Setup
+	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		"^test.(?P<id>.+).value.(?P<bar>.+)$": {
+			Path: "foo",
+			Subqueries: map[string]epsearchast_v3_es.Replacement{
+				"foo.$id": {
+					Value: "$yas.$bar",
+				},
+			},
+		},
+	}}
+
+	// Execute SUT & Verification
+	assert.PanicsWithValue(t, "Not all templates replaced in nested field [^test.(?P<id>.+).value.(?P<bar>.+)$] key [foo.$id] with value [$yas.$bar], after replacement left over with: $yas.", func() {
+		qb.MustValidate()
+	})
+}
+
+func TestMultipleRegexMatchesAreReplacedCorrectlyWhenCaptureGroupsOverlap(t *testing.T) {
+	// We are kind of sloppy with how we do templates, replacing $key with value by string.Replace.
+	// If two capture groups have a prefix then if you aren't careful you can get into weird states.
+	// For instance "$user and $username" if you have templates "user=foo, and username=bar", then
+	// "$user and $username" might get replaced with "foo and fooname" instead of "foo and bar".
+	// We could use a non-alphanumeric suffix but that might be limiting.
+
+	//language=JSON
+	jsonTxt := `{
+  "type": "EQ",
+  "args": [
+    "field.X.Y.Z","123"
+  ]
+}
+`
+
+	//language=JSON
+	// You can see an example of what this tests, by disabling the sorting of keys in applyPatternGroupsToFieldNameAndValue
+	// You'll get some left over as in the response.
+	expectedJson := `{
+  "nested": {
+    "path": "foo",
+    "query": {
+      "bool": {
+        "must": [
+          {
+            "term": {
+              "foo.Y.Y.Y": "ZYX"
+            }
+          },
+          {
+            "term": {
+              "foo.XZY": "YZX"
+            }
+          }
+        ]
+      }
+    }
+  }
+}`
+
+	qb := &epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		`^field\.(?P<aaa>[^.]+)\.(?P<a>[^.]+)\.(?P<aa>[^.]+)$`: {
+			Path: "foo",
+			Subqueries: map[string]epsearchast_v3_es.Replacement{
+				"foo.$aaa$aa$a": {
+					Value: "$a$aa$aaa",
+				},
+				"foo.$a.$a.$a": {
+					Value: "$aa$a$aaa",
+				},
+			},
+		},
+	}}
+
+	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	query, err := epsearchast_v3.SemanticReduceAst[epsearchast_v3_es.JsonObject](astNode, qb)
+	require.NoError(t, err)
+
+	// Verification
+	queryJson, err := json.MarshalIndent(query, "", "  ")
+	require.NoError(t, err)
+
+	require.Equal(t, expectedJson, string(queryJson))
+
+}
+
+func TestMultipleReplacementFieldsInNestedObjectAreSortedInDeterministicOrder(t *testing.T) {
+	// For consumers who want to unit test things, it's nice if things are deterministic.
+
+	//language=JSON
+	jsonTxt := `{
+  "type": "EQ",
+  "args": [
+    "field.X","123"
+  ]
+}
+`
+
+	//language=JSON
+	// You can see an example of what this tests, by disabling the sorting of keys in processNestedFieldToQuery
+	expectedJson := `{
+  "nested": {
+    "path": "foo",
+    "query": {
+      "bool": {
+        "must": [
+          {
+            "term": {
+              "foo.a": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.b": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.c": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.d": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.e": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.f": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.g": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.h": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.i": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.j": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.k": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.l": "123"
+            }
+          },
+          {
+            "term": {
+              "foo.m": "123"
+            }
+          }
+        ]
+      }
+    }
+  }
+}`
+
+	qb := &epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+		`^field\.(?P<aaa>[^.]+)$`: {
+			Path: "foo",
+			Subqueries: map[string]epsearchast_v3_es.Replacement{
+				"foo.j": {Value: "$value"},
+				"foo.i": {Value: "$value"},
+				"foo.l": {Value: "$value"},
+				"foo.m": {Value: "$value"},
+				"foo.h": {Value: "$value"},
+				"foo.c": {Value: "$value"},
+				"foo.f": {Value: "$value"},
+				"foo.k": {Value: "$value"},
+				"foo.a": {Value: "$value"},
+				"foo.b": {Value: "$value"},
+				"foo.e": {Value: "$value"},
+				"foo.d": {Value: "$value"},
+				"foo.g": {Value: "$value"},
+			},
+		},
+	}}
+
+	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	query, err := epsearchast_v3.SemanticReduceAst[epsearchast_v3_es.JsonObject](astNode, qb)
+	require.NoError(t, err)
+
+	// Verification
+	queryJson, err := json.MarshalIndent(query, "", "  ")
+	require.NoError(t, err)
+
+	require.Equal(t, expectedJson, string(queryJson))
+
+}
+
+type LowerCaseEmail struct {
+	epsearchast_v3_es.DefaultEsQueryBuilder
+}
+
+func (l *LowerCaseEmail) VisitEq(first, second string) (*epsearchast_v3_es.JsonObject, error) {
+	if first == "email" {
+		return epsearchast_v3_es.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, strings.ToLower(second))
+	} else {
+		return epsearchast_v3_es.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, second)
+	}
 }
