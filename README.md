@@ -414,32 +414,75 @@ package example
 import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 import epsearchast_v3_es "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/els"
 
+
+var qb = &LowerCaseEmail{
+   epsearchast_v3_es.DefaultEsQueryBuilder{
+      OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+         "status": {
+            Wildcard: "status.wildcard",
+         },
+      },
+   },
+}
+
+func init() {
+	// Check all the options are valid.
+	// Doing this in an init method, ensures that you don't have issues at runtime.
+    qb.MustValidate()	
+}
+
 func Example(ast *epsearchast_v3.AstNode, tenantBoundaryId string)  (string, error) {
    // Not Shown: Validation
-
-   // Create query builder
-   var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.LowerCaseEmail{}
+	
 
    // Create Query Object
-   queryObj, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+   query, err := epsearchast_v3.SemanticReduceAst[epsearchast_v3_es.JsonObject](astNode, qb)
 
    if err != nil {
       return nil, err
    }
+   
+   // Verification
+   queryJson, err := json.MarshalIndent(query, "", "  ")
 
-   ...
 }
 
 type LowerCaseEmail struct {
    epsearchast_v3_es.DefaultEsQueryBuilder
 }
 
-func (l *LowerCaseEmail) VisitEq(first, second string) (*bson.D, error) {
-   ....
+func (l *LowerCaseEmail) VisitEq(first, second string) (*epsearchast_v3_es.JsonObject, error) {
+   if first == "email" {
+      return epsearchast_v3_es.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, strings.ToLower(second))
+   } else {
+      return epsearchast_v3_es.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, second)
+   }
 }
 
 ```
 
+
+
+##### Limitations
+
+1. There is no support for [Null Values](https://opensearch.org/docs/latest/field-types/supported-field-types/index/#null-value), so while the is_null key is supported it defaults to empty
+   * An MR would be welcome to fix this.
+2. Elastic/OpenSearch do not by default ensure that objects retain their relations (e.g, you can't search for nested subobjects that have the AND of two properties). In order to support this you need to use [Nested Objects](https://opensearch.org/docs/latest/field-types/supported-field-types/nested/).
+3. You cannot use the is_null operator with nested fields.
+   * It's unclear whether or not this could actually be supported nicely.
+
+##### Advanced Customization
+
+###### Field Types
+
+Elastic Search may store the same field in multiple ways using [multi-fields](https://opensearch.org/docs/latest/field-types/supported-field-types/index/#multifields), and depending on the operator being used you might need to use a different field (e.g., `text(a,"hello")` could use a `text` field called `a`, but `eq(a,"hello")` might need the `keyword` field `a.keyword`).
+You can use the OpTypeToFieldNames map to essentially change the field to look at based on the operator type, check the code but there are essentially a number of classes, such as equality, relational, text, array, and wildcard. 
+
+###### Nested Subqueries
+
+Elastic Search doesn't natively support arrays, and so you can't easily support filters such as `eq(parent[0].id,)` or `text(locale.FR.description,"touté")` natively.
+
+This library includes support for creating these nested fields provided that you have an index element on each field. Please see the integration tests, for examples of how to use this feature.
 
 ### FAQ
 
