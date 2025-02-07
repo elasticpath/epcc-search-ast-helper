@@ -260,6 +260,9 @@ func (l *CustomQueryBuilder) VisitEq(first, second string) (*epsearchast_v3_gorm
 
 The following examples shows how to generate a Mongo Query with this library.
 
+Note: There are two packages for mongo, `epsearchast_v3_mongo` and `epsearchast_v3_mongo_v2`, this corresponds to the release of the [Mongo v2 driver](https://github.com/mongodb/mongo-go-driver/blob/master/docs/migration-2.0.md),
+in 2025. The packages are identical at the moment, except binding on the v2 types. Going forward consumers are recommended to switch to the v2 driver, as v1 is EOL in Nov 2025.
+
 ```go
 package example
 
