@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 )
-import "go.mongodb.org/mongo-driver/bson"
+import "go.mongodb.org/mongo-driver/v2/bson"
 
 type DefaultMongoQueryBuilder struct {
 	FieldTypes map[string]epsearchast_v3.FieldType
