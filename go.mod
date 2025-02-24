@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.23.3
 
 require (
-	github.com/go-playground/validator/v10 v10.24.0
+	github.com/go-playground/validator/v10 v10.25.0
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/mongo-driver v1.17.2
