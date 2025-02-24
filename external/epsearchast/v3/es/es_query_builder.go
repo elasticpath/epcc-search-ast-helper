@@ -41,7 +41,7 @@ type Replacement struct {
 	ForceEQ bool
 }
 
-// Elastic Search can encode data in multiple formats using multi fields
+// Elasticsearch can encode data in multiple formats using multi fields
 // https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-fields.html
 
 type OperatorTypeToMultiFieldName struct {
@@ -166,159 +166,181 @@ func (d DefaultEsQueryBuilder) PostVisitOr(rs []*JsonObject) (*JsonObject, error
 }
 
 func (d DefaultEsQueryBuilder) VisitIn(args ...string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
-		return &JsonObject{
-			"terms": map[string]any{
-				d.getFieldMapping(args[0]).Equality: args[1:],
-			},
-		}
-	}
+	b := d.GetTermsQueryBuilderForEqualityField()
 
 	return d.buildQueryWithBuilder(b, args...)
 }
 
-func (d DefaultEsQueryBuilder) eqBuilder() func(args ...string) *JsonObject {
+func (d DefaultEsQueryBuilder) GetTermsQueryBuilderForEqualityField() func(args ...string) *JsonObject {
 	return func(args ...string) *JsonObject {
 		return &JsonObject{
-			"term": map[string]any{
-				d.getFieldMapping(args[0]).Equality: args[1],
+			"terms": map[string]any{
+				d.GetFieldMapping(args[0]).Equality: args[1:],
 			},
 		}
 	}
 }
 
 func (d DefaultEsQueryBuilder) VisitEq(first, second string) (*JsonObject, error) {
-	b := d.eqBuilder()
+	b := d.GetTermQueryBuilderForEqualityField()
 
 	return d.buildQueryWithBuilder(b, first, second)
+}
+
+func (d DefaultEsQueryBuilder) GetTermQueryBuilderForEqualityField() func(args ...string) *JsonObject {
+	return func(args ...string) *JsonObject {
+		return &JsonObject{
+			"term": map[string]any{
+				d.GetFieldMapping(args[0]).Equality: args[1],
+			},
+		}
+	}
 }
 
 func (d DefaultEsQueryBuilder) VisitContains(first, second string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
+	b := d.GetTermQueryBuilderForArrayField()
+
+	return d.buildQueryWithBuilder(b, first, second)
+}
+
+func (d DefaultEsQueryBuilder) GetTermQueryBuilderForArrayField() func(args ...string) *JsonObject {
+	return func(args ...string) *JsonObject {
 		return &JsonObject{
 			"term": map[string]any{
-				d.getFieldMapping(args[0]).Array: args[1],
+				d.GetFieldMapping(args[0]).Array: args[1],
 			},
 		}
 	}
-
-	return d.buildQueryWithBuilder(b, first, second)
 }
 
 func (d DefaultEsQueryBuilder) VisitText(first, second string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
-		return (*JsonObject)(&map[string]any{
-			"match": map[string]any{
-				d.getFieldMapping(args[0]).Text: args[1],
-			},
-		})
-	}
+	b := d.BuildMatchBoolPrefixQuery()
 
 	return d.buildQueryWithBuilder(b, first, second)
+}
+
+func (d DefaultEsQueryBuilder) BuildMatchBoolPrefixQuery() func(args ...string) *JsonObject {
+	return func(args ...string) *JsonObject {
+
+		return &JsonObject{
+			"match_bool_prefix": map[string]any{
+				d.GetFieldMapping(args[0]).Text: map[string]any{
+					"query":    args[1],
+					"operator": "and",
+				},
+			},
+		}
+	}
 }
 
 // Useful doc: https://www.elastic.co/guide/en/elasticsearch/reference/7.17/query-dsl-range-query.html
-
 func (d DefaultEsQueryBuilder) VisitLe(first, second string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
-		return &JsonObject{
-			"range": map[string]any{
-				d.getFieldMapping(args[0]).Relational: map[string]any{
-					"lte": args[1],
-				},
-			},
-		}
-	}
+	b := d.GetLteRangeQueryBuilder()
 
 	return d.buildQueryWithBuilder(b, first, second)
+}
+
+func (d DefaultEsQueryBuilder) GetLteRangeQueryBuilder() func(args ...string) *JsonObject {
+	return d.GetRangeQueryBuilder("lte")
 }
 
 func (d DefaultEsQueryBuilder) VisitLt(first, second string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
-		return &JsonObject{
-			"range": map[string]any{
-				d.getFieldMapping(args[0]).Relational: map[string]any{
-					"lt": args[1],
-				},
-			},
-		}
-	}
+	b := d.GetLtRangeQueryBuilder()
 
 	return d.buildQueryWithBuilder(b, first, second)
+}
+
+func (d DefaultEsQueryBuilder) GetLtRangeQueryBuilder() func(args ...string) *JsonObject {
+	return d.GetRangeQueryBuilder("lt")
 }
 
 func (d DefaultEsQueryBuilder) VisitGe(first, second string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
-		return &JsonObject{
-			"range": map[string]any{
-				d.getFieldMapping(args[0]).Relational: map[string]any{
-					"gte": args[1],
-				},
-			},
-		}
-	}
+	b := d.GetGteRangeQueryBuilder()
 	return d.buildQueryWithBuilder(b, first, second)
+}
+
+func (d DefaultEsQueryBuilder) GetGteRangeQueryBuilder() func(args ...string) *JsonObject {
+	return d.GetRangeQueryBuilder("gte")
 }
 
 func (d DefaultEsQueryBuilder) VisitGt(first, second string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
-		return &JsonObject{
-			"range": map[string]any{
-				d.getFieldMapping(args[0]).Relational: map[string]any{
-					"gt": args[1],
-				},
-			},
-		}
-	}
+	b := d.GetGtRangeQueryBuilder()
 	return d.buildQueryWithBuilder(b, first, second)
 }
 
-func (d DefaultEsQueryBuilder) VisitLike(first, second string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
+func (d DefaultEsQueryBuilder) GetGtRangeQueryBuilder() func(args ...string) *JsonObject {
+	return d.GetRangeQueryBuilder("gt")
+}
+
+func (d DefaultEsQueryBuilder) GetRangeQueryBuilder(op string) func(args ...string) *JsonObject {
+	return func(args ...string) *JsonObject {
 		return &JsonObject{
-			"wildcard": map[string]any{
-				d.getFieldMapping(args[0]).Wildcard: map[string]any{
-					"value":            d.EscapeWildcardString(args[1]),
-					"case_insensitive": false,
+			"range": map[string]any{
+				d.GetFieldMapping(args[0]).Relational: map[string]any{
+					op: args[1],
 				},
 			},
 		}
 	}
+}
+
+func (d DefaultEsQueryBuilder) VisitLike(first, second string) (*JsonObject, error) {
+	b := d.GetCaseSensitiveWildcardQueryBuilder()
 	return d.buildQueryWithBuilder(b, first, second)
 }
 
 func (d DefaultEsQueryBuilder) VisitILike(first, second string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
+	b := d.GetCaseInsensitiveWildcardQueryBuilder()
+	return d.buildQueryWithBuilder(b, first, second)
+}
+
+func (d DefaultEsQueryBuilder) GetCaseInsensitiveWildcardQueryBuilder() func(args ...string) *JsonObject {
+	return func(args ...string) *JsonObject {
 		return &JsonObject{
 			"wildcard": map[string]any{
-				d.getFieldMapping(args[0]).Wildcard: map[string]any{
+				d.GetFieldMapping(args[0]).Wildcard: map[string]any{
 					"value":            d.EscapeWildcardString(args[1]),
 					"case_insensitive": true,
 				},
 			},
 		}
 	}
-	return d.buildQueryWithBuilder(b, first, second)
 }
 
 func (d DefaultEsQueryBuilder) VisitIsNull(first string) (*JsonObject, error) {
-	b := func(args ...string) *JsonObject {
+	b := d.GetMustNotExistQueryBuilder()
+	return d.buildQueryWithBuilder(b, first)
+}
+
+func (d DefaultEsQueryBuilder) GetCaseSensitiveWildcardQueryBuilder() func(args ...string) *JsonObject {
+	return func(args ...string) *JsonObject {
+		return &JsonObject{
+			"wildcard": map[string]any{
+				d.GetFieldMapping(args[0]).Wildcard: map[string]any{
+					"value":            d.EscapeWildcardString(args[1]),
+					"case_insensitive": false,
+				},
+			},
+		}
+	}
+}
+
+func (d DefaultEsQueryBuilder) GetMustNotExistQueryBuilder() func(arg ...string) *JsonObject {
+	return func(args ...string) *JsonObject {
 		return &JsonObject{
 			"bool": map[string]any{
 				"must_not": map[string]any{
 					"exists": map[string]any{
-						"field": d.getFieldMapping(args[0]).Equality,
+						"field": d.GetFieldMapping(args[0]).Equality,
 					},
 				},
 			},
 		}
 	}
-
-	return d.buildQueryWithBuilder(b, first)
 }
 
-// getFieldMapping returns the field name to use for a given operator type, the struct is always guaranteed to return f, if nothing was set.
-func (d DefaultEsQueryBuilder) getFieldMapping(f string) *OperatorTypeToMultiFieldName {
+// GetFieldMapping returns the field name to use for a given operator type, the struct is always guaranteed to return f, if nothing was set.
+func (d DefaultEsQueryBuilder) GetFieldMapping(f string) *OperatorTypeToMultiFieldName {
 	var o *OperatorTypeToMultiFieldName
 
 	if d.OpTypeToFieldNames[f] == nil {
@@ -451,7 +473,7 @@ func (d DefaultEsQueryBuilder) processNestedFieldToQuery(builder func(args ...st
 						replacedArgs = append(replacedArgs, sqValue)
 					}
 
-					musts = append(musts, d.eqBuilder()(replacedArgs...))
+					musts = append(musts, d.GetTermQueryBuilderForEqualityField()(replacedArgs...))
 				} else {
 					musts = append(musts, builder(replacedArgs...))
 				}
