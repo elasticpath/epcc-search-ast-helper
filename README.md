@@ -405,9 +405,9 @@ func (l *LowerCaseEmail) VisitEq(first, second string) (*bson.D, error) {
 
 You can of course use the `FieldTypes` and `CustomQueryBuilder` together.
 
-#### Elastic Search (Open Search)
+#### Elasticsearch (Open Search)
 
-The following examples shows how to generate a Elastic Search Query with this library.
+The following examples shows how to generate an Elasticsearch Query with this library.
 
 ```go
 package example
@@ -461,8 +461,6 @@ func (l *LowerCaseEmail) VisitEq(first, second string) (*epsearchast_v3_es.JsonO
 
 ```
 
-
-
 ##### Limitations
 
 1. There is no support for [Null Values](https://opensearch.org/docs/latest/field-types/supported-field-types/index/#null-value), so while the is_null key is supported it defaults to empty
@@ -475,14 +473,30 @@ func (l *LowerCaseEmail) VisitEq(first, second string) (*epsearchast_v3_es.JsonO
 
 ###### Field Types
 
-Elastic Search may store the same field in multiple ways using [multi-fields](https://opensearch.org/docs/latest/field-types/supported-field-types/index/#multifields), and depending on the operator being used you might need to use a different field (e.g., `text(a,"hello")` could use a `text` field called `a`, but `eq(a,"hello")` might need the `keyword` field `a.keyword`).
+Elasticsearch may store the same field in multiple ways using [multi-fields](https://opensearch.org/docs/latest/field-types/supported-field-types/index/#multifields), and depending on the operator being used you might need to use a different field (e.g., `text(a,"hello")` could use a `text` field called `a`, but `eq(a,"hello")` might need the `keyword` field `a.keyword`).
 You can use the OpTypeToFieldNames map to essentially change the field to look at based on the operator type, check the code but there are essentially a number of classes, such as equality, relational, text, array, and wildcard. 
 
 ###### Nested Subqueries
 
-Elastic Search doesn't natively support arrays, and so you can't easily support filters such as `eq(parent[0].id,)` or `text(locale.FR.description,"touté")` natively.
+Elasticsearch has a number of limitations when storing data to be mindful of:
 
-This library includes support for creating these nested fields provided that you have an index element on each field. Please see the integration tests, for examples of how to use this feature.
+1. It doesn't [natively support arrays](https://www.elastic.co/guide/en/elasticsearch/reference/current/array.html). Instead, multiple elements in a field are treated as a [Set](https://en.wikipedia.org/wiki/Set_(mathematics). Concretely this makes it difficult to support filters such as `eq(parent[0],foo)`, as ES is only really designed to support queries such as `contains(parent,foo)`. 
+   * You can't use dynamic field names to get around this, as there is an [upper limit of the number of fields that can be used](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-settings-limit.html) within an index.
+2. Elasticsearch has [no concept of inner objects](https://www.elastic.co/guide/en/elasticsearch/reference/current/nested.html#nested-arrays-flattening-objects), so if your primary storage engine is a document store the association between objects distinct fields is lost. From their documentation, if a document has the structure `<users: [<first: John, last: Smith>, <first: Alice, last: White>]>`, Elastic Search persists `<users.first: {Alice, John}, users.last: {Smith, White}>`. Elasticsearch can't distinguish between "John Smith", "Alice White" and "John White" and "Alice Smith".
+
+This makes it challenging to support filters such as `eq(parent[0],foo)` or `text(locale.FR.description,"touté")` natively. In order to support these kinds of searches, the way this library currently supports is to use the [nested field type](https://www.elastic.co/guide/en/elasticsearch/reference/current/nested.html) to store the data. Conceptually whereas another database might store the data as `<parent: [foo,bar]>`, we can store the data as: `<parent:{<idx:0, value:foo>,<idx:1, value:bar>}>`, this means that conceptually the library would translate `eq(parent[0],foo)` to something like `eq(parent.idx,0):eq(parent.value,foo)`, and then wrap the resulting query in a [nested query](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-nested-query.html). 
+
+This library includes support for automatically creating these nested fields provided that you have an index element on each field. Please see the integration tests, for examples of how to use this feature.
+
+###### Overriding Behaviour
+
+The Elasticsearch Query Builder has a couple of family of methods that can be overridden:
+
+1. `Visit___()` - These functions override what happens when we see particular nodes in the AST. These functions return the resulting JSON to query Elasticsearch with, and do so by generating a builder, and then handing it off to the nested query logic to decode the field name, etc...
+2. `Get_____QueryBuilder()` - These functions override the resulting ES queries that are built. These functions return a function that returns the JSON to query Elasticsearch With.
+
+In Mongo and Postgres there is a near 1-1 translation between an AST node and a query. In Elasticsearch, due to [Nested Queries](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-nested-query.html) the mapping is not 1-to-1,
+due to visiting a nested field. If you need to override behaviour pertaining to a nested field, the `Get____QueryBuilder()` functions are probably where the override should happen, otherwise `Visit____()` might be simpler.
 
 ### FAQ
 
@@ -491,3 +505,7 @@ This library includes support for creating these nested fields provided that you
 ##### Why does validation include alias resolution, why not process aliases first?
 
 When validation errors occur, those errors go back to the user, so telling the user the error that occurred using the term they specified improves usability.
+
+##### Why does the ES only support nested fields, and not other techniques such as flattened or object.
+
+Nested queries are the most *powerful* and *flexible* ways from a user perspective, however they are likely also the slowest, and eat up document ids a lot. In the future as other operation concerns become an issue, support can be added.

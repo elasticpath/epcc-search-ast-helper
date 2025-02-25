@@ -695,8 +695,11 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQuery(t *testing.T) {
 
 	//language=JSON
 	expectedJson := `{
-  "match": {
-    "description": "Cars"
+  "match_bool_prefix": {
+    "description": {
+      "operator": "and",
+      "query": "Cars"
+    }
   }
 }`
 
@@ -730,8 +733,11 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
 
 	//language=JSON
 	expectedJson := `{
-  "match": {
-    "description.text": "Cars"
+  "match_bool_prefix": {
+    "description.text": {
+      "operator": "and",
+      "query": "Cars"
+    }
   }
 }`
 
