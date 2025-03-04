@@ -668,6 +668,15 @@ func TestSmokeTestElasticSearchWithFilters(t *testing.T) {
 			count: 1,
 		},
 		{
+			// Checks for a typo
+			//language=JSON
+			filter: `{
+						"type": "TEXT",
+						"args": ["key_value_field.c.description", "trifceta triangles"]
+					}`,
+			count: 1,
+		},
+		{
 			//language=JSON
 			filter: `{
 						"type": "CONTAINS",
@@ -835,6 +844,14 @@ func TestSmokeTestElasticSearchWithFilters(t *testing.T) {
 		{
 			//language=JSON
 			filter: `{
+						"type": "EQ",
+						"args": ["key_value_field[1].description", "Multiplicative Identity"]
+					}`,
+			count: 0,
+		},
+		{
+			//language=JSON
+			filter: `{
 						"type": "AND",
 						"children": [
 							{
@@ -974,6 +991,7 @@ func TestSmokeTestElasticSearchWithFilters(t *testing.T) {
 						},
 					},
 				},
+				DefaultFuzziness: "AUTO",
 			}
 
 			query, err := epsearchast_v3.SemanticReduceAst(ast, qb)
