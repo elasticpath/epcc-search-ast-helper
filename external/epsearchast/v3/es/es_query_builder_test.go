@@ -697,6 +697,7 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQuery(t *testing.T) {
 	expectedJson := `{
   "match_bool_prefix": {
     "description": {
+      "fuzziness": "0",
       "operator": "and",
       "query": "Cars"
     }
@@ -735,6 +736,7 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
 	expectedJson := `{
   "match_bool_prefix": {
     "description.text": {
+      "fuzziness": "0",
       "operator": "and",
       "query": "Cars"
     }
@@ -750,6 +752,47 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
 				Text: "description.text",
 			},
 		},
+	}
+
+	// Execute SUT
+	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	require.NoError(t, err)
+
+	// Verification
+	queryJson, err := json.MarshalIndent(query, "", "  ")
+	require.NoError(t, err)
+
+	require.Equal(t, expectedJson, string(queryJson))
+}
+
+func TestSimpleBinaryTextOperatorGeneratesCorrectQueryWithFuzzinessSetting(t *testing.T) {
+	//Fixture Setup
+	//language=JSON
+	jsonTxt := `{
+  "type": "TEXT",
+  "args": [
+    "description",
+    "Cars"
+  ]
+}
+`
+
+	//language=JSON
+	expectedJson := `{
+  "match_bool_prefix": {
+    "description": {
+      "fuzziness": "AUTO",
+      "operator": "and",
+      "query": "Cars"
+    }
+  }
+}`
+
+	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+		DefaultFuzziness: "AUTO",
 	}
 
 	// Execute SUT

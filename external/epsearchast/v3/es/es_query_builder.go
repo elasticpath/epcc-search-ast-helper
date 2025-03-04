@@ -22,6 +22,11 @@ type DefaultEsQueryBuilder struct {
 	// The value is information about how to replace it, and allows us to create a nested query (https://opensearch.org/docs/latest/query-dsl/joining/nested/) that contains the path nested.
 	// The regular expression can have capture groups that will be used as replacements in the subquery keys and values.
 	NestedFieldToQuery map[string]NestedReplacement
+
+	// The default value for fuzziness
+	// https://opensearch.org/docs/latest/query-dsl/term/fuzzy/
+	// Default value is treated as zero
+	DefaultFuzziness string
 }
 
 type NestedReplacement struct {
@@ -222,11 +227,18 @@ func (d DefaultEsQueryBuilder) VisitText(first, second string) (*JsonObject, err
 func (d DefaultEsQueryBuilder) BuildMatchBoolPrefixQuery() func(args ...string) *JsonObject {
 	return func(args ...string) *JsonObject {
 
+		f := d.DefaultFuzziness
+
+		if f == "" {
+			f = "0"
+		}
+
 		return &JsonObject{
 			"match_bool_prefix": map[string]any{
 				d.GetFieldMapping(args[0]).Text: map[string]any{
-					"query":    args[1],
-					"operator": "and",
+					"query":     args[1],
+					"operator":  "and",
+					"fuzziness": f,
 				},
 			},
 		}
