@@ -19,6 +19,7 @@ var binOps = []testOp{
 
 	// The regex conversion is to complex, so we test that method distinctly.
 	//{"LIKE", "$regex"},
+	// Same with contains
 }
 
 var unaryOps = []testOp{

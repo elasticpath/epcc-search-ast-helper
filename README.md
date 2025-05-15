@@ -148,6 +148,10 @@ Over time this value and argument might change as we get more experience, in the
 
 Regular Expressions can also be set when using the Validation functions, the same rules apply as for aliases (see above). In general aliases are resolved prior to validation rules and operator checks.
 
+#### Customizing ASTs
+
+You can use the `IdentitySemanticReducer` type to simplify rewriting ASTs, by embedding this struct you can only override and process the specific parts you care about. Post processing the AST tree might be simplier than trying to post process a query written in your langauge, or while rebuilding a query.
+
 ### Generating Queries
 
 #### GORM/SQL
