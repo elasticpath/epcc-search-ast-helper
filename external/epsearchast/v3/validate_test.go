@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
+	"time"
 )
 
 var logicOps = []string{"AND", "OR"}
@@ -1323,6 +1324,46 @@ func TestValidateAstWithTypeValidationReturnsErrorWhenRequestIsAFloat64AndNonInt
 	require.ErrorContains(t, err, "could not validate [amount]")
 	require.ErrorContains(t, err, "with [eq]")
 	require.ErrorContains(t, err, "value [457.42] does not satisfy requirement [lt]")
+}
+
+func TestValidateAstWithTypeValidationReturnsNoErrorWhenRequestIsValidAsRFC3339Milli(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "updated_at",  "2024-01-01T00:00:00.000Z"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string{"updated_at": {"eq"}}, map[string]FieldType{"updated_at": RFC3339Milli})
+
+	// Verification
+	require.NoError(t, err)
+}
+
+func TestValidateAstWithTypeValidationReturnsErrorWhenRequestIsNotValidAsRFC3339Milli(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+			{
+				"type": "EQ",
+				"args": [ "updated_at",  "2024-01-01"]
+			}
+			`
+	ast, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string{"updated_at": {"eq"}}, map[string]FieldType{"updated_at": RFC3339Milli})
+
+	// Verification
+	require.ErrorContains(t, err, "could not validate [updated_at]")
+	require.ErrorContains(t, err, "the value [2024-01-01]")
+	require.ErrorContains(t, err, "invalid value for rfc3339milli")
 }
 
 func TestValidateAstWithDefaultRestrictionOnOrComplexityReturnsAValidationErrorWhenFilterIsToComplex(t *testing.T) {
