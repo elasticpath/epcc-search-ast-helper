@@ -3,6 +3,7 @@ package epsearchast_v3
 import (
 	"fmt"
 	"strconv"
+	"time"
 )
 
 type FieldType int
@@ -12,6 +13,7 @@ const (
 	Int64
 	Boolean
 	Float64
+	RFC3339Milli
 )
 
 func (f FieldType) String() string {
@@ -24,6 +26,8 @@ func (f FieldType) String() string {
 		return "bool"
 	case Float64:
 		return "float64"
+	case RFC3339Milli:
+		return "rfc3339milli"
 	default:
 		return "unknown"
 	}
@@ -46,6 +50,9 @@ func Convert(t FieldType, v string) (interface{}, error) {
 		newV, _ = strconv.ParseBool(v)
 	case Float64:
 		newV, _ = strconv.ParseFloat(v, 64)
+	case RFC3339Milli:
+		// Parse RFC3339 datetime with millisecond support
+		newV, _ = time.Parse(time.RFC3339Nano, v)
 	}
 
 	return newV, nil
@@ -90,6 +97,12 @@ func ValidateValue(t FieldType, v string) error {
 		_, e := strconv.ParseBool(v)
 		if e != nil {
 			return fmt.Errorf("invalid value for boolean: `%v`", v)
+		}
+		return nil
+	case RFC3339Milli:
+		_, e := time.Parse(time.RFC3339Nano, v)
+		if e != nil {
+			return fmt.Errorf("invalid value for rfc3339milli: `%v`, expected format like '2006-01-02T15:04:05.000Z'", v)
 		}
 		return nil
 	default:
