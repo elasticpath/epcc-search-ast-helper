@@ -8,7 +8,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.mongodb.org/mongo-driver v1.17.3
 	gorm.io/driver/postgres v1.6.0
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.31.0
 )
 
 require (
