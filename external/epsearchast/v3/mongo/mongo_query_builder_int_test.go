@@ -551,6 +551,94 @@ func TestSmokeTestMongoWithFilters(t *testing.T) {
 }`,
 			count: 2,
 		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ANY",
+						"args": ["array_field", "a", "c"]
+					}`,
+			count: 3,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ANY",
+						"args": ["array_field", "a", "d"]
+					}`,
+			count: 2,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ANY",
+						"args": ["array_field", "z"]
+					}`,
+			count: 0,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ALL",
+						"args": ["array_field", "a", "b"]
+					}`,
+			count: 1,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ALL",
+						"args": ["array_field", "c"]
+					}`,
+			count: 2,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ALL",
+						"args": ["array_field", "c", "d"]
+					}`,
+			count: 1,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ALL",
+						"args": ["array_field", "d", "c"]
+					}`,
+			count: 1,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ALL",
+						"args": ["array_field", "a", "c"]
+					}`,
+			count: 0,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ANY",
+						"args": ["array_field", "d", "a"]
+					}`,
+			count: 2,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ANY",
+						"args": ["array_field", "a", "b", "c"]
+					}`,
+			count: 3,
+		},
+		{
+			//language=JSON
+			filter: `{
+						"type": "CONTAINS_ALL",
+						"args": ["array_field", "a", "b", "c"]
+					}`,
+			count: 0,
+		},
 	}
 
 	for _, tc := range testCases {

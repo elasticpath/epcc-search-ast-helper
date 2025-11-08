@@ -217,6 +217,40 @@ func TestValidObjectWithContainsReturnsAst(t *testing.T) {
 	require.NotNil(t, astNode)
 }
 
+func TestValidObjectWithContainsAnyReturnsAst(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "CONTAINS_ANY",
+	"args": [ "status",  "paid", "pending", "failed"]
+}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.NoError(t, err)
+	require.NotNil(t, astNode)
+}
+
+func TestValidObjectWithContainsAllReturnsAst(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "CONTAINS_ALL",
+	"args": [ "tags",  "important", "urgent"]
+}
+`
+	// Execute SUT
+	astNode, err := GetAst(jsonTxt)
+
+	// Verify
+	require.NoError(t, err)
+	require.NotNil(t, astNode)
+}
+
 func TestValidObjectWithTextReturnsAst(t *testing.T) {
 	// Fixture Setup
 	// language=JSON

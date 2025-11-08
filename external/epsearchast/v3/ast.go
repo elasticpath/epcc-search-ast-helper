@@ -122,6 +122,8 @@ type AstVisitor interface {
 	VisitLike(astNode *AstNode) (bool, error)
 	VisitILike(astNode *AstNode) (bool, error)
 	VisitContains(astNode *AstNode) (bool, error)
+	VisitContainsAny(astNode *AstNode) (bool, error)
+	VisitContainsAll(astNode *AstNode) (bool, error)
 	VisitText(astNode *AstNode) (bool, error)
 	VisitIsNull(astNode *AstNode) (bool, error)
 }
@@ -171,6 +173,10 @@ func (a *AstNode) accept(v AstVisitor) error {
 		descend, err = v.VisitILike(a)
 	case "CONTAINS":
 		descend, err = v.VisitContains(a)
+	case "CONTAINS_ANY":
+		descend, err = v.VisitContainsAny(a)
+	case "CONTAINS_ALL":
+		descend, err = v.VisitContainsAll(a)
 	case "TEXT":
 		descend, err = v.VisitText(a)
 	case "IS_NULL":
@@ -232,7 +238,7 @@ func (a *AstNode) checkValid() error {
 		if len(a.Children) < 2 {
 			return fmt.Errorf("or should have at least two children")
 		}
-	case "IN":
+	case "IN", "CONTAINS_ANY", "CONTAINS_ALL":
 		if len(a.Children) > 0 {
 			return fmt.Errorf("operator %v should not have any children", strings.ToLower(a.NodeType))
 		}

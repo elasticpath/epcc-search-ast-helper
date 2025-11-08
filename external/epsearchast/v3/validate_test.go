@@ -13,7 +13,7 @@ var binOps = []string{"le", "lt", "eq", "ge", "gt", "like", "text", "ilike", "co
 
 var unaryOps = []string{"is_null"}
 
-var varOps = []string{"in"}
+var varOps = []string{"in", "contains_any", "contains_all"}
 
 func TestValidationReturnsErrorForBinaryOperatorsWhenAstUsesInvalidOperatorForKnownField(t *testing.T) {
 	for idx, binOp := range binOps {

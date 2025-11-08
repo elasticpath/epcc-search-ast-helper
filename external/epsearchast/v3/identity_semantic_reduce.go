@@ -53,6 +53,14 @@ func (i IdentitySemanticReducer) VisitContains(first, second string) (*AstNode, 
 	return &AstNode{NodeType: "CONTAINS", Args: []string{first, second}}, nil
 }
 
+func (i IdentitySemanticReducer) VisitContainsAny(args ...string) (*AstNode, error) {
+	return &AstNode{NodeType: "CONTAINS_ANY", Args: args}, nil
+}
+
+func (i IdentitySemanticReducer) VisitContainsAll(args ...string) (*AstNode, error) {
+	return &AstNode{NodeType: "CONTAINS_ALL", Args: args}, nil
+}
+
 func (i IdentitySemanticReducer) VisitText(first, second string) (*AstNode, error) {
 	return &AstNode{NodeType: "TEXT", Args: []string{first, second}}, nil
 }

@@ -66,6 +66,14 @@ func (p PanicyReducer) VisitContains(first, second string) (*string, error) {
 	panic("not called")
 }
 
+func (p PanicyReducer) VisitContainsAny(args ...string) (*string, error) {
+	panic("not called")
+}
+
+func (p PanicyReducer) VisitContainsAll(args ...string) (*string, error) {
+	panic("not called")
+}
+
 func (p PanicyReducer) VisitText(first, second string) (*string, error) {
 	panic("not called")
 }

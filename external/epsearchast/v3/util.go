@@ -94,6 +94,14 @@ func (e effectiveIndexIntersectionCount) VisitContains(first, second string) (*u
 	return ptr(1)
 }
 
+func (e effectiveIndexIntersectionCount) VisitContainsAny(args ...string) (*uint64, error) {
+	return ptr(1)
+}
+
+func (e effectiveIndexIntersectionCount) VisitContainsAll(args ...string) (*uint64, error) {
+	return ptr(1)
+}
+
 func (e effectiveIndexIntersectionCount) VisitText(first, second string) (*uint64, error) {
 	return ptr(1)
 }

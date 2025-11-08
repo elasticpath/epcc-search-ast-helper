@@ -25,6 +25,8 @@ var unaryOpsForTest = []string{
 
 var varOpsForTest = []string{
 	"IN",
+	"CONTAINS_ANY",
+	"CONTAINS_ALL",
 }
 
 func TestIdentitySemanticReducerWithBinaryOperators(t *testing.T) {
