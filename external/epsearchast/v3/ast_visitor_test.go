@@ -218,6 +218,66 @@ func TestPreAndPostAndInCalledOnAccept(t *testing.T) {
 
 }
 
+func TestPreAndPostAndContainsAnyCalledOnAccept(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "CONTAINS_ANY",
+	"args": [
+		"tags",
+		"important",
+		"urgent"
+	]
+}
+`
+
+	mockObj := new(MyMockedVisitor)
+	mockObj.On("PreVisit").Return(nil).
+		On("PostVisit").Return(nil).
+		On("VisitContainsAny", mock.Anything).Return(true, nil)
+
+	astNode, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = astNode.Accept(mockObj)
+
+	// Verification
+	require.NoError(t, err)
+
+}
+
+func TestPreAndPostAndContainsAllCalledOnAccept(t *testing.T) {
+	// Fixture Setup
+	// language=JSON
+	jsonTxt := `
+{
+	"type": "CONTAINS_ALL",
+	"args": [
+		"tags",
+		"important",
+		"urgent"
+	]
+}
+`
+
+	mockObj := new(MyMockedVisitor)
+	mockObj.On("PreVisit").Return(nil).
+		On("PostVisit").Return(nil).
+		On("VisitContainsAll", mock.Anything).Return(true, nil)
+
+	astNode, err := GetAst(jsonTxt)
+	require.NoError(t, err)
+
+	// Execute SUT
+	err = astNode.Accept(mockObj)
+
+	// Verification
+	require.NoError(t, err)
+
+}
+
 func TestPreOnAcceptWithError(t *testing.T) {
 	// Fixture Setup
 	// language=JSON
@@ -804,6 +864,16 @@ func (m *MyMockedVisitor) VisitILike(astNode *AstNode) (bool, error) {
 }
 
 func (m *MyMockedVisitor) VisitContains(astNode *AstNode) (bool, error) {
+	args := m.Called(astNode)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MyMockedVisitor) VisitContainsAny(astNode *AstNode) (bool, error) {
+	args := m.Called(astNode)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MyMockedVisitor) VisitContainsAll(astNode *AstNode) (bool, error) {
 	args := m.Called(astNode)
 	return args.Bool(0), args.Error(1)
 }

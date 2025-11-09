@@ -196,6 +196,26 @@ func (v *validatingVisitor) VisitContains(astNode *AstNode) (bool, error) {
 	return false, nil
 }
 
+func (v *validatingVisitor) VisitContainsAny(astNode *AstNode) (bool, error) {
+	fieldName := astNode.Args[0]
+
+	if err := v.validateFieldAndValue("contains_any", fieldName, astNode.Args[1:]...); err != nil {
+		return false, err
+	}
+
+	return false, nil
+}
+
+func (v *validatingVisitor) VisitContainsAll(astNode *AstNode) (bool, error) {
+	fieldName := astNode.Args[0]
+
+	if err := v.validateFieldAndValue("contains_all", fieldName, astNode.Args[1:]...); err != nil {
+		return false, err
+	}
+
+	return false, nil
+}
+
 func (v *validatingVisitor) VisitText(astNode *AstNode) (bool, error) {
 	fieldName := astNode.Args[0]
 

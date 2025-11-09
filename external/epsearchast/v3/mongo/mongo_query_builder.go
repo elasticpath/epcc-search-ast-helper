@@ -132,6 +132,26 @@ func (d DefaultMongoQueryBuilder) VisitContains(first, second string) (*bson.D, 
 
 }
 
+func (d DefaultMongoQueryBuilder) VisitContainsAny(args ...string) (*bson.D, error) {
+
+	if err := d.ValidateValues(args[0], args[1:]...); err != nil {
+		return nil, err
+	}
+	// https://www.mongodb.com/docs/manual/reference/operator/query/in/
+	// Matches arrays that contain at least one element that matches any of the provided values
+	return &bson.D{{args[0], bson.D{{"$in", d.ConvertValues(args[0], args[1:]...)}}}}, nil
+}
+
+func (d DefaultMongoQueryBuilder) VisitContainsAll(args ...string) (*bson.D, error) {
+
+	if err := d.ValidateValues(args[0], args[1:]...); err != nil {
+		return nil, err
+	}
+	// https://www.mongodb.com/docs/manual/reference/operator/query/all/
+	// Matches arrays that contain all the specified elements
+	return &bson.D{{args[0], bson.D{{"$all", d.ConvertValues(args[0], args[1:]...)}}}}, nil
+}
+
 func (d DefaultMongoQueryBuilder) VisitText(first, second string) (*bson.D, error) {
 	if v, ok := d.FieldTypes[first]; ok {
 		if v != epsearchast_v3.String {

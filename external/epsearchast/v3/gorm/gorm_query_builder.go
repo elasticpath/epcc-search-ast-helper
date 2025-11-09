@@ -3,6 +3,7 @@ package epsearchast_v3_gorm
 import (
 	"fmt"
 	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/lib/pq"
 	"strings"
 )
 
@@ -111,6 +112,20 @@ func (g DefaultGormQueryBuilder) VisitContains(first, second string) (*SubQuery,
 		// ChatGPT says this is the cleanest way
 		Clause: fmt.Sprintf("? = ANY(%s)", first),
 		Args:   []interface{}{g.ProcessLikeWildcards(second)},
+	}, nil
+}
+
+func (g DefaultGormQueryBuilder) VisitContainsAny(args ...string) (*SubQuery, error) {
+	return &SubQuery{
+		Clause: fmt.Sprintf("%s && ?", args[0]),
+		Args:   []interface{}{pq.Array(args[1:])},
+	}, nil
+}
+
+func (g DefaultGormQueryBuilder) VisitContainsAll(args ...string) (*SubQuery, error) {
+	return &SubQuery{
+		Clause: fmt.Sprintf("%s @> ?", args[0]),
+		Args:   []interface{}{pq.Array(args[1:])},
 	}, nil
 }
 

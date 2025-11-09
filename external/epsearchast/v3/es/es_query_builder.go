@@ -208,11 +208,48 @@ func (d DefaultEsQueryBuilder) VisitContains(first, second string) (*JsonObject,
 	return d.buildQueryWithBuilder(b, first, second)
 }
 
+func (d DefaultEsQueryBuilder) VisitContainsAny(args ...string) (*JsonObject, error) {
+	b := d.GetTermsQueryBuilderForArrayField()
+
+	return d.buildQueryWithBuilder(b, args...)
+}
+
+func (d DefaultEsQueryBuilder) VisitContainsAll(args ...string) (*JsonObject, error) {
+	// Build individual term queries for each value
+	b := d.GetTermQueryBuilderForArrayField()
+
+	var termQueries []*JsonObject
+	for _, value := range args[1:] {
+		query, err := d.buildQueryWithBuilder(b, args[0], value)
+		if err != nil {
+			return nil, err
+		}
+		termQueries = append(termQueries, query)
+	}
+
+	// Wrap in a bool query with must clause
+	return &JsonObject{
+		"bool": map[string]any{
+			"must": termQueries,
+		},
+	}, nil
+}
+
 func (d DefaultEsQueryBuilder) GetTermQueryBuilderForArrayField() func(args ...string) *JsonObject {
 	return func(args ...string) *JsonObject {
 		return &JsonObject{
 			"term": map[string]any{
 				d.GetFieldMapping(args[0]).Array: args[1],
+			},
+		}
+	}
+}
+
+func (d DefaultEsQueryBuilder) GetTermsQueryBuilderForArrayField() func(args ...string) *JsonObject {
+	return func(args ...string) *JsonObject {
+		return &JsonObject{
+			"terms": map[string]any{
+				d.GetFieldMapping(args[0]).Array: args[1:],
 			},
 		}
 	}

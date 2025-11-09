@@ -142,7 +142,7 @@ By default, when using validation in this library, it will cap the complexity of
 For example if you were searching for (a=1 OR b=2) AND (c=3 OR d=4 OR e=5), we compute that there might be 6 index intersections needed, (a=1,c=3),(a=1,d=4),(a=1,e=5),... This provides a heuristic to cap costs and prevent 
 runaway queries from being generated. It was actually intended that we look at the number of index scans needed, and maybe that's a closer measure to expense in the DB, but the math would only be slightly different.
 
-Over time this value and argument might change as we get more experience, in the interm you can use 0 as a value to allow everything (say if the collection is small).
+Over time this value and argument might change as we get more experience, in the interim you can use 0 as a value to allow everything (say if the collection is small).
 
 #### Regular Expressions
 
