@@ -165,8 +165,7 @@ configs:
     content: |
       helloworld
   passwordFile:
-    content: |
-      search
+    content: "search"
   config.default.yml:
     # language=yaml
     content: |
