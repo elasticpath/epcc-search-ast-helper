@@ -13,12 +13,12 @@ services:
       timeout: 5s
       retries: 5
   mongo:
-    image: mongo:7.0
+    image: mongodb/mongodb-community-server:8.2.1-ubi8
     ports:
       - '20002:27017'
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGODB_INITDB_ROOT_USERNAME: admin
+      MONGODB_INITDB_ROOT_PASSWORD: admin
     healthcheck:
       test: [ "CMD-SHELL", "echo 'db.runCommand({ ping: 1 })' | mongosh mongodb://localhost:27017/test_db --quiet" ]
       interval: 10s
