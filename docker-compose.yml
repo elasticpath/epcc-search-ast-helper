@@ -1,3 +1,7 @@
+volumes:
+  mongo-community:
+  mongo-community-search:
+
 services:
   postgres:
     image: postgres:15.0-bullseye
@@ -17,6 +21,8 @@ services:
     ports:
       - '127.0.0.1:20002:27017'
     environment:
+      MONGODB_INITDB_ROOT_USERNAME: admin
+      MONGODB_INITDB_ROOT_PASSWORD: admin
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
     healthcheck:
@@ -38,3 +44,155 @@ services:
       timeout: 5s
       retries: 5
 
+
+  mongo-community:
+    container_name: search-ast-helper-mongo-community
+    hostname: mongo-community
+    extra_hosts:
+      # We override the hostname for mongo to point to localhost.
+      # Because in the init mode mongo is only available to localhost.
+      # But we need the replicaset to be configured with a name other containers can see.
+      # https://github.com/docker-library/mongo/issues/339#issuecomment-2253159258
+      - "mongo-community:127.0.0.1"
+    #image: mongodb/mongodb-community-server:8.2.1-ubi8
+    image: mongo:8.2.1
+    command:
+      - "--bind_ip_all"
+      - "--replSet"
+      - "rs0"
+      - "--setParameter"
+      - "mongotHost=mongo-community-search:27027"
+      - "--setParameter"
+      - "searchIndexManagementHostAndPort=mongo-community-search:27027"
+      - "--setParameter"
+      - "skipAuthenticationToSearchIndexManagementServer=false"
+      - "--setParameter"
+      - "useGrpcForSearch=true"
+      - "--keyFile"
+      - "/keyfile"
+      - "--auth"
+    ports:
+      - '127.0.0.1:20004:27017'
+    volumes:
+      - mongo-community:/data/db:delegated
+    configs:
+      - source: mongo-rs-config.js
+        target: /docker-entrypoint-initdb.d/mongo-rs-config.js
+      - source: mongo-user-config.js
+        target: /docker-entrypoint-initdb.d/mongo-user-config.js
+      - source: keyfile
+        target: /keyfile
+        mode: 0400
+        uid: "999"
+        gid: "999"
+    healthcheck:
+      test: >
+        mongosh --quiet "localhost/test" --eval 'quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  mongo-community-search:
+    container_name: search-ast-helper-mongo-community-search
+    hostname: mongo-community-search
+    image: mongodb/mongodb-community-search:0.55.0
+    ports:
+      - '127.0.0.1:20005:27027'
+    volumes:
+      - mongo-community-search:/data/mongot:delegated
+    configs:
+      - source: config.default.yml
+        target: /mongot-community/config.default.yml
+      - source: passwordFile
+        target: /etc/mongot/secrets/passwordFile
+        mode: 0400
+        uid: "999"
+        gid: "999"
+    stop_grace_period: 1s
+    depends_on:
+      mongo-community:
+        condition: service_healthy
+
+
+
+configs:
+  mongo-rs-config.js:
+    # language=javascript
+    content: |
+      print("\n\n\nStarting Replica Set Configuration\n\n\n");
+      rs.initiate({
+          _id: "rs0",
+          members: [
+              { _id: 0, host: `mongo-community:27017` }
+          ]
+      });
+
+      while (!rs.status().members.some(m => m.stateStr === "PRIMARY")) {
+          print("Waiting for primary...");
+          sleep(1000); // sleep 1 second
+      }
+
+      print("\n\n\nReplica Set Configuration Completed\n\n\n");
+
+  mongo-user-config.js:
+    # language=javascript
+    content: |
+      print("\n\n\nCreating Users\n\n\n");
+      var db = db.getSiblingDB("admin");
+      db.createUser(
+          {
+              user: "admin",
+              pwd: "admin",
+              mechanisms: ["SCRAM-SHA-256"],
+              roles: [
+                  {
+                      role: "root",
+                      db: "admin"
+                  }
+              ]
+          },
+          {
+             w: "majority",
+             wtimeout: 5000
+          }
+      );
+
+      db.createUser(
+        {
+          user: "search",
+          pwd: "search",
+          mechanisms: ["SCRAM-SHA-256"],
+          roles: [ "searchCoordinator" ]
+        }
+      );
+
+      print("\n\n\nUsers created\n\n\n");
+  keyfile:
+    content: |
+      helloworld
+  passwordFile:
+    content: "search"
+  config.default.yml:
+    # language=yaml
+    content: |
+      syncSource:
+        replicaSet:
+          hostAndPort: "mongo-community:27017"
+          username: "search"
+          passwordFile: "/etc/mongot/secrets/passwordFile"
+          tls: false
+      storage:
+        dataPath: "/data/mongot"
+      server:
+        grpc:
+          address: "0.0.0.0:27027"
+          tls:
+            mode: "disabled"
+      metrics:
+        enabled: true
+        address: "0.0.0.0:9946"
+      healthCheck:
+        address: "0.0.0.0:8080"
+      logging:
+        verbosity: INFO

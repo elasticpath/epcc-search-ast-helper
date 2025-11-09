@@ -582,6 +582,174 @@ The Elasticsearch Query Builder has a couple of family of methods that can be ov
 In Mongo and Postgres there is a near 1-1 translation between an AST node and a query. In Elasticsearch, due to [Nested Queries](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-nested-query.html) the mapping is not 1-to-1,
 due to visiting a nested field. If you need to override behaviour pertaining to a nested field, the `Get____QueryBuilder()` functions are probably where the override should happen, otherwise `Visit____()` might be simpler.
 
+#### MongoDB Atlas Search (Beta)
+
+The following example shows how to generate a MongoDB Atlas Search query with this library.
+
+**Note**: MongoDB Atlas Search support is currently in beta. Some operators & types are not yet implemented.
+
+```go
+package example
+
+import (
+	"context"
+	"github.com/elasticpath/epcc-search-ast-helper"
+	"github.com/elasticpath/epcc-search-ast-helper/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+func Example(ast *epsearchast.AstNode, collection *mongo.Collection, tenantBoundaryId string) (*mongo.Cursor, error) {
+	// Not Shown: Validation
+
+	// Create Atlas Search query builder
+	// Configure multi-analyzers for fields that support LIKE/ILIKE
+	var qb epsearchast.SemanticReducer[bson.D] = astmongo.DefaultAtlasSearchQueryBuilder{
+		FieldToMultiAnalyzers: map[string]*astmongo.StringMultiAnalyzers{
+			"name": {
+				WildcardCaseInsensitive: "caseInsensitiveAnalyzer",
+				WildcardCaseSensitive:   "caseSensitiveAnalyzer",
+			},
+			"email": {
+				WildcardCaseInsensitive: "caseInsensitiveAnalyzer",
+				WildcardCaseSensitive:   "caseSensitiveAnalyzer",
+			},
+		},
+	}
+
+	// Create AST Query Object
+	astQuery, err := epsearchast.SemanticReduceAst(ast, qb)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Build the Atlas Search query with compound must clause
+	// - astQuery contains the user's search filter (from AST)
+	// - equals clauses ensure results are scoped to the tenant boundary
+	searchQuery := bson.D{
+		{"compound",
+			bson.D{
+				{"must", bson.A{
+					astQuery,
+					bson.D{
+						{"equals", bson.D{
+							{"path", "tenant_boundary_id"},
+							{"value", tenantBoundaryId},
+						}},
+					},
+				}},
+			},
+		},
+	}
+
+	// Execute the search using aggregation pipeline
+	pipeline := mongo.Pipeline{
+		{{Key: "$search", Value: searchQuery}},
+	}
+
+	return collection.Aggregate(context.TODO(), pipeline)
+}
+```
+
+##### Supported Operators
+
+The following operators are currently supported:
+- `text` - Full-text search with analyzers
+- `eq` - Exact case-sensitive equality matching (string fields only)
+- `in` - Multiple value exact matching (string fields only)
+- `like` - Case-sensitive wildcard matching
+- `ilike` - Case-insensitive wildcard matching
+- `gt` - Greater than (lexicographic comparison for strings)
+- `ge` - Greater than or equal (lexicographic comparison for strings)
+- `lt` - Less than (lexicographic comparison for strings)
+- `le` - Less than or equal (lexicographic comparison for strings)
+
+##### Field Configuration
+
+###### Multi-Analyzer Configuration for LIKE/ILIKE
+
+To support `like` and `ilike` operators with proper case sensitivity handling, you need to:
+
+1. **Define custom analyzers in your search index** with appropriate tokenization and case handling
+2. **Configure multi-analyzers on your string fields** to index the same field with different analyzers
+3. **Map fields to analyzer names** in the query builder using `FieldToMultiAnalyzers`
+
+**Example Search Index Definition:**
+
+```json
+{
+  "analyzers": [
+    {
+      "name": "caseInsensitiveAnalyzer",
+      "tokenizer": {
+        "type": "keyword"
+      },
+      "tokenFilters": [
+        {
+          "type": "lowercase"
+        }
+      ]
+    }
+  ],
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "name": [
+        {
+          "type": "string",
+          "analyzer": "lucene.standard",
+          "multi": {
+            "caseInsensitiveAnalyzer": {
+              "type": "string",
+              "analyzer": "caseInsensitiveAnalyzer"
+            },
+            "caseSensitiveAnalyzer": {
+              "type": "string",
+              "analyzer": "lucene.keyword"
+            }
+          }
+        },
+        {
+          "type": "token"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Query Builder Configuration:**
+
+The `FieldToMultiAnalyzers` map specifies which multi-analyzer to use for each field:
+
+```go
+FieldToMultiAnalyzers: map[string]*StringMultiAnalyzers{
+	"name": {
+		WildcardCaseInsensitive: "caseInsensitiveAnalyzer",      // Used for ILIKE
+		WildcardCaseSensitive:   "caseSensitiveAnalyzer",  // Used for LIKE
+	},
+}
+```
+
+**Behavior:**
+If a field is **not** in `FieldToMultiAnalyzers`, if you specify a non empty analyzer, then a "multi" attribute is generated with the name (e.g., `{"path": {"value": "fieldName", "multi": "analyzerName"}}`)
+
+This allows you to mix fields with and without multi-analyzer support in the same index.
+
+##### Limitations
+
+1. The following operators are not yet implemented: `contains`, `contains_any`, `contains_all`, `is_null`
+2. The following field types are not currently supported: UUID fields, Date fields, Numeric fields (numbers are compared as strings)
+3. Range operators (`gt`, `ge`, `lt`, `le`) perform lexicographic comparison on string fields only
+4. Atlas Search requires proper [search index configuration](https://www.mongodb.com/docs/atlas/atlas-search/create-index/) with appropriate field types:
+   - String fields used with `like`/`ilike` should be indexed with multi-analyzers as shown above
+   - String fields used with `eq`/`in` should be indexed with `token` type
+   - String fields used with range operators (`gt`/`ge`/`lt`/`le`) work with `token` type for lexicographic comparison
+   - Text fields should be indexed with `string` type and an appropriate analyzer
+5. Unlike regular MongoDB queries, Atlas Search queries use the aggregation pipeline with the `$search` stage
+6. Additional filters (like tenant boundaries) should be included within the `$search` stage using compound must clauses for optimal performance (as shown in the example above). Alternatively, they can be added as separate `$match` stages after the `$search` stage, though this is less efficient as it filters results after the search rather than during indexing
+
 ### FAQ
 
 #### Design
