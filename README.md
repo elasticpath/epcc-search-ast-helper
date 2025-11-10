@@ -502,6 +502,64 @@ The Elasticsearch Query Builder has a couple of family of methods that can be ov
 In Mongo and Postgres there is a near 1-1 translation between an AST node and a query. In Elasticsearch, due to [Nested Queries](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-nested-query.html) the mapping is not 1-to-1,
 due to visiting a nested field. If you need to override behaviour pertaining to a nested field, the `Get____QueryBuilder()` functions are probably where the override should happen, otherwise `Visit____()` might be simpler.
 
+#### MongoDB Atlas Search (Beta)
+
+The following example shows how to generate a MongoDB Atlas Search query with this library.
+
+**Note**: MongoDB Atlas Search support is currently in beta. Some operators are not yet implemented.
+
+```go
+package example
+
+import (
+	"context"
+	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	epsearchast_v3_mongo "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBoundaryId string) (*mongo.Cursor, error) {
+	// Not Shown: Validation
+
+	// Create Atlas Search query builder
+	var qb epsearchast_v3.SemanticReducer[bson.D] = epsearchast_v3_mongo.DefaultAtlasSearchQueryBuilder{}
+
+	// Create Query Object
+	query, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Execute the search using aggregation pipeline
+	pipeline := mongo.Pipeline{
+		{{Key: "$search", Value: query}},
+		// Don't forget to add additional filters using $match stage if needed
+		{{Key: "$match", Value: bson.D{{"tenant_boundary_id", tenantBoundaryId}}}},
+	}
+
+	return collection.Aggregate(context.TODO(), pipeline)
+}
+```
+
+##### Supported Operators
+
+The following operators are currently supported:
+- `text` - Full-text search with analyzers
+- `eq` - Exact case-sensitive equality matching
+- `in` - Multiple value exact matching
+- `ilike` - Case-insensitive wildcard matching
+
+##### Limitations
+
+1. The following operators are not yet implemented: `like`, `lt`, `le`, `gt`, `ge`, `contains`, `contains_any`, `contains_all`, `is_null`
+2. Atlas Search requires proper [search index configuration](https://www.mongodb.com/docs/atlas/atlas-search/create-index/) with appropriate field types:
+   - Fields should be indexed with both `string` (for text/wildcard operators) and `token` (for exact matching operators) types
+   - Atlas Search automatically routes operators to the correct field type
+3. Unlike regular MongoDB queries, Atlas Search queries use the aggregation pipeline with the `$search` stage
+4. Additional filters (like tenant boundaries) should be added as separate `$match` stages in the pipeline
+
 ### FAQ
 
 #### Design
