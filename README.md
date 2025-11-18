@@ -639,8 +639,8 @@ func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBo
 
 The following operators are currently supported:
 - `text` - Full-text search with analyzers
-- `eq` - Exact case-sensitive equality matching (supports string and UUID fields)
-- `in` - Multiple value exact matching (supports string and UUID fields)
+- `eq` - Exact case-sensitive equality matching (string fields only)
+- `in` - Multiple value exact matching (string fields only)
 - `like` - Case-sensitive wildcard matching
 - `ilike` - Case-insensitive wildcard matching
 - `gt` - Greater than (lexicographic comparison for strings)
@@ -696,16 +696,11 @@ To support `like` and `ilike` operators with proper case sensitivity handling, y
         {
           "type": "token"
         }
-      ],
-      "id": {
-        "type": "token"
-      }
+      ]
     }
   }
 }
 ```
-
-**Note on UUID Fields**: MongoDB Atlas Search (cloud) supports a dedicated `uuid` field type, but `token` type works for UUID string values in both Atlas Search and MongoDB Community Search editions. The query builder treats both the same way.
 
 **Query Builder Configuration:**
 
@@ -728,15 +723,15 @@ This allows you to mix fields with and without multi-analyzer support in the sam
 ##### Limitations
 
 1. The following operators are not yet implemented: `contains`, `contains_any`, `contains_all`, `is_null`
-2. Range operators (`gt`, `ge`, `lt`, `le`) perform lexicographic comparison on string fields. For numeric comparisons, ensure fields are indexed with appropriate numeric types
-3. Atlas Search requires proper [search index configuration](https://www.mongodb.com/docs/atlas/atlas-search/create-index/) with appropriate field types:
+2. The following field types are not currently supported: UUID fields, Date fields, Numeric fields (numbers are compared as strings)
+3. Range operators (`gt`, `ge`, `lt`, `le`) perform lexicographic comparison on string fields only
+4. Atlas Search requires proper [search index configuration](https://www.mongodb.com/docs/atlas/atlas-search/create-index/) with appropriate field types:
    - String fields used with `like`/`ilike` should be indexed with multi-analyzers as shown above
    - String fields used with `eq`/`in` should be indexed with `token` type
    - String fields used with range operators (`gt`/`ge`/`lt`/`le`) work with `token` type for lexicographic comparison
-   - UUID fields should be indexed with `token` type
    - Text fields should be indexed with `string` type and an appropriate analyzer
-4. Unlike regular MongoDB queries, Atlas Search queries use the aggregation pipeline with the `$search` stage
-5. Additional filters (like tenant boundaries) should be added as separate `$match` stages in the pipeline
+5. Unlike regular MongoDB queries, Atlas Search queries use the aggregation pipeline with the `$search` stage
+6. Additional filters (like tenant boundaries) should be added as separate `$match` stages in the pipeline
 
 ### FAQ
 

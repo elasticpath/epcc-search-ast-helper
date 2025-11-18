@@ -70,7 +70,7 @@ services:
       - "/keyfile"
       - "--auth"
     ports:
-      - '20004:27017'
+      - '127.0.0.1:20004:27017'
     volumes:
       - mongo-community:/data/db:delegated
     configs:
@@ -96,7 +96,7 @@ services:
     hostname: mongo-community-search
     image: mongodb/mongodb-community-search:0.55.0
     ports:
-      - 20005:27027
+      - '127.0.0.1:20005:27027'
     volumes:
       - mongo-community-search:/data/mongot:delegated
     configs:

@@ -1,11 +1,11 @@
-package epsearchast_v3_mongo
+package astmongo
 
 import (
 	"fmt"
 	"strings"
 
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/elasticpath/epcc-search-ast-helper"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type DefaultAtlasSearchQueryBuilder struct {
@@ -27,7 +27,7 @@ type StringMultiAnalyzers struct {
 	WildcardCaseSensitive string
 }
 
-var _ epsearchast_v3.SemanticReducer[bson.D] = (*DefaultAtlasSearchQueryBuilder)(nil)
+var _ epsearchast.SemanticReducer[bson.D] = (*DefaultAtlasSearchQueryBuilder)(nil)
 
 func (d DefaultAtlasSearchQueryBuilder) PostVisitAnd(rs []*bson.D) (*bson.D, error) {
 	// https://www.mongodb.com/docs/atlas/atlas-search/compound/
