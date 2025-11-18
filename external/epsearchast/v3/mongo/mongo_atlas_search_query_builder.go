@@ -87,16 +87,32 @@ func (d DefaultAtlasSearchQueryBuilder) VisitGt(_, _ string) (*bson.D, error) {
 	return nil, fmt.Errorf("GT operator not yet implemented for Atlas Search")
 }
 
-func (d DefaultAtlasSearchQueryBuilder) VisitLike(_, _ string) (*bson.D, error) {
-	return nil, fmt.Errorf("LIKE operator not yet implemented for Atlas Search")
+func (d DefaultAtlasSearchQueryBuilder) VisitLike(first, second string) (*bson.D, error) {
+	// https://www.mongodb.com/docs/atlas/atlas-search/wildcard/
+	// Use multi parameter to target the case-sensitive keyword analyzer for matching across spaces
+	// Case-sensitive wildcard matching (unlike ILIKE which is case-insensitive)
+	return &bson.D{
+		{"wildcard", bson.D{
+			{"path", bson.D{
+				{"value", first},
+				{"multi", "caseSensitiveKeywordAnalyzer"},
+			}},
+			{"query", d.ProcessWildcardString(second)},
+			{"allowAnalyzedField", true},
+		}},
+	}, nil
 }
 
 func (d DefaultAtlasSearchQueryBuilder) VisitILike(first, second string) (*bson.D, error) {
 	// https://www.mongodb.com/docs/atlas/atlas-search/wildcard/
+	// Use multi parameter to target the keyword analyzer for matching across spaces
 	// allowAnalyzedField: true makes the search case-insensitive
 	return &bson.D{
 		{"wildcard", bson.D{
-			{"path", first},
+			{"path", bson.D{
+				{"value", first},
+				{"multi", "keywordAnalyzer"},
+			}},
 			{"query", d.ProcessWildcardString(second)},
 			{"allowAnalyzedField", true},
 		}},

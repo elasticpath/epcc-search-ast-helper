@@ -31,21 +31,24 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 
 	documents := []interface{}{
 		bson.M{
-			"string_field":          "test1",
-			"array_field":           []string{"a", "b"},
+			"string_field":          "test1 test1",
+			"array_field":           []string{"a a", "b b"},
 			"nullable_string_field": nil,
 			"text_field":            "Developers like IDEs",
+			"uuid_field":            "550e8400-e29b-41d4-a716-446655440001",
 		},
 		bson.M{
-			"string_field":          "test2",
-			"array_field":           []string{"c", "d"},
-			"nullable_string_field": "yay",
+			"string_field":          "test2 test2",
+			"array_field":           []string{"c c", "d d"},
+			"nullable_string_field": "yay yay",
 			"text_field":            "I like Development Environments",
+			"uuid_field":            "550e8400-e29b-41d4-a716-446655440002",
 		},
 		bson.M{
-			"string_field": "test3",
-			"array_field":  []string{"c"},
+			"string_field": "test3 test3",
+			"array_field":  []string{"c c"},
 			"text_field":   "Vim is the best",
+			"uuid_field":   "550e8400-e29b-41d4-a716-446655440003",
 		},
 	}
 
@@ -65,7 +68,7 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			//language=JSON
 			filter: `{
 						"type": "EQ",
-						"args": ["string_field", "test1"]
+						"args": ["string_field", "test1 test1"]
 					}`,
 			count: 1,
 		},
@@ -73,7 +76,7 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			//language=JSON
 			filter: `{
 						"type": "EQ",
-						"args": ["string_field", "test2"]
+						"args": ["string_field", "test2 test2"]
 					}`,
 			count: 1,
 		},
@@ -142,7 +145,79 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			//language=JSON
 			filter: `{
 						"type": "ILIKE",
-						"args": ["string_field", "*est1"]
+						"args": ["string_field", "*test1"]
+					}`,
+			count: 1,
+		},
+		{
+			// Test ILIKE with wildcard matching across space - pattern with space and wildcard
+			//language=JSON
+			filter: `{
+						"type": "ILIKE",
+						"args": ["string_field", "test1 *"]
+					}`,
+			count: 1,
+		},
+		{
+			// Test ILIKE with wildcard matching across space - wildcard before space
+			//language=JSON
+			filter: `{
+						"type": "ILIKE",
+						"args": ["string_field", "* test1"]
+					}`,
+			count: 1,
+		},
+		{
+			// Test ILIKE with wildcard at both beginning and end - should match "test1 test1"
+			//language=JSON
+			filter: `{
+						"type": "ILIKE",
+						"args": ["string_field", "*1 test*"]
+					}`,
+			count: 1,
+		},
+		{
+			// Test LIKE (case-sensitive) with exact case match
+			//language=JSON
+			filter: `{
+						"type": "LIKE",
+						"args": ["string_field", "test*"]
+					}`,
+			count: 3,
+		},
+		{
+			// Test LIKE (case-sensitive) with wrong case - should NOT match
+			//language=JSON
+			filter: `{
+						"type": "LIKE",
+						"args": ["string_field", "Test*"]
+					}`,
+			count: 0,
+		},
+		{
+			// Test LIKE (case-sensitive) with wildcard at end
+			//language=JSON
+			filter: `{
+						"type": "LIKE",
+						"args": ["string_field", "test1 *"]
+					}`,
+			count: 1,
+		},
+		{
+			// Test LIKE (case-sensitive) with wildcard at beginning
+			//language=JSON
+			filter: `{
+						"type": "LIKE",
+						"args": ["string_field", "*test1"]
+					}`,
+			count: 1,
+		},
+		{
+			// Test LIKE (case-sensitive) with wildcard at both ends
+			//language=JSON
+			filter: `{
+						"type": "LIKE",
+						"args": ["string_field", "*1 test*"]
 					}`,
 			count: 1,
 		},
@@ -151,7 +226,7 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			//language=JSON
 			filter: `{
 						"type": "IN",
-						"args": ["string_field", "test1", "test2", "test4"]
+						"args": ["string_field", "test1 test1", "test2 test2", "test4"]
 					}`,
 			count: 2,
 		},
@@ -160,7 +235,7 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			//language=JSON
 			filter: `{
 						"type": "IN",
-						"args": ["string_field", "test3"]
+						"args": ["string_field", "test3 test3"]
 					}`,
 			count: 1,
 		},
@@ -179,7 +254,7 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			filter: `{
 						"type": "AND",
 						"children": [
-							{"type": "EQ", "args": ["string_field", "test1"]},
+							{"type": "EQ", "args": ["string_field", "test1 test1"]},
 							{"type": "EQ", "args": ["text_field", "Developers like IDEs"]}
 						]
 					}`,
@@ -191,7 +266,7 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			filter: `{
 						"type": "AND",
 						"children": [
-							{"type": "EQ", "args": ["string_field", "test2"]},
+							{"type": "EQ", "args": ["string_field", "test2 test2"]},
 							{"type": "TEXT", "args": ["text_field", "Development"]}
 						]
 					}`,
@@ -203,8 +278,8 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			filter: `{
 						"type": "AND",
 						"children": [
-							{"type": "EQ", "args": ["string_field", "test1"]},
-							{"type": "EQ", "args": ["string_field", "test2"]}
+							{"type": "EQ", "args": ["string_field", "test1 test1"]},
+							{"type": "EQ", "args": ["string_field", "test2 test2"]}
 						]
 					}`,
 			count: 0,
@@ -215,8 +290,8 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			filter: `{
 						"type": "OR",
 						"children": [
-							{"type": "EQ", "args": ["string_field", "test1"]},
-							{"type": "EQ", "args": ["string_field", "test2"]}
+							{"type": "EQ", "args": ["string_field", "test1 test1"]},
+							{"type": "EQ", "args": ["string_field", "test2 test2"]}
 						]
 					}`,
 			count: 2,
@@ -227,9 +302,9 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			filter: `{
 						"type": "OR",
 						"children": [
-							{"type": "EQ", "args": ["string_field", "test1"]},
-							{"type": "EQ", "args": ["string_field", "test2"]},
-							{"type": "EQ", "args": ["string_field", "test3"]}
+							{"type": "EQ", "args": ["string_field", "test1 test1"]},
+							{"type": "EQ", "args": ["string_field", "test2 test2"]},
+							{"type": "EQ", "args": ["string_field", "test3 test3"]}
 						]
 					}`,
 			count: 3,
@@ -243,8 +318,8 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 							{
 								"type": "OR",
 								"children": [
-									{"type": "EQ", "args": ["string_field", "test1"]},
-									{"type": "EQ", "args": ["string_field", "test2"]}
+									{"type": "EQ", "args": ["string_field", "test1 test1"]},
+									{"type": "EQ", "args": ["string_field", "test2 test2"]}
 								]
 							},
 							{"type": "TEXT", "args": ["text_field", "like"]}
@@ -259,10 +334,64 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 						"type": "AND",
 						"children": [
 							{"type": "ILIKE", "args": ["string_field", "test*"]},
-							{"type": "IN", "args": ["string_field", "test1", "test2"]}
+							{"type": "IN", "args": ["string_field", "test1 test1", "test2 test2"]}
 						]
 					}`,
 			count: 2,
+		},
+		{
+			// Test EQ on UUID field - exact match
+			//language=JSON
+			filter: `{
+						"type": "EQ",
+						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440001"]
+					}`,
+			count: 1,
+		},
+		{
+			// Test EQ on UUID field - different UUID
+			//language=JSON
+			filter: `{
+						"type": "EQ",
+						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440002"]
+					}`,
+			count: 1,
+		},
+		{
+			// Test EQ on UUID field - non-existent UUID
+			//language=JSON
+			filter: `{
+						"type": "EQ",
+						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440099"]
+					}`,
+			count: 0,
+		},
+		{
+			// Test IN on UUID field - multiple values
+			//language=JSON
+			filter: `{
+						"type": "IN",
+						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440002"]
+					}`,
+			count: 2,
+		},
+		{
+			// Test IN on UUID field - single value
+			//language=JSON
+			filter: `{
+						"type": "IN",
+						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440003"]
+					}`,
+			count: 1,
+		},
+		{
+			// Test IN on UUID field - no matches
+			//language=JSON
+			filter: `{
+						"type": "IN",
+						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440099", "550e8400-e29b-41d4-a716-446655440098"]
+					}`,
+			count: 0,
 		},
 	}
 
@@ -275,15 +404,39 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 	// - type: "token" for exact matching with equals operator
 	searchIndexModel := mongo.SearchIndexModel{
 		Definition: bson.D{
+			// Define custom analyzer for case-insensitive keyword matching
+			{"analyzers", bson.A{
+				bson.D{
+					{"name", "caseInsensitiveKeyword"},
+					{"tokenizer", bson.D{
+						{"type", "keyword"},
+					}},
+					{"tokenFilters", bson.A{
+						bson.D{{"type", "lowercase"}},
+					}},
+				},
+			}},
 			{"mappings", bson.D{
 				{"dynamic", false},
 				{"fields", bson.D{
 					// string_field: indexed as both string (for wildcard) and token (for equals)
 					{"string_field", bson.A{
-						// String supports (moreLikeThis, phrase, queryString, regex, span, text, wildcard)
-						bson.D{{"type", "string"}},
-
-						// Token supports (equals, facet, in, range)
+						// String type with standard analyzer (for TEXT queries) and keyword multi-analyzers (for LIKE/ILIKE)
+						bson.D{
+							{"type", "string"},
+							{"analyzer", "lucene.standard"},
+							{"multi", bson.D{
+								{"keywordAnalyzer", bson.D{
+									{"type", "string"},
+									{"analyzer", "caseInsensitiveKeyword"},
+								}},
+								{"caseSensitiveKeywordAnalyzer", bson.D{
+									{"type", "string"},
+									{"analyzer", "lucene.keyword"},
+								}},
+							}},
+						},
+						// Token type for exact EQ/IN matching
 						bson.D{{"type", "token"}},
 					}},
 					{"array_field", bson.D{
@@ -291,8 +444,22 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 						{"type", "string"},
 					}},
 					{"nullable_string_field", bson.A{
-						// String supports (moreLikeThis, phrase, queryString, regex, span, text, wildcard)
-						bson.D{{"type", "string"}},
+						// String type with standard analyzer (for TEXT queries) and keyword multi-analyzers (for LIKE/ILIKE)
+						bson.D{
+							{"type", "string"},
+							{"analyzer", "lucene.standard"},
+							{"multi", bson.D{
+								{"keywordAnalyzer", bson.D{
+									{"type", "string"},
+									{"analyzer", "caseInsensitiveKeyword"},
+								}},
+								{"caseSensitiveKeywordAnalyzer", bson.D{
+									{"type", "string"},
+									{"analyzer", "lucene.keyword"},
+								}},
+							}},
+						},
+						// Token type for exact EQ/IN matching
 						bson.D{{"type", "token"}},
 					}},
 					// text_field: indexed for both text search (with english analyzer) and exact matching
@@ -307,6 +474,11 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 							{"type", "token"},
 							{"normalizer", "none"}, // case-sensitive exact matching
 						},
+					}},
+					// uuid_field: indexed as token for equals and in operations
+					// Note: token type works for UUID string values
+					{"uuid_field", bson.D{
+						{"type", "token"},
 					}},
 				}},
 			}},
