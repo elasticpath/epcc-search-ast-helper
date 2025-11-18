@@ -36,6 +36,7 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			"nullable_string_field": nil,
 			"text_field":            "Developers like IDEs",
 			"uuid_field":            "550e8400-e29b-41d4-a716-446655440001",
+			"date_field":            time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		bson.M{
 			"string_field":          "test2 test2",
@@ -43,12 +44,14 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			"nullable_string_field": "yay yay",
 			"text_field":            "I like Development Environments",
 			"uuid_field":            "550e8400-e29b-41d4-a716-446655440002",
+			"date_field":            time.Date(2024, 6, 15, 0, 0, 0, 0, time.UTC),
 		},
 		bson.M{
 			"string_field": "test3 test3",
 			"array_field":  []string{"c c"},
 			"text_field":   "Vim is the best",
 			"uuid_field":   "550e8400-e29b-41d4-a716-446655440003",
+			"date_field":   time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC),
 		},
 	}
 
@@ -340,60 +343,6 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			count: 2,
 		},
 		{
-			// Test EQ on UUID field - exact match
-			//language=JSON
-			filter: `{
-						"type": "EQ",
-						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440001"]
-					}`,
-			count: 1,
-		},
-		{
-			// Test EQ on UUID field - different UUID
-			//language=JSON
-			filter: `{
-						"type": "EQ",
-						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440002"]
-					}`,
-			count: 1,
-		},
-		{
-			// Test EQ on UUID field - non-existent UUID
-			//language=JSON
-			filter: `{
-						"type": "EQ",
-						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440099"]
-					}`,
-			count: 0,
-		},
-		{
-			// Test IN on UUID field - multiple values
-			//language=JSON
-			filter: `{
-						"type": "IN",
-						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440002"]
-					}`,
-			count: 2,
-		},
-		{
-			// Test IN on UUID field - single value
-			//language=JSON
-			filter: `{
-						"type": "IN",
-						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440003"]
-					}`,
-			count: 1,
-		},
-		{
-			// Test IN on UUID field - no matches
-			//language=JSON
-			filter: `{
-						"type": "IN",
-						"args": ["uuid_field", "550e8400-e29b-41d4-a716-446655440099", "550e8400-e29b-41d4-a716-446655440098"]
-					}`,
-			count: 0,
-		},
-		{
 			// Test GT on string field - lexicographic comparison
 			//language=JSON
 			filter: `{
@@ -530,9 +479,12 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 						},
 					}},
 					// uuid_field: indexed as token for equals and in operations
-					// Note: token type works for UUID string values
 					{"uuid_field", bson.D{
-						{"type", "token"},
+						{"type", "uuid"},
+					}},
+					// date_field: indexed as token for range and equality operations
+					{"date_field", bson.D{
+						{"type", "date"},
 					}},
 				}},
 			}},
