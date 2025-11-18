@@ -393,6 +393,60 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 					}`,
 			count: 0,
 		},
+		{
+			// Test GT on string field - lexicographic comparison
+			//language=JSON
+			filter: `{
+						"type": "GT",
+						"args": ["string_field", "test1 test1"]
+					}`,
+			count: 2,
+		},
+		{
+			// Test GE on string field - lexicographic comparison
+			//language=JSON
+			filter: `{
+						"type": "GE",
+						"args": ["string_field", "test2 test2"]
+					}`,
+			count: 2,
+		},
+		{
+			// Test LT on string field - lexicographic comparison
+			//language=JSON
+			filter: `{
+						"type": "LT",
+						"args": ["string_field", "test3 test3"]
+					}`,
+			count: 2,
+		},
+		{
+			// Test LE on string field - lexicographic comparison
+			//language=JSON
+			filter: `{
+						"type": "LE",
+						"args": ["string_field", "test2 test2"]
+					}`,
+			count: 2,
+		},
+		{
+			// Test GT on string field - no matches
+			//language=JSON
+			filter: `{
+						"type": "GT",
+						"args": ["string_field", "test3 test3"]
+					}`,
+			count: 0,
+		},
+		{
+			// Test LT on string field - no matches
+			//language=JSON
+			filter: `{
+						"type": "LT",
+						"args": ["string_field", "test1 test1"]
+					}`,
+			count: 0,
+		},
 	}
 
 	collection := SetupAtlasDB(t, ctx, atlasClient)
@@ -510,8 +564,19 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 			*/
 
 			// Create query builder
-			// Atlas Search automatically routes operators to the correct index type
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultAtlasSearchQueryBuilder{}
+			// Configure multi-analyzers for fields that support LIKE/ILIKE
+			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultAtlasSearchQueryBuilder{
+				FieldToMultiAnalyzers: map[string]*StringMultiAnalyzers{
+					"string_field": {
+						WildcardCaseInsensitive: "keywordAnalyzer",
+						WildcardCaseSensitive:   "caseSensitiveKeywordAnalyzer",
+					},
+					"nullable_string_field": {
+						WildcardCaseInsensitive: "keywordAnalyzer",
+						WildcardCaseSensitive:   "caseSensitiveKeywordAnalyzer",
+					},
+				},
+			}
 
 			// Create Query Object
 			ast, err := epsearchast_v3.GetAst(tc.filter)
