@@ -603,7 +603,19 @@ func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBo
 	// Not Shown: Validation
 
 	// Create Atlas Search query builder
-	var qb epsearchast_v3.SemanticReducer[bson.D] = epsearchast_v3_mongo.DefaultAtlasSearchQueryBuilder{}
+	// Configure multi-analyzers for fields that support LIKE/ILIKE
+	var qb epsearchast_v3.SemanticReducer[bson.D] = epsearchast_v3_mongo.DefaultAtlasSearchQueryBuilder{
+		FieldToMultiAnalyzers: map[string]*epsearchast_v3_mongo.StringMultiAnalyzers{
+			"name": {
+				WildcardCaseInsensitive: "caseInsensitiveAnalyzer",
+				WildcardCaseSensitive:   "caseSensitiveAnalyzer",
+			},
+			"email": {
+				WildcardCaseInsensitive: "caseInsensitiveAnalyzer",
+				WildcardCaseSensitive:   "caseSensitiveAnalyzer",
+			},
+		},
+	}
 
 	// Create Query Object
 	query, err := epsearchast_v3.SemanticReduceAst(ast, qb)
@@ -627,18 +639,104 @@ func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBo
 
 The following operators are currently supported:
 - `text` - Full-text search with analyzers
-- `eq` - Exact case-sensitive equality matching
-- `in` - Multiple value exact matching
+- `eq` - Exact case-sensitive equality matching (supports string and UUID fields)
+- `in` - Multiple value exact matching (supports string and UUID fields)
+- `like` - Case-sensitive wildcard matching
 - `ilike` - Case-insensitive wildcard matching
+- `gt` - Greater than (lexicographic comparison for strings)
+- `ge` - Greater than or equal (lexicographic comparison for strings)
+- `lt` - Less than (lexicographic comparison for strings)
+- `le` - Less than or equal (lexicographic comparison for strings)
+
+##### Field Configuration
+
+###### Multi-Analyzer Configuration for LIKE/ILIKE
+
+To support `like` and `ilike` operators with proper case sensitivity handling, you need to:
+
+1. **Define custom analyzers in your search index** with appropriate tokenization and case handling
+2. **Configure multi-analyzers on your string fields** to index the same field with different analyzers
+3. **Map fields to analyzer names** in the query builder using `FieldToMultiAnalyzers`
+
+**Example Search Index Definition:**
+
+```json
+{
+  "analyzers": [
+    {
+      "name": "caseInsensitiveAnalyzer",
+      "tokenizer": {
+        "type": "keyword"
+      },
+      "tokenFilters": [
+        {
+          "type": "lowercase"
+        }
+      ]
+    }
+  ],
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "name": [
+        {
+          "type": "string",
+          "analyzer": "lucene.standard",
+          "multi": {
+            "caseInsensitiveAnalyzer": {
+              "type": "string",
+              "analyzer": "caseInsensitiveAnalyzer"
+            },
+            "caseSensitiveAnalyzer": {
+              "type": "string",
+              "analyzer": "lucene.keyword"
+            }
+          }
+        },
+        {
+          "type": "token"
+        }
+      ],
+      "id": {
+        "type": "token"
+      }
+    }
+  }
+}
+```
+
+**Note on UUID Fields**: MongoDB Atlas Search (cloud) supports a dedicated `uuid` field type, but `token` type works for UUID string values in both Atlas Search and MongoDB Community Search editions. The query builder treats both the same way.
+
+**Query Builder Configuration:**
+
+The `FieldToMultiAnalyzers` map specifies which multi-analyzer to use for each field:
+
+```go
+FieldToMultiAnalyzers: map[string]*StringMultiAnalyzers{
+	"name": {
+		WildcardCaseInsensitive: "caseInsensitiveAnalyzer",      // Used for ILIKE
+		WildcardCaseSensitive:   "caseSensitiveAnalyzer",  // Used for LIKE
+	},
+}
+```
+
+**Behavior:**
+If a field is **not** in `FieldToMultiAnalyzers`, if you specify a non empty analyzer, then a "multi" attribute is generated with the name (e.g., `{"path": {"value": "fieldName", "multi": "analyzerName"}}`)
+
+This allows you to mix fields with and without multi-analyzer support in the same index.
 
 ##### Limitations
 
-1. The following operators are not yet implemented: `like`, `lt`, `le`, `gt`, `ge`, `contains`, `contains_any`, `contains_all`, `is_null`
-2. Atlas Search requires proper [search index configuration](https://www.mongodb.com/docs/atlas/atlas-search/create-index/) with appropriate field types:
-   - Fields should be indexed with both `string` (for text/wildcard operators) and `token` (for exact matching operators) types
-   - Atlas Search automatically routes operators to the correct field type
-3. Unlike regular MongoDB queries, Atlas Search queries use the aggregation pipeline with the `$search` stage
-4. Additional filters (like tenant boundaries) should be added as separate `$match` stages in the pipeline
+1. The following operators are not yet implemented: `contains`, `contains_any`, `contains_all`, `is_null`
+2. Range operators (`gt`, `ge`, `lt`, `le`) perform lexicographic comparison on string fields. For numeric comparisons, ensure fields are indexed with appropriate numeric types
+3. Atlas Search requires proper [search index configuration](https://www.mongodb.com/docs/atlas/atlas-search/create-index/) with appropriate field types:
+   - String fields used with `like`/`ilike` should be indexed with multi-analyzers as shown above
+   - String fields used with `eq`/`in` should be indexed with `token` type
+   - String fields used with range operators (`gt`/`ge`/`lt`/`le`) work with `token` type for lexicographic comparison
+   - UUID fields should be indexed with `token` type
+   - Text fields should be indexed with `string` type and an appropriate analyzer
+4. Unlike regular MongoDB queries, Atlas Search queries use the aggregation pipeline with the `$search` stage
+5. Additional filters (like tenant boundaries) should be added as separate `$match` stages in the pipeline
 
 ### FAQ
 

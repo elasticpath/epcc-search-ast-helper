@@ -9,6 +9,22 @@ import (
 )
 
 type DefaultAtlasSearchQueryBuilder struct {
+	// Map from field name to multi-analyzer names for different operators
+	// If a field is not in this map, or if the analyzer name is "",
+	// the base path will be used without specifying a multi-analyzer
+	FieldToMultiAnalyzers map[string]*StringMultiAnalyzers
+}
+
+type StringMultiAnalyzers struct {
+	// Multi-analyzer name for case-insensitive wildcard (ILIKE)
+	// If empty, will use: {"path": "field"}
+	// If set, will use: {"path": {"value": "field", "multi": "this_value"}}
+	WildcardCaseInsensitive string
+
+	// Multi-analyzer name for case-sensitive wildcard (LIKE)
+	// If empty, will use: {"path": "field"}
+	// If set, will use: {"path": {"value": "field", "multi": "this_value"}}
+	WildcardCaseSensitive string
 }
 
 var _ epsearchast_v3.SemanticReducer[bson.D] = (*DefaultAtlasSearchQueryBuilder)(nil)
@@ -71,32 +87,54 @@ func (d DefaultAtlasSearchQueryBuilder) VisitEq(first, second string) (*bson.D, 
 	}, nil
 }
 
-func (d DefaultAtlasSearchQueryBuilder) VisitLe(_, _ string) (*bson.D, error) {
-	return nil, fmt.Errorf("LE operator not yet implemented for Atlas Search")
+func (d DefaultAtlasSearchQueryBuilder) VisitLe(first, second string) (*bson.D, error) {
+	// https://www.mongodb.com/docs/atlas/atlas-search/range/
+	return &bson.D{
+		{"range", bson.D{
+			{"path", first},
+			{"lte", second},
+		}},
+	}, nil
 }
 
-func (d DefaultAtlasSearchQueryBuilder) VisitLt(_, _ string) (*bson.D, error) {
-	return nil, fmt.Errorf("LT operator not yet implemented for Atlas Search")
+func (d DefaultAtlasSearchQueryBuilder) VisitLt(first, second string) (*bson.D, error) {
+	// https://www.mongodb.com/docs/atlas/atlas-search/range/
+	return &bson.D{
+		{"range", bson.D{
+			{"path", first},
+			{"lt", second},
+		}},
+	}, nil
 }
 
-func (d DefaultAtlasSearchQueryBuilder) VisitGe(_, _ string) (*bson.D, error) {
-	return nil, fmt.Errorf("GE operator not yet implemented for Atlas Search")
+func (d DefaultAtlasSearchQueryBuilder) VisitGe(first, second string) (*bson.D, error) {
+	// https://www.mongodb.com/docs/atlas/atlas-search/range/
+	return &bson.D{
+		{"range", bson.D{
+			{"path", first},
+			{"gte", second},
+		}},
+	}, nil
 }
 
-func (d DefaultAtlasSearchQueryBuilder) VisitGt(_, _ string) (*bson.D, error) {
-	return nil, fmt.Errorf("GT operator not yet implemented for Atlas Search")
+func (d DefaultAtlasSearchQueryBuilder) VisitGt(first, second string) (*bson.D, error) {
+	// https://www.mongodb.com/docs/atlas/atlas-search/range/
+	return &bson.D{
+		{"range", bson.D{
+			{"path", first},
+			{"gt", second},
+		}},
+	}, nil
 }
 
 func (d DefaultAtlasSearchQueryBuilder) VisitLike(first, second string) (*bson.D, error) {
 	// https://www.mongodb.com/docs/atlas/atlas-search/wildcard/
-	// Use multi parameter to target the case-sensitive keyword analyzer for matching across spaces
 	// Case-sensitive wildcard matching (unlike ILIKE which is case-insensitive)
+	path := d.getWildcardPath(first, true)
+
 	return &bson.D{
 		{"wildcard", bson.D{
-			{"path", bson.D{
-				{"value", first},
-				{"multi", "caseSensitiveKeywordAnalyzer"},
-			}},
+			{"path", path},
 			{"query", d.ProcessWildcardString(second)},
 			{"allowAnalyzedField", true},
 		}},
@@ -105,14 +143,12 @@ func (d DefaultAtlasSearchQueryBuilder) VisitLike(first, second string) (*bson.D
 
 func (d DefaultAtlasSearchQueryBuilder) VisitILike(first, second string) (*bson.D, error) {
 	// https://www.mongodb.com/docs/atlas/atlas-search/wildcard/
-	// Use multi parameter to target the keyword analyzer for matching across spaces
-	// allowAnalyzedField: true makes the search case-insensitive
+	// Case-insensitive wildcard matching (uses allowAnalyzedField: true)
+	path := d.getWildcardPath(first, false)
+
 	return &bson.D{
 		{"wildcard", bson.D{
-			{"path", bson.D{
-				{"value", first},
-				{"multi", "keywordAnalyzer"},
-			}},
+			{"path", path},
 			{"query", d.ProcessWildcardString(second)},
 			{"allowAnalyzedField", true},
 		}},
@@ -154,4 +190,31 @@ func (d DefaultAtlasSearchQueryBuilder) ProcessWildcardString(s string) string {
 	}
 
 	return str
+}
+
+// getWildcardPath returns the path configuration for wildcard queries (LIKE/ILIKE)
+// If caseSensitive is true, uses WildcardCaseSensitive analyzer
+// If caseSensitive is false, uses WildcardCaseInsensitive analyzer
+// If no analyzer is configured (or is empty string), returns simple field name
+func (d DefaultAtlasSearchQueryBuilder) getWildcardPath(fieldName string, caseSensitive bool) interface{} {
+	// Check if field has multi-analyzer configuration
+	if config, ok := d.FieldToMultiAnalyzers[fieldName]; ok && config != nil {
+		var analyzerName string
+		if caseSensitive {
+			analyzerName = config.WildcardCaseSensitive
+		} else {
+			analyzerName = config.WildcardCaseInsensitive
+		}
+
+		// If analyzer name is specified, return path with multi
+		if analyzerName != "" {
+			return bson.D{
+				{"value", fieldName},
+				{"multi", analyzerName},
+			}
+		}
+	}
+
+	// Otherwise, return simple field name
+	return fieldName
 }
