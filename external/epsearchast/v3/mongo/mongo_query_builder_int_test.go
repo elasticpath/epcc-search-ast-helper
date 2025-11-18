@@ -3,14 +3,15 @@ package epsearchast_v3_mongo
 import (
 	"context"
 	"fmt"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"os"
 	"testing"
 	"time"
+
+	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var client *mongo.Client
@@ -642,12 +643,7 @@ func TestSmokeTestMongoWithFilters(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		ast, err := epsearchast_v3.GetAst(tc.filter)
-		if err != nil {
-			t.Fatalf("Failed to get filter: %v", err)
-		}
-
-		t.Run(fmt.Sprintf("%s", ast.AsFilter()), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s", tc.filter), func(t *testing.T) {
 			/*
 				Fixture Setup
 			*/
@@ -670,6 +666,7 @@ func TestSmokeTestMongoWithFilters(t *testing.T) {
 				t.Fatalf("Failed to get filter: %v", err)
 			}
 
+			fmt.Printf("Filter: %s", ast.AsFilter())
 			query, err := epsearchast_v3.SemanticReduceAst(ast, qb)
 
 			if err != nil {
