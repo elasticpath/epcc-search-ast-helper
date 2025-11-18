@@ -148,9 +148,89 @@ Over time this value and argument might change as we get more experience, in the
 
 Regular Expressions can also be set when using the Validation functions, the same rules apply as for aliases (see above). In general aliases are resolved prior to validation rules and operator checks.
 
+### Working with ASTs
+
+#### Reduce & Semantic Reduce
+
+The library provides two approaches for processing AST trees: `ReduceAst()` and `SemanticReduceAst()`.
+
+##### ReduceAst()
+
+`ReduceAst()` is a low-level generic function that recursively processes an AST tree. It's useful when you need to process all nodes uniformly, regardless of their operator type. For example, extracting all field names, calculating tree depth, or transforming field names.
+
+```go
+// Example: Collect all field names from the AST
+result, _ := epsearchast_v3.ReduceAst(ast, func(node *epsearchast_v3.AstNode, children []*[]string) (*[]string, error) {
+	fields := []string{}
+	if len(node.Args) > 0 {
+		fields = append(fields, node.Args[0])
+	}
+	for _, child := range children {
+		if child != nil {
+			fields = append(fields, *child...)
+		}
+	}
+	return &fields, nil
+})
+```
+
+##### SemanticReduceAst()
+
+`SemanticReduceAst()` is a higher-level wrapper that uses the `SemanticReducer` interface to provide individual methods for each operator type (VisitEq, VisitLt, etc.). This is the recommended approach for generating queries, as each operator can be translated differently.
+
+```go
+// Example: Generate a SQL query using GORM
+var qb epsearchast_v3.SemanticReducer[epsearchast_v3_gorm.SubQuery] = epsearchast_v3_gorm.DefaultGormQueryBuilder{}
+sq, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+```
+
+**When to use which:**
+- Use `ReduceAst()` when you care about the tree structure but not the specific operators (e.g., collecting field names, calculating depth, transforming field names)
+- Use `SemanticReduceAst()` when you need operator-specific behavior (e.g., generating database queries where EQ, LT, GE each translate differently)
+
 #### Customizing ASTs
 
-You can use the `IdentitySemanticReducer` type to simplify rewriting ASTs, by embedding this struct you can only override and process the specific parts you care about. Post processing the AST tree might be simplier than trying to post process a query written in your langauge, or while rebuilding a query.
+You can use the `IdentitySemanticReducer` type to simplify rewriting ASTs, by embedding this struct you can only override and process the specific parts you care about. Post-processing the AST tree might be simplier than trying to post process a query written in your langauge, or while rebuilding a query.
+
+#### Util Functions
+
+The library provides several utility functions for working with ASTs:
+
+##### GetAllFirstArgs()/GetAllFirstArgsSorted()/GetAllFirstUnique()
+
+Returns all first arguments (field names) from the AST. Useful for permission checking, index optimization, or field validation.
+
+```go
+fields := epsearchast_v3.GetAllFirstArgs(ast)           // []string{"status", "amount", "status"} - includes duplicates
+sortedFields := epsearchast_v3.GetAllFirstArgsSorted(ast)  // []string{"amount", "status", "status"} - sorted
+uniqueFields := epsearchast_v3.GetAllFirstArgsUnique(ast)  // map[string]struct{}{"status": {}, "amount": {}}
+```
+
+##### HasFirstArg()
+
+Returns true if a specific field name appears anywhere in the AST. Useful for quickly checking if a field is referenced before performing expensive operations.
+
+```go
+hasStatus := epsearchast_v3.HasFirstArg(ast, "status")  // true if "status" appears as a field name anywhere in the query
+```
+
+##### GetAstDepth()
+
+Returns the maximum depth of the AST tree. Useful for limiting query complexity.
+
+```go
+depth := epsearchast_v3.GetAstDepth(ast)
+```
+
+##### GetEffectiveIndexIntersectionCount()
+
+Returns a heuristic measure of query complexity based on potential index intersections. Used internally to cap OR query complexity (default limit is 4). See the "OR Filter Restrictions" section for more details.
+
+```go
+count, err := epsearchast_v3.GetEffectiveIndexIntersectionCount(ast)
+```
+
+
 
 ### Generating Queries
 
