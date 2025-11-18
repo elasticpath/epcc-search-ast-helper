@@ -266,70 +266,72 @@ func TestSmokeTestAtlasSearchWithFilters(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		ast, err := epsearchast_v3.GetAst(tc.filter)
-		if err != nil {
-			t.Fatalf("Failed to get filter: %v", err)
-		}
+	collection := SetupAtlasDB(t, ctx, atlasClient)
+	InsertDocumentsOrFail(t, collection, ctx, documents)
 
-		t.Run(fmt.Sprintf("%s", ast.AsFilter()), func(t *testing.T) {
+	// Create search index with explicit field mappings
+	// Index fields with multiple types (like ES multi-fields):
+	// - type: "string" for text/wildcard search
+	// - type: "token" for exact matching with equals operator
+	searchIndexModel := mongo.SearchIndexModel{
+		Definition: bson.D{
+			{"mappings", bson.D{
+				{"dynamic", false},
+				{"fields", bson.D{
+					// string_field: indexed as both string (for wildcard) and token (for equals)
+					{"string_field", bson.A{
+						// String supports (moreLikeThis, phrase, queryString, regex, span, text, wildcard)
+						bson.D{{"type", "string"}},
+
+						// Token supports (equals, facet, in, range)
+						bson.D{{"type", "token"}},
+					}},
+					{"array_field", bson.D{
+						// String supports (moreLikeThis, phrase, queryString, regex, span, text, wildcard)
+						{"type", "string"},
+					}},
+					{"nullable_string_field", bson.A{
+						// String supports (moreLikeThis, phrase, queryString, regex, span, text, wildcard)
+						bson.D{{"type", "string"}},
+						bson.D{{"type", "token"}},
+					}},
+					// text_field: indexed for both text search (with english analyzer) and exact matching
+					{"text_field", bson.A{
+						bson.D{
+							// String supports (moreLikeThis, phrase, queryString, regex, span, text, wildcard)
+							{"type", "string"},
+							{"analyzer", "lucene.english"},
+						},
+						bson.D{
+							// Token supports (equals, facet, in, range)
+							{"type", "token"},
+							{"normalizer", "none"}, // case-sensitive exact matching
+						},
+					}},
+				}},
+			}},
+		},
+		Options: nil,
+	}
+
+	indexName, err := collection.SearchIndexes().CreateOne(ctx, searchIndexModel)
+	if err != nil {
+		t.Fatalf("Failed to create search index: %v", err)
+	}
+	t.Logf("Created search index: %s", indexName)
+
+	// Wait for index to be ready by polling
+	err = waitForAtlasSearchIndex(ctx, collection, indexName, 30*time.Second)
+	if err != nil {
+		t.Fatalf("Failed to wait for search index: %v", err)
+	}
+	t.Logf("Search index %s is ready", indexName)
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%s", tc.filter), func(t *testing.T) {
 			/*
 				Fixture Setup
 			*/
-			ctx := context.Background()
-			collection := SetupAtlasDB(t, ctx, atlasClient)
-			InsertDocumentsOrFail(t, collection, ctx, documents)
-
-			// Create search index with explicit field mappings
-			// Index fields with multiple types (like ES multi-fields):
-			// - type: "string" for text/wildcard search
-			// - type: "token" for exact matching with equals operator
-			searchIndexModel := mongo.SearchIndexModel{
-				Definition: bson.D{
-					{"mappings", bson.D{
-						{"dynamic", false},
-						{"fields", bson.D{
-							// string_field: indexed as both string (for wildcard) and token (for equals)
-							{"string_field", bson.A{
-								bson.D{{"type", "string"}},
-								bson.D{{"type", "token"}},
-							}},
-							{"array_field", bson.D{
-								{"type", "string"},
-							}},
-							{"nullable_string_field", bson.A{
-								bson.D{{"type", "string"}},
-								bson.D{{"type", "token"}},
-							}},
-							// text_field: indexed for both text search (with english analyzer) and exact matching
-							{"text_field", bson.A{
-								bson.D{
-									{"type", "string"},
-									{"analyzer", "lucene.english"},
-								},
-								bson.D{
-									{"type", "token"},
-									{"normalizer", "none"}, // case-sensitive exact matching
-								},
-							}},
-						}},
-					}},
-				},
-				Options: nil,
-			}
-
-			indexName, err := collection.SearchIndexes().CreateOne(ctx, searchIndexModel)
-			if err != nil {
-				t.Fatalf("Failed to create search index: %v", err)
-			}
-			t.Logf("Created search index: %s", indexName)
-
-			// Wait for index to be ready by polling
-			err = waitForAtlasSearchIndex(ctx, collection, indexName, 30*time.Second)
-			if err != nil {
-				t.Fatalf("Failed to wait for search index: %v", err)
-			}
-			t.Logf("Search index %s is ready", indexName)
 
 			/*
 			  Execute SUT

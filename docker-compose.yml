@@ -94,7 +94,6 @@ services:
   mongo-community-search:
     container_name: search-ast-helper-mongo-community-search
     hostname: mongo-community-search
-    #image: mongodb/mongodb-atlas-search:1.54.0
     image: mongodb/mongodb-community-search:0.55.0
     ports:
       - 20005:27027
@@ -109,6 +108,11 @@ services:
         uid: "999"
         gid: "999"
     stop_grace_period: 1s
+    depends_on:
+      mongo-community:
+        condition: service_healthy
+
+
 
 configs:
   mongo-rs-config.js:
@@ -156,6 +160,7 @@ configs:
         {
           user: "search",
           pwd: "search",
+          mechanisms: ["SCRAM-SHA-256"],
           roles: [ "searchCoordinator" ]
         }
       );
