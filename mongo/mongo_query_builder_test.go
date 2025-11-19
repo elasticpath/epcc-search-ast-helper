@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/elasticpath/epcc-search-ast-helper"
 	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"strings"
 	"testing"
 )
