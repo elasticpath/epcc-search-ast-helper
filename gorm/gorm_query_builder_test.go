@@ -2,7 +2,7 @@ package astgorm
 
 import (
 	"fmt"
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper"
 	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"

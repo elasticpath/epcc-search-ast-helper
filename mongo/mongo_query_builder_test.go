@@ -3,7 +3,7 @@ package astmongo
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
 	"strings"

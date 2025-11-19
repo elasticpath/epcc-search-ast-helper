@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper"
 )
 
 const esBaseURL = "http://localhost:20003"

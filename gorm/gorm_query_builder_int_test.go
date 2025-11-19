@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper"
 	"github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

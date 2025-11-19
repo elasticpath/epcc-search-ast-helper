@@ -3,14 +3,15 @@ package astmongo
 import (
 	"context"
 	"fmt"
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/elasticpath/epcc-search-ast-helper"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var client *mongo.Client

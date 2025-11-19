@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper"
 )
 
 type JsonObject map[string]any

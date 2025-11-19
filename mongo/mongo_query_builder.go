@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper"
 )
 import "go.mongodb.org/mongo-driver/bson"
 

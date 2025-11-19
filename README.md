@@ -11,7 +11,7 @@ The `GetAst()` function will convert the JSON header into a struct that can be t
 ```go
 package example
 
-import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import "github.com/elasticpath/epcc-search-ast-helper"
 
 func Example(headerValue string) (*epsearchast.AstNode, error) {
 	
@@ -37,7 +37,7 @@ This package provides a way to support aliases for fields, this will allow a use
 ```go
 package example
 
-import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import "github.com/elasticpath/epcc-search-ast-helper"
 
 func Example(ast *epsearchast.AstNode) error {
 	
@@ -73,7 +73,7 @@ This package provides a concise way to validate that the operators and fields sp
 ```go
 package example
 
-import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import "github.com/elasticpath/epcc-search-ast-helper"
 
 func Example(ast *epsearchast.AstNode) error {
 	var err error
@@ -241,8 +241,8 @@ The following examples shows how to generate a Gorm query with this library.
 ```go
 package example
 
-import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
+import "github.com/elasticpath/epcc-search-ast-helper"
+import "github.com/elasticpath/epcc-search-ast-helper/gorm"
 import "gorm.io/gorm"
 
 func Example(ast *epsearchast.AstNode, query *gorm.DB, tenantBoundaryId string) error {
@@ -287,10 +287,10 @@ in this case, we want all eq queries for emails to use the lower case, compariso
 package example
 
 import (
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper"
 	"strconv"
 )
-import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
+import "github.com/elasticpath/epcc-search-ast-helper/gorm"
 import "gorm.io/gorm"
 
 
@@ -349,8 +349,8 @@ package example
 
 import (
 	"context"
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"github.com/elasticpath/epcc-search-ast-helper"
+	"github.com/elasticpath/epcc-search-ast-helper/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -399,8 +399,8 @@ package example
 
 import (
 	"context"
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"github.com/elasticpath/epcc-search-ast-helper"
+	"github.com/elasticpath/epcc-search-ast-helper/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
@@ -443,8 +443,8 @@ package example
 
 import (
 	"context"
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"github.com/elasticpath/epcc-search-ast-helper"
+	"github.com/elasticpath/epcc-search-ast-helper/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
@@ -495,8 +495,8 @@ The following examples shows how to generate an Elasticsearch Query with this li
 
 ```go
 package example
-import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/els"
+import "github.com/elasticpath/epcc-search-ast-helper"
+import "github.com/elasticpath/epcc-search-ast-helper/els"
 
 
 var qb = &LowerCaseEmail{
