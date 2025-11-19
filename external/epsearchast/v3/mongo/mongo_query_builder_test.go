@@ -1,9 +1,9 @@
-package epsearchast_v3_mongo
+package astmongo
 
 import (
 	"encoding/json"
 	"fmt"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
 	"strings"
@@ -46,14 +46,14 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 				"args": [ "amount",  "5"]
 			}`, binOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":"5"}}`, binOp.MongoOp)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -78,15 +78,15 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithInt64TypeConversio
 				"args": [ "amount",  "5"]
 			}`, binOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Int64}}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{"amount": epsearchast.Int64}}
 
 			// https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/#mongodb-bsontype-Int64
 			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":{"$numberLong":"5"}}}`, binOp.MongoOp)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -111,15 +111,15 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithFloat64TypeConvers
 				"args": [ "amount",  "5"]
 			}`, binOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Float64}}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{"amount": epsearchast.Float64}}
 
 			// https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/#mongodb-bsontype-Int64
 			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":{"$numberDouble":"5.0"}}}`, binOp.MongoOp)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -144,15 +144,15 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithBooleanTypeConvers
 				"args": [ "paid",  "true"]
 			}`, binOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"paid": epsearchast_v3.Boolean}}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{"paid": epsearchast.Boolean}}
 
 			// https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/#mongodb-bsontype-Int64
 			expectedSearchJson := fmt.Sprintf(`{"paid":{"%s":true}}`, binOp.MongoOp)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -167,7 +167,7 @@ func TestSimpleBinaryOperatorFiltersGeneratesCorrectFilterWithBooleanTypeConvers
 }
 
 func TestSimpleBinaryOperatorFiltersGeneratesErrorWhenValueCantBeConverted(t *testing.T) {
-	for _, fieldType := range []epsearchast_v3.FieldType{epsearchast_v3.Int64, epsearchast_v3.Float64, epsearchast_v3.Boolean} {
+	for _, fieldType := range []epsearchast.FieldType{epsearchast.Int64, epsearchast.Float64, epsearchast.Boolean} {
 		for _, binOp := range binOps {
 			t.Run(fmt.Sprintf("%s %s", fieldType, binOp.AstOp), func(t *testing.T) {
 				//Fixture Setup
@@ -178,12 +178,12 @@ func TestSimpleBinaryOperatorFiltersGeneratesErrorWhenValueCantBeConverted(t *te
 				"args": [ "foo",  "Hello World!"]
 			}`, binOp.AstOp)
 
-				astNode, err := epsearchast_v3.GetAst(astJson)
+				astNode, err := epsearchast.GetAst(astJson)
 
-				var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"foo": fieldType}}
+				var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{"foo": fieldType}}
 
 				// Execute SUT
-				_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+				_, err = epsearchast.SemanticReduceAst(astNode, qb)
 
 				// Verification
 				errStr := fmt.Sprintf("invalid value for %s", fieldType)
@@ -202,14 +202,14 @@ func TestTextBinaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 		"args": [ "*",  "computer"]
 	}`, "TEXT")
 
-	astNode, err := epsearchast_v3.GetAst(astJson)
+	astNode, err := epsearchast.GetAst(astJson)
 
-	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+	var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 	expectedSearchJson := `{"$text":{"$search":"computer"}}`
 
 	// Execute SUT
-	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 	// Verification
 
@@ -231,14 +231,14 @@ func TestTextBinaryOperatorFiltersGeneratesErrorWhenNotAStringType(t *testing.T)
 		"args": [ "*",  "computer"]
 	}`, "TEXT")
 
-	astNode, err := epsearchast_v3.GetAst(astJson)
+	astNode, err := epsearchast.GetAst(astJson)
 
-	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{
-		"*": epsearchast_v3.Int64,
+	var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{
+		"*": epsearchast.Int64,
 	}}
 
 	// Execute SUT
-	_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+	_, err = epsearchast.SemanticReduceAst(astNode, qb)
 
 	// Verification
 	require.ErrorContains(t, err, "text() operator is only supported for string fields")
@@ -254,14 +254,14 @@ func TestLikeBinaryOperatorFiltersGeneratesErrorWhenNotAStringType(t *testing.T)
 		"args": [ "foo",  "52"]
 	}`, "LIKE")
 
-	astNode, err := epsearchast_v3.GetAst(astJson)
+	astNode, err := epsearchast.GetAst(astJson)
 
-	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{
-		"foo": epsearchast_v3.Int64,
+	var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{
+		"foo": epsearchast.Int64,
 	}}
 
 	// Execute SUT
-	_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+	_, err = epsearchast.SemanticReduceAst(astNode, qb)
 
 	// Verification
 	require.ErrorContains(t, err, "like() operator is only supported for string fields")
@@ -277,14 +277,14 @@ func TestILikeBinaryOperatorFiltersGeneratesErrorWhenNotAStringType(t *testing.T
 		"args": [ "foo",  "52"]
 	}`, "ILIKE")
 
-	astNode, err := epsearchast_v3.GetAst(astJson)
+	astNode, err := epsearchast.GetAst(astJson)
 
-	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{
-		"foo": epsearchast_v3.Int64,
+	var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{
+		"foo": epsearchast.Int64,
 	}}
 
 	// Execute SUT
-	_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+	_, err = epsearchast.SemanticReduceAst(astNode, qb)
 
 	// Verification
 	require.ErrorContains(t, err, "like() operator is only supported for string fields")
@@ -303,15 +303,15 @@ func TestILikeOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 				"args": [ "amount",  "5"]
 			}`, astOp)
 
-	astNode, err := epsearchast_v3.GetAst(astJson)
+	astNode, err := epsearchast.GetAst(astJson)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+	var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 	expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":"^5$","$options":"i"}}`, mongoOp)
 
 	// Execute SUT
-	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 	// Verification
 
@@ -333,16 +333,16 @@ func TestContainsOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 				"args": [ "favourite_colors",  "red"]
 			}`
 
-	astNode, err := epsearchast_v3.GetAst(astJson)
+	astNode, err := epsearchast.GetAst(astJson)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+	var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 	expectedSearchJson :=
 		`{"favourite_colors":{"$elemMatch":{"$eq":"red"}}}`
 
 	// Execute SUT
-	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 	// Verification
 
@@ -365,14 +365,14 @@ func TestSimpleUnaryOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 				"args": [ "amount"]
 			}`, unaryOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 			expectedSearchJson := fmt.Sprintf(`{"amount":{%s}}`, unaryOp.MongoOp)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -397,16 +397,16 @@ func TestSimpleVariableOperatorFiltersGeneratesCorrectFilter(t *testing.T) {
 				"args": [ "amount",  "5", "6", "7"]
 			}`, varOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 
 			require.NoError(t, err)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":["5","6","7"]}}`, varOp.MongoOp)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -431,16 +431,16 @@ func TestSimpleVariableOperatorFiltersGeneratesCorrectFilterWithInt64(t *testing
 				"args": [ "amount",  "5", "6", "7"]
 			}`, varOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 
 			require.NoError(t, err)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Int64}}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{"amount": epsearchast.Int64}}
 
 			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":[{"$numberLong":"5"},{"$numberLong":"6"},{"$numberLong":"7"}]}}`, varOp.MongoOp)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -465,16 +465,16 @@ func TestSimpleVariableOperatorFiltersGeneratesCorrectFilterWithFloat64(t *testi
 				"args": [ "amount",  "5", "6", "7"]
 			}`, varOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 
 			require.NoError(t, err)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": epsearchast_v3.Float64}}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{"amount": epsearchast.Float64}}
 
 			expectedSearchJson := fmt.Sprintf(`{"amount":{"%s":[{"$numberDouble":"5.0"},{"$numberDouble":"6.0"},{"$numberDouble":"7.0"}]}}`, varOp.MongoOp)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -502,16 +502,16 @@ func TestSimpleVariableOperatorFiltersGeneratesCorrectFilterWithBoolean(t *testi
 				"args": [ "paid",  "true", "false", "true", "true", "false"]
 			}`, varOp.AstOp)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 
 			require.NoError(t, err)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"paid": epsearchast_v3.Boolean}}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{"paid": epsearchast.Boolean}}
 
 			expectedSearchJson := fmt.Sprintf(`{"paid":{"%s":[true,false,true,true,false]}}`, varOp.MongoOp)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -526,7 +526,7 @@ func TestSimpleVariableOperatorFiltersGeneratesCorrectFilterWithBoolean(t *testi
 }
 
 func TestSimpleVariableOperatorFiltersGeneratesErrorIfInvalidValue(t *testing.T) {
-	for _, fieldType := range []epsearchast_v3.FieldType{epsearchast_v3.Int64, epsearchast_v3.Float64, epsearchast_v3.Boolean} {
+	for _, fieldType := range []epsearchast.FieldType{epsearchast.Int64, epsearchast.Float64, epsearchast.Boolean} {
 		for _, varOp := range varOps {
 			t.Run(fmt.Sprintf("%s %s", fieldType, varOp.AstOp), func(t *testing.T) {
 				// Yes also this test case is kind of silly, for booleans.
@@ -539,14 +539,14 @@ func TestSimpleVariableOperatorFiltersGeneratesErrorIfInvalidValue(t *testing.T)
 				"args": [ "amount", "Nothing!", "5", "7"]
 			}`, varOp.AstOp)
 
-				astNode, err := epsearchast_v3.GetAst(astJson)
+				astNode, err := epsearchast.GetAst(astJson)
 
 				require.NoError(t, err)
 
-				var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast_v3.FieldType{"amount": fieldType}}
+				var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{FieldTypes: map[string]epsearchast.FieldType{"amount": fieldType}}
 
 				// Execute SUT
-				_, err = epsearchast_v3.SemanticReduceAst(astNode, qb)
+				_, err = epsearchast.SemanticReduceAst(astNode, qb)
 
 				// Verification
 
@@ -574,10 +574,10 @@ func TestLikeFilterWildCards(t *testing.T) {
 				"args": [ "status",  "%s"]
 			}`, astOp, astLiteral)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 			require.NoError(t, err)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 			jsonMongoRegexLiteral, err := json.Marshal(mongoRegexLiteral)
 			require.NoError(t, err)
@@ -585,7 +585,7 @@ func TestLikeFilterWildCards(t *testing.T) {
 			expectedSearchJson := fmt.Sprintf(`{"status":{"%s":%s}}`, mongoOp, jsonMongoRegexLiteral)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -625,10 +625,10 @@ func TestILikeFilterWildCards(t *testing.T) {
 				"args": [ "status",  "%s"]
 			}`, astOp, astLiteral)
 
-			astNode, err := epsearchast_v3.GetAst(astJson)
+			astNode, err := epsearchast.GetAst(astJson)
 			require.NoError(t, err)
 
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 			jsonMongoRegexLiteral, err := json.Marshal(mongoRegexLiteral)
 			require.NoError(t, err)
@@ -636,7 +636,7 @@ func TestILikeFilterWildCards(t *testing.T) {
 			expectedSearchJson := fmt.Sprintf(`{"status":{"%s":%s,"$options":"i"}}`, mongoOp, jsonMongoRegexLiteral)
 
 			// Execute SUT
-			queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 			// Verification
 
@@ -701,13 +701,13 @@ func TestSimpleRecursiveStructure(t *testing.T) {
 }
 `, "\n ")
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+	var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 	// Execute SUT
-	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 	// Verification
 
@@ -761,12 +761,12 @@ func TestSimpleRecursiveStructureWithOverrideStruct(t *testing.T) {
 }
 `, "\n ")
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
 	// Execute SUT
-	var qb epsearchast_v3.SemanticReducer[bson.D] = &LowerCaseEmail{}
-	queryObj, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	var qb epsearchast.SemanticReducer[bson.D] = &LowerCaseEmail{}
+	queryObj, err := epsearchast.SemanticReduceAst(astNode, qb)
 
 	// Verification
 

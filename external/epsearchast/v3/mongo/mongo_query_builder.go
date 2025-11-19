@@ -1,18 +1,19 @@
-package epsearchast_v3_mongo
+package astmongo
 
 import (
 	"fmt"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"regexp"
 	"strings"
+
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 )
 import "go.mongodb.org/mongo-driver/bson"
 
 type DefaultMongoQueryBuilder struct {
-	FieldTypes map[string]epsearchast_v3.FieldType
+	FieldTypes map[string]epsearchast.FieldType
 }
 
-var _ epsearchast_v3.SemanticReducer[bson.D] = (*DefaultMongoQueryBuilder)(nil)
+var _ epsearchast.SemanticReducer[bson.D] = (*DefaultMongoQueryBuilder)(nil)
 
 func (d DefaultMongoQueryBuilder) PostVisitAnd(rs []*bson.D) (*bson.D, error) {
 	// https://www.mongodb.com/docs/manual/reference/operator/query/and/
@@ -89,7 +90,7 @@ func (d DefaultMongoQueryBuilder) VisitGt(first, second string) (*bson.D, error)
 
 func (d DefaultMongoQueryBuilder) VisitLike(first, second string) (*bson.D, error) {
 	if v, ok := d.FieldTypes[first]; ok {
-		if v != epsearchast_v3.String {
+		if v != epsearchast.String {
 			return nil, fmt.Errorf("like() operator is only supported for string fields, and [%s] is not a string", first)
 		}
 	}
@@ -99,7 +100,7 @@ func (d DefaultMongoQueryBuilder) VisitLike(first, second string) (*bson.D, erro
 
 func (d DefaultMongoQueryBuilder) VisitILike(first, second string) (*bson.D, error) {
 	if v, ok := d.FieldTypes[first]; ok {
-		if v != epsearchast_v3.String {
+		if v != epsearchast.String {
 			return nil, fmt.Errorf("ilike() operator is only supported for string fields, and [%s] is not a string", first)
 		}
 	}
@@ -154,7 +155,7 @@ func (d DefaultMongoQueryBuilder) VisitContainsAll(args ...string) (*bson.D, err
 
 func (d DefaultMongoQueryBuilder) VisitText(first, second string) (*bson.D, error) {
 	if v, ok := d.FieldTypes[first]; ok {
-		if v != epsearchast_v3.String {
+		if v != epsearchast.String {
 			return nil, fmt.Errorf("text() operator is only supported for string fields, and [%s] is not a string", first)
 		}
 	}
@@ -198,7 +199,7 @@ func (d DefaultMongoQueryBuilder) ProcessLikeWildcards(valString string) string 
 func (d DefaultMongoQueryBuilder) ValidateValue(fieldName string, v string) error {
 
 	if fieldType, ok := d.FieldTypes[fieldName]; ok {
-		return epsearchast_v3.ValidateValue(fieldType, v)
+		return epsearchast.ValidateValue(fieldType, v)
 	}
 
 	return nil
@@ -206,7 +207,7 @@ func (d DefaultMongoQueryBuilder) ValidateValue(fieldName string, v string) erro
 
 func (d DefaultMongoQueryBuilder) ValidateValues(fieldName string, v ...string) error {
 	if fieldType, ok := d.FieldTypes[fieldName]; ok {
-		return epsearchast_v3.ValidateAllValues(fieldType, v...)
+		return epsearchast.ValidateAllValues(fieldType, v...)
 	} else {
 		return nil
 	}
@@ -215,7 +216,7 @@ func (d DefaultMongoQueryBuilder) ValidateValues(fieldName string, v ...string) 
 func (d DefaultMongoQueryBuilder) ConvertValue(fieldName string, v string) interface{} {
 
 	if fieldType, ok := d.FieldTypes[fieldName]; ok {
-		v, _ := epsearchast_v3.Convert(fieldType, v)
+		v, _ := epsearchast.Convert(fieldType, v)
 		return v
 	}
 
@@ -225,12 +226,12 @@ func (d DefaultMongoQueryBuilder) ConvertValue(fieldName string, v string) inter
 func (d DefaultMongoQueryBuilder) ConvertValues(fieldName string, v ...string) []interface{} {
 
 	if fieldType, ok := d.FieldTypes[fieldName]; ok {
-		v, _ := epsearchast_v3.ConvertAll(fieldType, v...)
+		v, _ := epsearchast.ConvertAll(fieldType, v...)
 		return v
 	} else {
 		// We need to do the conversion to string, because we got a []string in, and need to
 		// return a []interface{}
-		v, _ := epsearchast_v3.ConvertAll(epsearchast_v3.String, v...)
+		v, _ := epsearchast.ConvertAll(epsearchast.String, v...)
 		return v
 	}
 }

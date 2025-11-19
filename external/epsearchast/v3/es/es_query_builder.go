@@ -1,11 +1,12 @@
-package epsearchast_v3_es
+package astes
 
 import (
 	"fmt"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 )
 
 type JsonObject map[string]any
@@ -150,7 +151,7 @@ func sortByDecreasingLength(groupKeys []string) {
 	})
 }
 
-var _ epsearchast_v3.SemanticReducer[JsonObject] = (*DefaultEsQueryBuilder)(nil)
+var _ epsearchast.SemanticReducer[JsonObject] = (*DefaultEsQueryBuilder)(nil)
 
 func (d DefaultEsQueryBuilder) PostVisitAnd(rs []*JsonObject) (*JsonObject, error) {
 	return &JsonObject{

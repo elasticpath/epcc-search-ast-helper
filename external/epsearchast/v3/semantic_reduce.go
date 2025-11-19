@@ -1,8 +1,8 @@
-package epsearchast_v3
+package epsearchast
 
 import "fmt"
 
-// A SemanticReducer is essentially collection of functions that make it easier to reduce things that working with [epsearchast_v3.AstNode]'s directly.
+// A SemanticReducer is essentially collection of functions that make it easier to reduce things that working with [epsearchast.AstNode]'s directly.
 //
 // It provides an individual method for each allowed keyword in the AST, which can make some transforms easier. In particular
 // only conjunction operators are required to handle the child arguments, and most other types have there arguments passed in the right type.
@@ -24,7 +24,7 @@ type SemanticReducer[R any] interface {
 	VisitIsNull(first string) (*R, error)
 }
 
-// SemanticReduceAst adapts an epsearchast_v3.SemanticReducer for use with the epsearchast_v3.ReduceAst function.
+// SemanticReduceAst adapts an epsearchast.SemanticReducer for use with the epsearchast.ReduceAst function.
 func SemanticReduceAst[T any](a *AstNode, v SemanticReducer[T]) (*T, error) {
 	f := func(a *AstNode, t []*T) (*T, error) {
 		switch a.NodeType {

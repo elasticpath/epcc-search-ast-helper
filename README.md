@@ -11,11 +11,11 @@ The `GetAst()` function will convert the JSON header into a struct that can be t
 ```go
 package example
 
-import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 
-func Example(headerValue string) (*epsearchast_v3.AstNode, error) {
+func Example(headerValue string) (*epsearchast.AstNode, error) {
 	
-	ast, err := epsearchast_v3.GetAst(headerValue)
+	ast, err := epsearchast.GetAst(headerValue)
 	
 	if err != nil { 
 		return nil, err
@@ -37,12 +37,12 @@ This package provides a way to support aliases for fields, this will allow a use
 ```go
 package example
 
-import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 
-func Example(ast *epsearchast_v3.AstNode) error {
+func Example(ast *epsearchast.AstNode) error {
 	
 	//The ast from the user will be converted into a new one, and if the user specified a payment_status field, the new ast will have it recorded as status. 
-	aliasedAst, err := ApplyAliases(ast, map[string]string{"payment_status": "status"})
+	aliasedAst, err := epsearchast.ApplyAliases(ast, map[string]string{"payment_status": "status"})
 
 	if err != nil { 
 		return err
@@ -73,12 +73,12 @@ This package provides a concise way to validate that the operators and fields sp
 ```go
 package example
 
-import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 
-func Example(ast *epsearchast_v3.AstNode) error {
+func Example(ast *epsearchast.AstNode) error {
 	var err error
 	// The following is an implementation of all the filter operators for orders https://elasticpath.dev/docs/orders/orders-api/orders-api-overview#filtering
-	err = epsearchast_v3.ValidateAstFieldAndOperators(ast, map[string][]string {
+	err = epsearchast.ValidateAstFieldAndOperators(ast, map[string][]string {
 		"status": {"eq"},
 		"payment": {"eq"},
 		"shipping": {"eq"},
@@ -106,27 +106,27 @@ func Example(ast *epsearchast_v3.AstNode) error {
 	
 	// You can additionally create aliases which allows for one field to reference another:
 	// In this case any headers that search for a field of `order_status` will be mapped to `status` and use those rules instead. 
-	err = epsearchast_v3.ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string {"status": {"eq"}}, map[string]string {"order_status": "status"})
+	err = epsearchast.ValidateAstFieldAndOperatorsWithAliases(ast, map[string][]string {"status": {"eq"}}, map[string]string {"order_status": "status"})
 	if err != nil {
 		return err
 	}
 	
 	// You can also supply validators on fields, which may be necessary in some cases depending on your data model or to improve user experience.
 	// Validation is provided by the go-playground/validator package https://github.com/go-playground/validator#usage-and-documentation
-	err = epsearchast_v3.ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string {"status": {"eq"}}, map[string]string {"status": "oneof=incomplete complete processing cancelled"})
+	err = epsearchast.ValidateAstFieldAndOperatorsWithValueValidation(ast, map[string][]string {"status": {"eq"}}, map[string]string {"status": "oneof=incomplete complete processing cancelled"})
 	
 	if err != nil {
 		return err
     }
 	
 	// Finally you can also restrict certain fields to types, which may be necessary in some cases depending on your data model or to improve user experience.
-   err = epsearchast_v3.ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string {"with_tax": {"eq"}}, map[string]epsearchast_v3.FieldType{"with_tax": epsearchast_v3.Int64})
+   err = epsearchast.ValidateAstFieldAndOperatorsWithFieldTypes(ast, map[string][]string {"with_tax": {"eq"}}, map[string]epsearchast.FieldType{"with_tax": epsearchast.Int64})
 
    if err != nil {
       return err
    }
    
-   // All of these options together can be done with  epsearchast_v3.ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes
+   // All of these options together can be done with  epsearchast.ValidateAstFieldAndOperatorsWithAliasesAndValueValidationAndFieldTypes
 	return err
 }
 ```
@@ -160,7 +160,7 @@ The library provides two approaches for processing AST trees: `ReduceAst()` and 
 
 ```go
 // Example: Collect all field names from the AST
-result, _ := epsearchast_v3.ReduceAst(ast, func(node *epsearchast_v3.AstNode, children []*[]string) (*[]string, error) {
+result, _ := epsearchast.ReduceAst(ast, func(node *epsearchast.AstNode, children []*[]string) (*[]string, error) {
 	fields := []string{}
 	if len(node.Args) > 0 {
 		fields = append(fields, node.Args[0])
@@ -180,8 +180,8 @@ result, _ := epsearchast_v3.ReduceAst(ast, func(node *epsearchast_v3.AstNode, ch
 
 ```go
 // Example: Generate a SQL query using GORM
-var qb epsearchast_v3.SemanticReducer[epsearchast_v3_gorm.SubQuery] = epsearchast_v3_gorm.DefaultGormQueryBuilder{}
-sq, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+var qb epsearchast.SemanticReducer[astgorm.SubQuery] = astgorm.DefaultGormQueryBuilder{}
+sq, err := epsearchast.SemanticReduceAst(ast, qb)
 ```
 
 **When to use which:**
@@ -201,9 +201,9 @@ The library provides several utility functions for working with ASTs:
 Returns all first arguments (field names) from the AST. Useful for permission checking, index optimization, or field validation.
 
 ```go
-fields := epsearchast_v3.GetAllFirstArgs(ast)           // []string{"status", "amount", "status"} - includes duplicates
-sortedFields := epsearchast_v3.GetAllFirstArgsSorted(ast)  // []string{"amount", "status", "status"} - sorted
-uniqueFields := epsearchast_v3.GetAllFirstArgsUnique(ast)  // map[string]struct{}{"status": {}, "amount": {}}
+fields := epsearchast.GetAllFirstArgs(ast)           // []string{"status", "amount", "status"} - includes duplicates
+sortedFields := epsearchast.GetAllFirstArgsSorted(ast)  // []string{"amount", "status", "status"} - sorted
+uniqueFields := epsearchast.GetAllFirstArgsUnique(ast)  // map[string]struct{}{"status": {}, "amount": {}}
 ```
 
 ##### HasFirstArg()
@@ -211,7 +211,7 @@ uniqueFields := epsearchast_v3.GetAllFirstArgsUnique(ast)  // map[string]struct{
 Returns true if a specific field name appears anywhere in the AST. Useful for quickly checking if a field is referenced before performing expensive operations.
 
 ```go
-hasStatus := epsearchast_v3.HasFirstArg(ast, "status")  // true if "status" appears as a field name anywhere in the query
+hasStatus := epsearchast.HasFirstArg(ast, "status")  // true if "status" appears as a field name anywhere in the query
 ```
 
 ##### GetAstDepth()
@@ -219,7 +219,7 @@ hasStatus := epsearchast_v3.HasFirstArg(ast, "status")  // true if "status" appe
 Returns the maximum depth of the AST tree. Useful for limiting query complexity.
 
 ```go
-depth := epsearchast_v3.GetAstDepth(ast)
+depth := epsearchast.GetAstDepth(ast)
 ```
 
 ##### GetEffectiveIndexIntersectionCount()
@@ -227,7 +227,7 @@ depth := epsearchast_v3.GetAstDepth(ast)
 Returns a heuristic measure of query complexity based on potential index intersections. Used internally to cap OR query complexity (default limit is 4). See the "OR Filter Restrictions" section for more details.
 
 ```go
-count, err := epsearchast_v3.GetEffectiveIndexIntersectionCount(ast)
+count, err := epsearchast.GetEffectiveIndexIntersectionCount(ast)
 ```
 
 
@@ -241,20 +241,20 @@ The following examples shows how to generate a Gorm query with this library.
 ```go
 package example
 
-import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-import epsearchast_v3_gorm "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
+import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
 import "gorm.io/gorm"
 
-func Example(ast *epsearchast_v3.AstNode, query *gorm.DB, tenantBoundaryId string) error {
+func Example(ast *epsearchast.AstNode, query *gorm.DB, tenantBoundaryId string) error {
 	var err error
 	
 	// Not Shown: Validation
 	
 	// Create query builder
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_gorm.SubQuery] = epsearchast_v3_gorm.DefaultGormQueryBuilder{}
+	var qb epsearchast.SemanticReducer[astgorm.SubQuery] = astgorm.DefaultGormQueryBuilder{}
 
 	
-	sq, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+	sq, err := epsearchast.SemanticReduceAst(ast, qb)
 
 	if err != nil {
 		return err
@@ -287,22 +287,22 @@ in this case, we want all eq queries for emails to use the lower case, compariso
 package example
 
 import (
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"strconv"
 )
-import epsearchast_v3_gorm "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
+import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/gorm"
 import "gorm.io/gorm"
 
 
-func Example(ast *epsearchast_v3.AstNode, query *gorm.DB, tenantBoundaryId string) error {
+func Example(ast *epsearchast.AstNode, query *gorm.DB, tenantBoundaryId string) error {
 	var err error
 
 	// Not Shown: Validation
 
 	// Create query builder
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_gorm.SubQuery] = &CustomQueryBuilder{}
+	var qb epsearchast.SemanticReducer[astgorm.SubQuery] = &CustomQueryBuilder{}
 
-	sq, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+	sq, err := epsearchast.SemanticReduceAst(ast, qb)
 
 	if err != nil {
 		return err
@@ -316,12 +316,12 @@ func Example(ast *epsearchast_v3.AstNode, query *gorm.DB, tenantBoundaryId strin
 }
 
 type CustomQueryBuilder struct {
-	epsearchast_v3_gorm.DefaultGormQueryBuilder
+	astgorm.DefaultGormQueryBuilder
 }
 
-func (l *CustomQueryBuilder) VisitEq(first, second string) (*epsearchast_v3_gorm.SubQuery, error) {
+func (l *CustomQueryBuilder) VisitEq(first, second string) (*astgorm.SubQuery, error) {
 	if first == "email" {
-		return &epsearchast_v3_gorm.SubQuery{
+		return &astgorm.SubQuery{
 			Clause: fmt.Sprintf("LOWER(%s::text) = LOWER(?)", first),
 			Args:   []interface{}{second},
 		}, nil
@@ -330,7 +330,7 @@ func (l *CustomQueryBuilder) VisitEq(first, second string) (*epsearchast_v3_gorm
 		if err != nil {
 			return nil, err
 		}
-		return &epsearchast_v3_gorm.SubQuery{
+		return &astgorm.SubQuery{
 			Clause: fmt.Sprintf("%s = ?", first),
 			Args:   []interface{}{n},
 		}, nil
@@ -349,20 +349,20 @@ package example
 
 import (
 	"context"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	epsearchast_v3_mongo "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBoundaryQuery bson.M)  (*mongo.Cursor, error) {
+func Example(ast *epsearchast.AstNode, collection *mongo.Collection, tenantBoundaryQuery bson.M)  (*mongo.Cursor, error) {
 	// Not Shown: Validation
 
 	// Create query builder
-	var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+	var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 	// Create Query Object
-	queryObj, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+	queryObj, err := epsearchast.SemanticReduceAst(ast, qb)
 
 	if err != nil {
 		return nil, err
@@ -399,23 +399,23 @@ package example
 
 import (
 	"context"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	epsearchast_v3_mongo "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
 )
 
-func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBoundaryQuery *bson.M)  (*mongo.Cursor, error) {
+func Example(ast *epsearchast.AstNode, collection *mongo.Collection, tenantBoundaryQuery *bson.M)  (*mongo.Cursor, error) {
 	// Not Shown: Validation
 
 	// Create query builder
-	var qb epsearchast_v3.SemanticReducer[bson.D] = &epsearchast_v3_mongo.DefaultMongoQueryBuilder{
-		FieldTypes: map[string]epsearchast_v3_mongo.FieldType{"with_tax": epsearchast_v3_mongo.Int64},
+	var qb epsearchast.SemanticReducer[bson.D] = &astmongo.DefaultMongoQueryBuilder{
+		FieldTypes: map[string]astmongo.FieldType{"with_tax": astmongo.Int64},
     }
 
 	// Create Query Object
-	queryObj, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+	queryObj, err := epsearchast.SemanticReduceAst(ast, qb)
 
 	if err != nil {
 		return nil, err
@@ -443,21 +443,21 @@ package example
 
 import (
 	"context"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	epsearchast_v3_mongo "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
 )
 
-func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBoundaryQuery *bson.M)  (*mongo.Cursor, error) {
+func Example(ast *epsearchast.AstNode, collection *mongo.Collection, tenantBoundaryQuery *bson.M)  (*mongo.Cursor, error) {
 	// Not Shown: Validation
 
 	// Create query builder
-	var qb epsearchast_v3.SemanticReducer[bson.D] = &LowerCaseEmail{}
+	var qb epsearchast.SemanticReducer[bson.D] = &LowerCaseEmail{}
 
 	// Create Query Object
-	queryObj, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+	queryObj, err := epsearchast.SemanticReduceAst(ast, qb)
 
 	if err != nil {
 		return nil, err
@@ -475,7 +475,7 @@ func Example(ast *epsearchast_v3.AstNode, collection *mongo.Collection, tenantBo
 }
 
 type LowerCaseEmail struct {
-	epsearchast_v3_mongo.DefaultMongoQueryBuilder
+	astmongo.DefaultMongoQueryBuilder
 }
 
 func (l *LowerCaseEmail) VisitEq(first, second string) (*bson.D, error) {
@@ -495,13 +495,13 @@ The following examples shows how to generate an Elasticsearch Query with this li
 
 ```go
 package example
-import epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-import epsearchast_v3_es "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/els"
+import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+import "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/els"
 
 
 var qb = &LowerCaseEmail{
-   epsearchast_v3_es.DefaultEsQueryBuilder{
-      OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+   astes.DefaultEsQueryBuilder{
+      OpTypeToFieldNames: map[string]*astes.OperatorTypeToMultiFieldName{
          "status": {
             Wildcard: "status.wildcard",
          },
@@ -515,12 +515,12 @@ func init() {
     qb.MustValidate()	
 }
 
-func Example(ast *epsearchast_v3.AstNode, tenantBoundaryId string)  (string, error) {
+func Example(ast *epsearchast.AstNode, tenantBoundaryId string)  (string, error) {
    // Not Shown: Validation
 	
 
    // Create Query Object
-   query, err := epsearchast_v3.SemanticReduceAst[epsearchast_v3_es.JsonObject](astNode, qb)
+   query, err := astes.SemanticReduceAst[astes.JsonObject](astNode, qb)
 
    if err != nil {
       return nil, err
@@ -532,14 +532,14 @@ func Example(ast *epsearchast_v3.AstNode, tenantBoundaryId string)  (string, err
 }
 
 type LowerCaseEmail struct {
-   epsearchast_v3_es.DefaultEsQueryBuilder
+   astes.DefaultEsQueryBuilder
 }
 
-func (l *LowerCaseEmail) VisitEq(first, second string) (*epsearchast_v3_es.JsonObject, error) {
+func (l *LowerCaseEmail) VisitEq(first, second string) (*astes.JsonObject, error) {
    if first == "email" {
-      return epsearchast_v3_es.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, strings.ToLower(second))
+      return astes.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, strings.ToLower(second))
    } else {
-      return epsearchast_v3_es.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, second)
+      return astes.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, second)
    }
 }
 

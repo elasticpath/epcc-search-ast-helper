@@ -1,10 +1,11 @@
-package epsearchast_v3_gorm
+package astgorm
 
 import (
 	"fmt"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	"github.com/lib/pq"
 	"strings"
+
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/lib/pq"
 )
 
 type SubQuery struct {
@@ -16,7 +17,7 @@ type SubQuery struct {
 
 type DefaultGormQueryBuilder struct{}
 
-var _ epsearchast_v3.SemanticReducer[SubQuery] = (*DefaultGormQueryBuilder)(nil)
+var _ epsearchast.SemanticReducer[SubQuery] = (*DefaultGormQueryBuilder)(nil)
 
 func (g DefaultGormQueryBuilder) PostVisitAnd(sqs []*SubQuery) (*SubQuery, error) {
 	clauses := make([]string, 0, len(sqs))

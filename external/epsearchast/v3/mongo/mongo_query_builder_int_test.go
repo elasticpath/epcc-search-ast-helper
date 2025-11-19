@@ -1,9 +1,9 @@
-package epsearchast_v3_mongo
+package astmongo
 
 import (
 	"context"
 	"fmt"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
+	"github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -642,7 +642,7 @@ func TestSmokeTestMongoWithFilters(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		ast, err := epsearchast_v3.GetAst(tc.filter)
+		ast, err := epsearchast.GetAst(tc.filter)
 		if err != nil {
 			t.Fatalf("Failed to get filter: %v", err)
 		}
@@ -662,15 +662,15 @@ func TestSmokeTestMongoWithFilters(t *testing.T) {
 			// Perform a count query with a filter
 
 			// Create query builder
-			var qb epsearchast_v3.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
+			var qb epsearchast.SemanticReducer[bson.D] = DefaultMongoQueryBuilder{}
 
 			// Create Query Object
-			ast, err := epsearchast_v3.GetAst(tc.filter)
+			ast, err := epsearchast.GetAst(tc.filter)
 			if err != nil {
 				t.Fatalf("Failed to get filter: %v", err)
 			}
 
-			query, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+			query, err := epsearchast.SemanticReduceAst(ast, qb)
 
 			if err != nil {
 				t.Fatalf("Failed to get filter: %v", err)
