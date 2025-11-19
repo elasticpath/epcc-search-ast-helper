@@ -1,14 +1,15 @@
-package epsearchast_v3_es_test
+package astes
 
 import (
 	"encoding/json"
 	"fmt"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
-	epsearchast_v3_es "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3/es"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
+
+	"github.com/elasticpath/epcc-search-ast-helper"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSimpleBinaryEqOperatorGeneratesCorrectQuery(t *testing.T) {
@@ -30,13 +31,13 @@ func TestSimpleBinaryEqOperatorGeneratesCorrectQuery(t *testing.T) {
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -65,11 +66,11 @@ func TestSimpleBinaryEqOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 			"email": {
 				Equality: "email.keyword",
 			},
@@ -77,7 +78,7 @@ func TestSimpleBinaryEqOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -108,13 +109,13 @@ func TestSimpleBinaryLeOperatorGeneratesCorrectQuery(t *testing.T) {
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -145,11 +146,11 @@ func TestSimpleBinaryLeOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 			"amount": {
 				Relational: "amount.range",
 			},
@@ -157,7 +158,7 @@ func TestSimpleBinaryLeOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -188,13 +189,13 @@ func TestSimpleBinaryLtOperatorGeneratesCorrectQuery(t *testing.T) {
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -225,11 +226,11 @@ func TestSimpleBinaryLtOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 			"amount": {
 				Relational: "amount.range",
 			},
@@ -237,7 +238,7 @@ func TestSimpleBinaryLtOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -268,13 +269,13 @@ func TestSimpleBinaryGtOperatorGeneratesCorrectQuery(t *testing.T) {
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -305,11 +306,11 @@ func TestSimpleBinaryGtOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 			"amount": {
 				Relational: "amount.range",
 			},
@@ -317,7 +318,7 @@ func TestSimpleBinaryGtOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -348,13 +349,13 @@ func TestSimpleBinaryGEOperatorGeneratesCorrectQuery(t *testing.T) {
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -385,11 +386,11 @@ func TestSimpleBinaryGEOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 			"amount": {
 				Relational: "amount.range",
 			},
@@ -397,7 +398,7 @@ func TestSimpleBinaryGEOperatorGeneratesCorrectQueryWithFieldOverride(t *testing
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -429,13 +430,13 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQuery(t *testing.T) {
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -467,11 +468,11 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 			"email": {
 				Wildcard: "email.keyword",
 			},
@@ -479,7 +480,7 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -528,13 +529,13 @@ func TestSimpleBinaryLikeOperatorGeneratesCorrectQueryWithWildcards(t *testing.T
   }
 }`, strings.ReplaceAll(tc.expectedWildcardTerm, `\`, `\\`))
 
-			astNode, err := epsearchast_v3.GetAst(jsonTxt)
+			astNode, err := epsearchast.GetAst(jsonTxt)
 			require.NoError(t, err)
 
-			var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
+			var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 
 			// Execute SUT
-			query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+			query, err := epsearchast.SemanticReduceAst(astNode, qb)
 			require.NoError(t, err)
 
 			// Verification
@@ -594,11 +595,11 @@ func TestSimpleRecursiveStructure(t *testing.T) {
     ]
   }
 }`
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 			"status": {
 				Equality: "status.keyword",
 			},
@@ -606,7 +607,7 @@ func TestSimpleRecursiveStructure(t *testing.T) {
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -656,12 +657,12 @@ func TestSimpleRecursiveWithStringOverrideStruct(t *testing.T) {
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
 	var qb = &LowerCaseEmail{
-		epsearchast_v3_es.DefaultEsQueryBuilder{
-			OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+		DefaultEsQueryBuilder{
+			OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 				"status": {
 					Equality: "status.keyword",
 				},
@@ -670,7 +671,7 @@ func TestSimpleRecursiveWithStringOverrideStruct(t *testing.T) {
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst[epsearchast_v3_es.JsonObject](astNode, qb)
+	query, err := epsearchast.SemanticReduceAst[JsonObject](astNode, qb)
 	require.NoError(t, err)
 	// Verification
 
@@ -704,13 +705,13 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQuery(t *testing.T) {
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -743,11 +744,11 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 			"description": {
 				Text: "description.text",
 			},
@@ -755,7 +756,7 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQueryWithFieldOverride(t *testi
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -788,15 +789,15 @@ func TestSimpleBinaryTextOperatorGeneratesCorrectQueryWithFuzzinessSetting(t *te
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
 		DefaultFuzziness: "AUTO",
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -828,13 +829,13 @@ func TestSimpleUnaryIsNullOperatorGeneratesCorrectQuery(t *testing.T) {
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{}
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -866,11 +867,11 @@ func TestSimpleUnaryIsNullOperatorGeneratesCorrectQueryWithFieldOverride(t *test
   }
 }`
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
-	var qb epsearchast_v3.SemanticReducer[epsearchast_v3_es.JsonObject] = epsearchast_v3_es.DefaultEsQueryBuilder{
-		OpTypeToFieldNames: map[string]*epsearchast_v3_es.OperatorTypeToMultiFieldName{
+	var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+		OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 			"sort_order": {
 				Equality: "sort_order.keyword",
 			},
@@ -878,7 +879,7 @@ func TestSimpleUnaryIsNullOperatorGeneratesCorrectQueryWithFieldOverride(t *test
 	}
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst(astNode, qb)
+	query, err := epsearchast.SemanticReduceAst(astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -890,7 +891,7 @@ func TestSimpleUnaryIsNullOperatorGeneratesCorrectQueryWithFieldOverride(t *test
 
 func TestMustValidateDoesNotPanicOnEmptyObject(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{}
+	qb := DefaultEsQueryBuilder{}
 
 	// Execute SUT & Verification
 	assert.NotPanics(t, func() {
@@ -900,7 +901,7 @@ func TestMustValidateDoesNotPanicOnEmptyObject(t *testing.T) {
 
 func TestMustValidatePanicsWhenRegexDoesNotCompile(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		"tes(": {
 			Path: "foo",
 		},
@@ -915,7 +916,7 @@ func TestMustValidatePanicsWhenRegexDoesNotCompile(t *testing.T) {
 
 func TestMustValidatePanicsWhenRegexDoesNotHaveStartAnchor(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		"test": {
 			Path: "foo",
 		},
@@ -930,7 +931,7 @@ func TestMustValidatePanicsWhenRegexDoesNotHaveStartAnchor(t *testing.T) {
 
 func TestMustValidatePanicsWhenRegexDoesNotHaveEndAnchor(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		"^test": {
 			Path: "foo",
 		},
@@ -945,7 +946,7 @@ func TestMustValidatePanicsWhenRegexDoesNotHaveEndAnchor(t *testing.T) {
 
 func TestMustValidatePanicsWhenNoPathIsSet(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		"^test.foo$": {},
 	}}
 
@@ -958,7 +959,7 @@ func TestMustValidatePanicsWhenNoPathIsSet(t *testing.T) {
 
 func TestMustValidatePanicsWhenRegexHasValueCaptureGroup(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		"^test.(?P<value>.+)value$": {
 			Path: "foo",
 		},
@@ -973,10 +974,10 @@ func TestMustValidatePanicsWhenRegexHasValueCaptureGroup(t *testing.T) {
 
 func TestMustValidatePanicsWhenRegexKeyHasValueReplacement(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		"^test.(?P<id>.+).value$": {
 			Path: "foo",
-			Subqueries: map[string]epsearchast_v3_es.Replacement{
+			Subqueries: map[string]Replacement{
 				"foo.$value": {
 					Value: "$value",
 				},
@@ -993,10 +994,10 @@ func TestMustValidatePanicsWhenRegexKeyHasValueReplacement(t *testing.T) {
 
 func TestMustValidatePanicsNoSubqueriesSet(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		"^test.(?P<id>.+).value$": {
 			Path:       "foo",
-			Subqueries: map[string]epsearchast_v3_es.Replacement{},
+			Subqueries: map[string]Replacement{},
 		},
 	}}
 
@@ -1008,10 +1009,10 @@ func TestMustValidatePanicsNoSubqueriesSet(t *testing.T) {
 
 func TestMustValidatePanicsWhenFieldHasTemplateNotInField(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		"^test.(?P<id>.+).value$": {
 			Path: "foo",
-			Subqueries: map[string]epsearchast_v3_es.Replacement{
+			Subqueries: map[string]Replacement{
 				"foo.$i.$id": {
 					Value: "$id",
 				},
@@ -1027,10 +1028,10 @@ func TestMustValidatePanicsWhenFieldHasTemplateNotInField(t *testing.T) {
 
 func TestMustValidatePanicsWhenFieldValueHasTemplateNotInField(t *testing.T) {
 	// Fixture Setup
-	qb := epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		"^test.(?P<id>.+).value.(?P<bar>.+)$": {
 			Path: "foo",
-			Subqueries: map[string]epsearchast_v3_es.Replacement{
+			Subqueries: map[string]Replacement{
 				"foo.$id": {
 					Value: "$yas.$bar",
 				},
@@ -1085,10 +1086,10 @@ func TestMultipleRegexMatchesAreReplacedCorrectlyWhenCaptureGroupsOverlap(t *tes
   }
 }`
 
-	qb := &epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := &DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		`^field\.(?P<aaa>[^.]+)\.(?P<a>[^.]+)\.(?P<aa>[^.]+)$`: {
 			Path: "foo",
-			Subqueries: map[string]epsearchast_v3_es.Replacement{
+			Subqueries: map[string]Replacement{
 				"foo.$aaa$aa$a": {
 					Value: "$a$aa$aaa",
 				},
@@ -1099,11 +1100,11 @@ func TestMultipleRegexMatchesAreReplacedCorrectlyWhenCaptureGroupsOverlap(t *tes
 		},
 	}}
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst[epsearchast_v3_es.JsonObject](astNode, qb)
+	query, err := epsearchast.SemanticReduceAst[JsonObject](astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -1205,10 +1206,10 @@ func TestMultipleReplacementFieldsInNestedObjectAreSortedInDeterministicOrder(t 
   }
 }`
 
-	qb := &epsearchast_v3_es.DefaultEsQueryBuilder{NestedFieldToQuery: map[string]epsearchast_v3_es.NestedReplacement{
+	qb := &DefaultEsQueryBuilder{NestedFieldToQuery: map[string]NestedReplacement{
 		`^field\.(?P<aaa>[^.]+)$`: {
 			Path: "foo",
-			Subqueries: map[string]epsearchast_v3_es.Replacement{
+			Subqueries: map[string]Replacement{
 				"foo.j": {Value: "$value"},
 				"foo.i": {Value: "$value"},
 				"foo.l": {Value: "$value"},
@@ -1226,11 +1227,11 @@ func TestMultipleReplacementFieldsInNestedObjectAreSortedInDeterministicOrder(t 
 		},
 	}}
 
-	astNode, err := epsearchast_v3.GetAst(jsonTxt)
+	astNode, err := epsearchast.GetAst(jsonTxt)
 	require.NoError(t, err)
 
 	// Execute SUT
-	query, err := epsearchast_v3.SemanticReduceAst[epsearchast_v3_es.JsonObject](astNode, qb)
+	query, err := epsearchast.SemanticReduceAst[JsonObject](astNode, qb)
 	require.NoError(t, err)
 
 	// Verification
@@ -1242,13 +1243,13 @@ func TestMultipleReplacementFieldsInNestedObjectAreSortedInDeterministicOrder(t 
 }
 
 type LowerCaseEmail struct {
-	epsearchast_v3_es.DefaultEsQueryBuilder
+	DefaultEsQueryBuilder
 }
 
-func (l *LowerCaseEmail) VisitEq(first, second string) (*epsearchast_v3_es.JsonObject, error) {
+func (l *LowerCaseEmail) VisitEq(first, second string) (*JsonObject, error) {
 	if first == "email" {
-		return epsearchast_v3_es.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, strings.ToLower(second))
+		return DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, strings.ToLower(second))
 	} else {
-		return epsearchast_v3_es.DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, second)
+		return DefaultEsQueryBuilder.VisitEq(l.DefaultEsQueryBuilder, first, second)
 	}
 }

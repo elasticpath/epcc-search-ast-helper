@@ -1,14 +1,15 @@
-package epsearchast_v3_es
+package astes
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	epsearchast_v3 "github.com/elasticpath/epcc-search-ast-helper/external/epsearchast/v3"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/elasticpath/epcc-search-ast-helper"
 )
 
 const esBaseURL = "http://localhost:20003"
@@ -24,7 +25,7 @@ type testStruct struct {
 
 func (t *testStruct) String() string {
 
-	ast, err := epsearchast_v3.GetAst(t.filter)
+	ast, err := epsearchast.GetAst(t.filter)
 
 	if err != nil {
 		panic(fmt.Sprintf("Failed to get filter: %s)", err))
@@ -1048,12 +1049,12 @@ func TestSmokeTestElasticSearchWithFilters(t *testing.T) {
 			}
 
 			// Build Elasticsearch query
-			ast, err := epsearchast_v3.GetAst(tc.filter)
+			ast, err := epsearchast.GetAst(tc.filter)
 			if err != nil {
 				t.Fatalf("Failed to parse filter: %v", err)
 			}
 
-			var qb epsearchast_v3.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
+			var qb epsearchast.SemanticReducer[JsonObject] = DefaultEsQueryBuilder{
 				OpTypeToFieldNames: map[string]*OperatorTypeToMultiFieldName{
 					"key_value_field.description": {
 						Wildcard: "key_value_field.description.wildcard",
@@ -1082,7 +1083,7 @@ func TestSmokeTestElasticSearchWithFilters(t *testing.T) {
 				DefaultFuzziness: "AUTO",
 			}
 
-			query, err := epsearchast_v3.SemanticReduceAst(ast, qb)
+			query, err := epsearchast.SemanticReduceAst(ast, qb)
 			if err != nil {
 				t.Fatalf("Failed to reduce AST: %v", err)
 			}

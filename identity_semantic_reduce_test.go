@@ -1,4 +1,4 @@
-package epsearchast_v3
+package epsearchast
 
 import (
 	"encoding/json"

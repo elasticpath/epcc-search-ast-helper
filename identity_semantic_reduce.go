@@ -1,4 +1,4 @@
-package epsearchast_v3
+package epsearchast
 
 // IdentitySemanticReducer is a SemanticReducer that returns the same AstNode it is given.
 type IdentitySemanticReducer struct{}

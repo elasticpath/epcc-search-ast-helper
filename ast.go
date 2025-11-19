@@ -1,5 +1,5 @@
-// Package epsearchast_v3 implements structs and functions for working with the EP-Internal-Search-AST-v3 header.
-package epsearchast_v3
+// Package epsearchast implements structs and functions for working with the EP-Internal-Search-AST-v3 header.
+package epsearchast
 
 import (
 	"encoding/json"
@@ -102,7 +102,7 @@ func GetAst(jsonTxt string) (*AstNode, error) {
 
 // The AstVisitor interface provides a way of specifying a [Visitor] for visiting an AST.
 //
-// This interface is clunky to use for conversions or when you need to return state, and you should use [epsearchast_v3.ReduceAst] instead.
+// This interface is clunky to use for conversions or when you need to return state, and you should use [epsearchast.ReduceAst] instead.
 // In particular because the return values are restricted to error, you need to manage and combine the state yourself, which can be more annoying than necessary.
 //
 // [Visitor]: https://en.wikipedia.org/wiki/Visitor_pattern

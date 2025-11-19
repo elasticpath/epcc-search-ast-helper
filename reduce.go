@@ -1,11 +1,11 @@
-package epsearchast_v3
+package epsearchast
 
 // ReduceAst is a generic function that can be used to compute or build "something" about an AST.
 //
 // This function recursively calls the supplied f on each node of the tree, passing in the return value of all
 // child nodes as an argument.
 //
-// Depending on what you are doing you may find that [epsearchast_v3.SemanticReduceAst] to be simpler.
+// Depending on what you are doing you may find that [epsearchast.SemanticReduceAst] to be simpler.
 func ReduceAst[T any](a *AstNode, f func(*AstNode, []*T) (*T, error)) (*T, error) {
 	if a == nil {
 		return nil, nil
