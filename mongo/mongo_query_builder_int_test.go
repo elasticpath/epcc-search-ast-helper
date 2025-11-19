@@ -3,15 +3,16 @@ package astmongo
 import (
 	"context"
 	"fmt"
+
 	"log"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/elasticpath/epcc-search-ast-helper"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var client *mongo.Client
@@ -21,7 +22,7 @@ func TestMain(m *testing.M) {
 	defer cancel()
 
 	var err error
-	client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://admin:admin@localhost:20002"))
+	client, err = mongo.Connect(options.Client().ApplyURI("mongodb://admin:admin@localhost:20002"))
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
