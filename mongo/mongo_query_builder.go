@@ -7,7 +7,7 @@ import (
 
 	"github.com/elasticpath/epcc-search-ast-helper"
 )
-import "go.mongodb.org/mongo-driver/bson"
+import "go.mongodb.org/mongo-driver/v2/bson"
 
 type DefaultMongoQueryBuilder struct {
 	FieldTypes map[string]epsearchast.FieldType

@@ -351,8 +351,8 @@ import (
 	"context"
 	"github.com/elasticpath/epcc-search-ast-helper"
 	"github.com/elasticpath/epcc-search-ast-helper/mongo"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func Example(ast *epsearchast.AstNode, collection *mongo.Collection, tenantBoundaryQuery bson.M)  (*mongo.Cursor, error) {
@@ -401,8 +401,8 @@ import (
 	"context"
 	"github.com/elasticpath/epcc-search-ast-helper"
 	"github.com/elasticpath/epcc-search-ast-helper/mongo"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"strings"
 )
 
@@ -445,8 +445,8 @@ import (
 	"context"
 	"github.com/elasticpath/epcc-search-ast-helper"
 	"github.com/elasticpath/epcc-search-ast-helper/mongo"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"strings"
 )
 
