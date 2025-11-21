@@ -644,12 +644,7 @@ func TestSmokeTestMongoWithFilters(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		ast, err := epsearchast.GetAst(tc.filter)
-		if err != nil {
-			t.Fatalf("Failed to get filter: %v", err)
-		}
-
-		t.Run(fmt.Sprintf("%s", ast.AsFilter()), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s", tc.filter), func(t *testing.T) {
 			/*
 				Fixture Setup
 			*/
@@ -672,6 +667,7 @@ func TestSmokeTestMongoWithFilters(t *testing.T) {
 				t.Fatalf("Failed to get filter: %v", err)
 			}
 
+			fmt.Printf("Filter: %s", ast.AsFilter())
 			query, err := epsearchast.SemanticReduceAst(ast, qb)
 
 			if err != nil {
