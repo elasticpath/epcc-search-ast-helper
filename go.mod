@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/go-playground/validator/v10 v10.30.1
-	github.com/lib/pq v1.10.9
+	github.com/lib/pq v1.12.2
 	github.com/stretchr/testify v1.11.1
 	go.mongodb.org/mongo-driver/v2 v2.4.2
 	gorm.io/driver/postgres v1.6.0
